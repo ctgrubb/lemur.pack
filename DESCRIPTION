@@ -1,0 +1,15 @@
+Package: lemur.pack
+Title: Package for Team Lemur functional codebase
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Christopher",
+           family = "Grubb",
+           role = c("aut", "cre"),
+           email = "ctgrubb@vt.edu",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: This package contains functions and vignette's for Team Lemur.
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
