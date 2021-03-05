@@ -2,3 +2,6 @@
 ^\.Rproj\.user$
 ^\.git$
 ^\.gitignore$
+^R/exploration\.R$
+^doc$
+^Meta$
