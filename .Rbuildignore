@@ -5,3 +5,4 @@
 ^R/exploration\.R$
 ^doc$
 ^Meta$
+^vignettes/figure$

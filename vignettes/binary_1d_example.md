@@ -7,17 +7,11 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
 
-```{r setup, echo = FALSE}
+
+
+```r
 library(lemur.pack)
-library(dplyr)
-library(tidyr)
 library(ggplot2)
 ```
 
@@ -29,11 +23,11 @@ This vignette explains synthetic population sampling for the simplest case, wher
 
 The first thing we need is our sample, and thus we need to know our *true* population proportion. For starters lets fix the truth at *p = 0.5*, sample size at *10*, and simulate a population of size *100*.
 
-```{r}
+
+```r
 p <- 0.5; n <- 10; N <- 100
 obs <- sample(c(0, 1), size = n, replace = TRUE, prob = c(1-p, p))
 y <- sum(obs)
-y <- 5
 ```
 
 ## Calculating the Posterior
@@ -51,13 +45,13 @@ It can be thought of as the probability of sampling *y* white balls in a sample 
 
 Since we observe a sample **from** the population, our population must have at least as many *1*s and *0*s as our sample. Let's construct a **data.frame** with all the information we will need.
 
-```{r}
-df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPriorFlat = NA, LogPriorUninformative = NA)
+
+```r
+df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPrior = NA)
 
 for(i in 1:nrow(df)) {
   df$LogLikelihood[i] <- lemur.pack:::loglik_binary_(N = N, n = n, Y = df$Y[i], y = y)
 }
-
 ```
 
 
@@ -65,38 +59,26 @@ for(i in 1:nrow(df)) {
 
 Lets start by using a flat prior. In log space this is actually just zero.
 
-```{r}
+
+```r
+
 for(i in 1:nrow(df)) {
-  df$LogPriorFlat[i] <- lemur.pack:::logprior_binary_flat_()
+  df$LogPrior[i] <- lemur.pack:::logprior_binary_flat_()
 }
 ```
 
-Lets also add an uninformative prior.
-
-```{r}
-for(i in 1:nrow(df)) {
-  df$LogPriorUninformative[i] <- lemur.pack:::logprior_binary_uninformative_(N, Y = df$Y[i])
-}
-```
 
 ### Construction
 
 Now we can add the log-likelihood and log-prior to get the log-posterior for each value of *Y*, and create a plot.
 
-```{r}
-df <- df %>%
-  pivot_longer(contains("LogPrior"), names_to = "Prior", names_prefix = "LogPrior", 
-               values_to = "LogPrior") %>%
-  mutate(LogPosterior = LogLikelihood + LogPrior) %>%
-  mutate(
-    Likelihood = exp(LogLikelihood),
-    Posterior = exp(LogPosterior)
-  )
-```
 
-```{r, echo = FALSE}
-  ggplot(data = df, mapping = aes(x = Y, y = LogPrior, color = Prior)) +
+```r
+df$LogPosterior <- df$LogLikelihood + df$LogPrior
+
+ggplot(data = df, mapping = aes(x = Y, y = LogPosterior)) +
   geom_line()
 ```
 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
 

@@ -25,7 +25,7 @@ logpost_binary <- function(pop, obs, lprior) {
 logpost_binary_ <- function(N, n, Y, y, lprior) {
 
   if(y > Y | (n - y) > (N - Y)) {
-    return(-Inf)
+    return(-9e9)
   }
 
   log_lik <- loglik_binary_(N, n, Y, y)
