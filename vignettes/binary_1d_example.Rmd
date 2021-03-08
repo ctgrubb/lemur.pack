@@ -7,21 +7,21 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
 
-```{r setup, echo = FALSE}
+```{r message = FALSE, warning = FALSE}
 library(lemur.pack)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 ```
 
-# Simple 1-dimensional Bianry Example
+# Simple 1-dimensional Binary Example
 
 This vignette explains synthetic population sampling for the simplest case, where each individual is defined by one binary variable. The only piece of information used to inform what the population looks like is a simple random sample of size *n*, which can be thought of as an *n*-vector with sum *y*. Our goal is to synthesize populations of size *N* with sum *Y*.
 

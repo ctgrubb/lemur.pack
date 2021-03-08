@@ -12,10 +12,12 @@ vignette: >
 
 ```r
 library(lemur.pack)
+library(dplyr)
+library(tidyr)
 library(ggplot2)
 ```
 
-# Simple 1-dimensional Bianry Example
+# Simple 1-dimensional Binary Example
 
 This vignette explains synthetic population sampling for the simplest case, where each individual is defined by one binary variable. The only piece of information used to inform what the population looks like is a simple random sample of size *n*, which can be thought of as an *n*-vector with sum *y*. Our goal is to synthesize populations of size *N* with sum *Y*.
 
@@ -28,6 +30,7 @@ The first thing we need is our sample, and thus we need to know our *true* popul
 p <- 0.5; n <- 10; N <- 100
 obs <- sample(c(0, 1), size = n, replace = TRUE, prob = c(1-p, p))
 y <- sum(obs)
+y <- 5
 ```
 
 ## Calculating the Posterior
@@ -47,7 +50,7 @@ Since we observe a sample **from** the population, our population must have at l
 
 
 ```r
-df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPrior = NA)
+df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPriorFlat = NA, LogPriorUninformative = NA)
 
 for(i in 1:nrow(df)) {
   df$LogLikelihood[i] <- lemur.pack:::loglik_binary_(N = N, n = n, Y = df$Y[i], y = y)
@@ -61,12 +64,19 @@ Lets start by using a flat prior. In log space this is actually just zero.
 
 
 ```r
-
 for(i in 1:nrow(df)) {
-  df$LogPrior[i] <- lemur.pack:::logprior_binary_flat_()
+  df$LogPriorFlat[i] <- lemur.pack:::logprior_binary_flat_()
 }
 ```
 
+Lets also add an uninformative prior.
+
+
+```r
+for(i in 1:nrow(df)) {
+  df$LogPriorUninformative[i] <- lemur.pack:::logprior_binary_uninformative_(N, Y = df$Y[i])
+}
+```
 
 ### Construction
 
@@ -74,11 +84,16 @@ Now we can add the log-likelihood and log-prior to get the log-posterior for eac
 
 
 ```r
-df$LogPosterior <- df$LogLikelihood + df$LogPrior
-
-ggplot(data = df, mapping = aes(x = Y, y = LogPosterior)) +
-  geom_line()
+df <- df %>%
+  pivot_longer(contains("LogPrior"), names_to = "Prior", names_prefix = "LogPrior", 
+               values_to = "LogPrior") %>%
+  mutate(LogPosterior = LogLikelihood + LogPrior) %>%
+  mutate(
+    Likelihood = exp(LogLikelihood),
+    Posterior = exp(LogPosterior)
+  )
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+
 

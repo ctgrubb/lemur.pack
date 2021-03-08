@@ -1,3 +1,99 @@
+#' Sample from the posterior of a 1-d binary population
+#'
+#' @param obs numeric vector representing the observed sample.
+#' @param N size of the population.
+#' @param prior choice of prior.
+#' @param control a list of parameters for tuning the mcmc algorithm. Passed to \code{\link{lemur.control}}.
+#' @param ... arguments to be used to form the \code{control} object if it is not supplied directly.
+#' @importFrom coda mcmc
+#' @export
+mcmc_binary <- function(obs, N, prior = "uninformative", control = list(...), ...) {
+  control <- do.call("lemur.control", control)
+
+  if(prior == "uninformative") {
+    lprior <- logprior_binary_uninformative_
+  } else if(prior == "flat") {
+    lprior <- logprior_binary_flat_
+  }
+
+  n <- length(obs)
+  y <- sum(obs)
+  n_row <- control$nsteps + control$burnin
+
+  stor <- matrix(0, nrow = n_row, ncol = N)
+
+  lp0 = logpost_binary_(N, n, 0, y)
+
+  for(i in 2:n_row) {
+    Ycur <- stor[i-1, ]
+    for(k in 1:N) {
+      can <- Ycur
+      can[k] <- ifelse(Ycur[k] == 1, 0, 1)
+      lpcan <- logpost_binary_(N, n, sum(can), y, lprior)
+
+      u <- runif(1)
+      if(log(u) < (lpcan - lp0)){
+        Ycur <- can
+        lp0 <- lpcan
+      }
+    }
+    stor[i, ] <- Ycur
+  }
+
+  raw <- coda::mcmc(stor)
+  out <- window(raw, start = control$burnin + 1, thin = control$thin)
+  return(out)
+}
+
+
+#' Sample from the posterior of a 1-d multi-class population
+#'
+#' @param obs numeric vector representing the observed sample.
+#' @param N size of the population.
+#' @param prior choice of prior.
+#' @param control a list of parameters for tuning the mcmc algorithm. Passed to \code{\link{lemur.control}}.
+#' @param ... arguments to be used to form the \code{control} object if it is not supplied directly.
+#' @importFrom coda mcmc
+#' @export
+mcmc_multiclass <- function(obs, N, prior = "uninformative", control = list(...), ...) {
+  control <- do.call("lemur.control", control)
+
+  if(prior == "uninformative") {
+    lprior <- logprior_multiclass_uninformative_
+  } else if(prior == "flat") {
+    lprior <- logprior_multiclass_flat_
+  }
+
+  n <- length(obs)
+  y <- as.numeric(table(obs))
+  n_class <- length(y)
+  n_row <- control$nsteps + control$burnin
+
+  stor <- matrix(0, nrow = n_row, ncol = N)
+
+  lp0 = logpost_multiclass_(N, n, c(), y)
+
+  for(i in 2:n_row) {
+    Ycur <- stor[i-1, ]
+    for(k in 1:N) {
+      can <- Ycur
+      can[k] <- ifelse(Ycur[k] == 1, 0, 1)
+      lpcan <- logpost_binary_(N, n, sum(can), y, lprior)
+
+      u <- runif(1)
+      if(log(u) < (lpcan - lp0)){
+        Ycur <- can
+        lp0 <- lpcan
+      }
+    }
+    stor[i, ] <- Ycur
+  }
+
+  raw <- coda::mcmc(stor)
+  out <- window(raw, start = control$burnin + 1, thin = control$thin)
+  return(out)
+}
+
 #' Calculate the log-posterior of a 1-d binary population
 #'
 #' @param pop numeric vector representing the population
@@ -46,6 +142,17 @@ loglik_binary_ <- function(N, n, Y, y) {
 }
 
 
+#' Calculate the log-likelihood for a 1-d multi-class population
+#'
+#' @param n the sample size.
+#' @param Y a vector indicating the amount of each class in the population.
+#' @param y a vector indicating the amount of each class in the sample.
+#' @importFrom extraDistr dmvhyper
+loglik_multiclass_ <- function(n, Y, y) {
+  return(dmvhyper(y, Y, n, log = TRUE))
+}
+
+
 #' Calculates the uninformative log-prior for a 1-d binary population
 #'
 #' @param N the population size
@@ -55,9 +162,27 @@ logprior_binary_uninformative_ <- function(N, Y, ...) {
   return(-lchoose(N, Y))
 }
 
+
+#' Calculates the uninformative log-prior for a 1-d multi-class population
+#'
+#' @param Y a vector indicating the amount of each class in the population.
+#' @param y a vector indicating the amount of each class in the sample.
+logprior_multiclass_uninformative_ <- function() {
+
+}
+
+
 #' Calculates the flat log-prior for a 1-d binary population
 #'
 #' @param ... other arguments (unused)
 logprior_binary_flat_ <- function(...) {
+  return(0)
+}
+
+
+#' Calculates the flat log-prior for a 1-d multi-class population
+#'
+#' @param ... other arguments (unused)
+logprior_multiclass_flat_ <- function(...) {
   return(0)
 }
