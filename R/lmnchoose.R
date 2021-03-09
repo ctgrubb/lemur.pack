@@ -21,5 +21,5 @@
 #' @param k numeric vector representing the number of times each category was chosen.
 #' @export
 lmnchoose <- function(n, k) {
-  k
+
 }
