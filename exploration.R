@@ -1,10 +1,13 @@
-n <- 12
-k <- c(3, 4, 5)
+obs <- c(1, 2, 1, 2, 3, 3, 1, 1, 1)
+obs <- c(1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 1, 2, 1, 2, 1, 1, 1, 1)
+table(obs) / length(obs)
+N <- 100
 
-test <- factorial(12) / (factorial(3) * factorial(4) * factorial(5))
-test2 <- log(test)
 
-sum(log(1:12)) - sum(log(1:3)) - sum(log(1:4)) - sum(log(1:5))
+test <- mcmc_multiclass(obs, N)
 
-sapply(k, function(x) sum(log(1:x)))
+table(as.matrix(test))
 
+hist(apply(as.matrix(test), 1, function(x) table(factor(x, levels = 1:3)))[1, ])
+hist(apply(as.matrix(test), 1, function(x) table(factor(x, levels = 1:3)))[2, ])
+hist(apply(as.matrix(test), 1, function(x) table(factor(x, levels = 1:3)))[3, ])

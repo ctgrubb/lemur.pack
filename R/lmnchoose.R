@@ -1,7 +1,11 @@
-#' Calculate the log multinomial coefficient.
+#' @name Special
+#' @rdname Special
+#'
+#' @title Calculate the multinomial coefficient.
 #'
 #' @description
 #' \loadmathjax
+#' `mnchoose` returns the multinomial coefficient.
 #' `lmnchoose` returns the natural logarithm of the multinomial coefficient.
 #'
 #' @details
@@ -20,6 +24,12 @@
 #' @param n number representing the size of the sample.
 #' @param k numeric vector representing the number of times each category was chosen.
 #' @export
-lmnchoose <- function(n, k) {
+mnchoose <- function(n, k) {
+  exp(sum(log(1:n)) - sum(sapply(k, function(x) sum(log(1:x)))))
+}
 
+#' @rdname Special
+#' @export
+lmnchoose <- function(n, k) {
+  sum(log(1:n)) - sum(sapply(k, function(x) sum(log(1:x))))
 }

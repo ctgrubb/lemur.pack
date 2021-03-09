@@ -22,7 +22,7 @@ mcmc_binary <- function(obs, N, prior = "uninformative", control = list(...), ..
 
   stor <- matrix(0, nrow = n_row, ncol = N)
 
-  lp0 = logpost_binary_(N, n, 0, y)
+  lp0 <- logpost_binary_(N, n, 0, y)
 
   for(i in 2:n_row) {
     Ycur <- stor[i-1, ]
@@ -69,16 +69,16 @@ mcmc_multiclass <- function(obs, N, prior = "uninformative", control = list(...)
   n_class <- length(y)
   n_row <- control$nsteps + control$burnin
 
-  stor <- matrix(0, nrow = n_row, ncol = N)
+  stor <- matrix(1, nrow = n_row, ncol = N)
 
-  lp0 = logpost_multiclass_(N, n, c(), y)
+  lp0 <- logpost_multiclass_(N, n, as.numeric(table(factor(stor[1, ], levels = 1:n_class))), y)
 
   for(i in 2:n_row) {
     Ycur <- stor[i-1, ]
     for(k in 1:N) {
       can <- Ycur
-      can[k] <- ifelse(Ycur[k] == 1, 0, 1)
-      lpcan <- logpost_binary_(N, n, sum(can), y, lprior)
+      can[k] <- sample((1:n_class)[-can[k]], 1)
+      lpcan <- logpost_multiclass_(N, n, as.numeric(table(factor(can, levels = 1:n_class))), y, lprior)
 
       u <- runif(1)
       if(log(u) < (lpcan - lp0)){
@@ -111,6 +111,25 @@ logpost_binary <- function(pop, obs, lprior) {
   logpost_binary_(N, n, Y, y, lprior)
 }
 
+
+#' Calculate the log-posterior of a 1-d multi-class population
+#'
+#' @param pop numeric vector representing the population
+#' @param obs numeric vector representing the observed sample
+#' @param lprior function uses to calculate the log-prior
+#' @export
+logpost_multiclass <- function(pop, obs, lprior) {
+
+  N <- length(pop)
+  n <- length(obs)
+
+  Y <- as.numeric(table(pop))
+  y <- as.numeric(table(obs))
+
+  logpost_multiclass_(N, n, Y, y, lprior)
+}
+
+
 #' Calculate the log-posterior for a 1-d binary population
 #'
 #' @param N the population size
@@ -127,8 +146,29 @@ logpost_binary_ <- function(N, n, Y, y, lprior) {
   log_lik <- loglik_binary_(N, n, Y, y)
   log_prior <- lprior(N, Y)
 
-  return(log_lik + log_prior)
+  log_lik + log_prior
 }
+
+
+#' Calculate the log-posterior for a 1-d multi-class population
+#'
+#' @param N the population size
+#' @param n the sample size
+#' @param Y a vector indicating the amount of each class in the population.
+#' @param y a vector indicating the amount of each class in the sample.
+#' @param lprior function uses to calculate the log-prior
+logpost_multiclass_ <- function(N, n, Y, y, lprior) {
+
+  if(any(Y < y)) {
+    return(-9e9)
+  }
+
+  log_lik <- loglik_multiclass_(n, Y, y)
+  log_prior <- lprior(N, Y)
+
+  log_lik + log_prior
+}
+
 
 #' Calculate the log-likelihood for a 1-d binary population
 #'
@@ -138,7 +178,7 @@ logpost_binary_ <- function(N, n, Y, y, lprior) {
 #' @param y the number of successes in the sample
 #' @importFrom stats dhyper
 loglik_binary_ <- function(N, n, Y, y) {
-  return(dhyper(y, Y, N-Y, n, log = TRUE))
+  dhyper(y, Y, N-Y, n, log = TRUE)
 }
 
 
@@ -149,7 +189,7 @@ loglik_binary_ <- function(N, n, Y, y) {
 #' @param y a vector indicating the amount of each class in the sample.
 #' @importFrom extraDistr dmvhyper
 loglik_multiclass_ <- function(n, Y, y) {
-  return(dmvhyper(y, Y, n, log = TRUE))
+  dmvhyper(y, Y, n, log = TRUE)
 }
 
 
@@ -159,16 +199,16 @@ loglik_multiclass_ <- function(n, Y, y) {
 #' @param Y the number of successes in the population
 #' @param ... other arguments (unused)
 logprior_binary_uninformative_ <- function(N, Y, ...) {
-  return(-lchoose(N, Y))
+  -lchoose(N, Y)
 }
 
 
 #' Calculates the uninformative log-prior for a 1-d multi-class population
 #'
+#' @param N the population size
 #' @param Y a vector indicating the amount of each class in the population.
-#' @param y a vector indicating the amount of each class in the sample.
-logprior_multiclass_uninformative_ <- function() {
-
+logprior_multiclass_uninformative_ <- function(N, Y, ...) {
+  -lmnchoose(N, Y)
 }
 
 
@@ -176,7 +216,7 @@ logprior_multiclass_uninformative_ <- function() {
 #'
 #' @param ... other arguments (unused)
 logprior_binary_flat_ <- function(...) {
-  return(0)
+  0
 }
 
 
@@ -184,5 +224,5 @@ logprior_binary_flat_ <- function(...) {
 #'
 #' @param ... other arguments (unused)
 logprior_multiclass_flat_ <- function(...) {
-  return(0)
+  0
 }

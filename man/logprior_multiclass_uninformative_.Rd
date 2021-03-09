@@ -4,12 +4,12 @@
 \alias{logprior_multiclass_uninformative_}
 \title{Calculates the uninformative log-prior for a 1-d multi-class population}
 \usage{
-logprior_multiclass_uninformative_()
+logprior_multiclass_uninformative_(N, Y, ...)
 }
 \arguments{
-\item{Y}{a vector indicating the amount of each class in the population.}
+\item{N}{the population size}
 
-\item{y}{a vector indicating the amount of each class in the sample.}
+\item{Y}{a vector indicating the amount of each class in the population.}
 }
 \description{
 Calculates the uninformative log-prior for a 1-d multi-class population
