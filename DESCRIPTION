@@ -14,11 +14,15 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 RdMacros: mathjaxr
+Imports: 
+    coda,
+    extraDistr,
+    stats,
+    dplyr
 Suggests: 
     knitr,
     rmarkdown,
     mathjaxr,
-    dplyr,
     tidyr,
     ggplot2
 VignetteBuilder: knitr

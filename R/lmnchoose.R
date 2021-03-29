@@ -5,8 +5,8 @@
 #'
 #' @description
 #' \loadmathjax
-#' `mnchoose` returns the multinomial coefficient.
-#' `lmnchoose` returns the natural logarithm of the multinomial coefficient.
+#' \code{mnchoose} returns the multinomial coefficient.
+#' \code{lmnchoose} returns the natural logarithm of the multinomial coefficient.
 #'
 #' @details
 #' The multinomail coefficient is the

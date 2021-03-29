@@ -11,10 +11,12 @@ library(tidyr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
-p <- 0.5; n <- 10; N <- 100
-obs <- sample(c(0, 1), size = n, replace = TRUE, prob = c(1-p, p))
+p <- 0.5
+obs <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
+N <- 100
+n <- length(obs)
+
 y <- sum(obs)
-y <- 5
 
 ## -----------------------------------------------------------------------------
 df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPriorFlat = NA, LogPriorUninformative = NA)
@@ -22,7 +24,6 @@ df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPriorFlat = NA, LogPriorU
 for(i in 1:nrow(df)) {
   df$LogLikelihood[i] <- lemur.pack:::loglik_binary_(N = N, n = n, Y = df$Y[i], y = y)
 }
-
 
 ## -----------------------------------------------------------------------------
 for(i in 1:nrow(df)) {
@@ -43,8 +44,30 @@ df <- df %>%
     Likelihood = exp(LogLikelihood),
     Posterior = exp(LogPosterior)
   )
+df <- as.data.frame(df)
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE, fig.width = 6----------------------------------------------
   ggplot(data = df, mapping = aes(x = Y, y = LogPrior, color = Prior)) +
-  geom_line()
+  geom_line() + 
+  labs(x = "Y", y = "LogPrior")
+
+## -----------------------------------------------------------------------------
+flat_samples <- mcmc_binary(obs, N, prior = "flat", nsteps = 2000)
+Y_samples <- data.frame(Y = rowSums(flat_samples))
+
+## ----echo = FALSE, fig.width = 6----------------------------------------------
+ggplot(data = Y_samples, mapping = aes(x = Y)) + 
+  geom_density() + 
+  scale_x_continuous(limits = c(0, N)) + 
+  labs(y = "Density")
+
+## -----------------------------------------------------------------------------
+uninformative_samples <- mcmc_binary(obs, N, prior = "uninformative", nsteps = 2000)
+Y_samples <- data.frame(Y = rowSums(uninformative_samples))
+
+## ----echo = FALSE, fig.width = 6----------------------------------------------
+ggplot(data = Y_samples, mapping = aes(x = Y)) + 
+  geom_density() + 
+  scale_x_continuous(limits = c(0, N)) + 
+  labs(y = "Density")
 

@@ -6,3 +6,6 @@
 ^doc$
 ^Meta$
 ^vignettes/figure$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

@@ -23,14 +23,16 @@ This vignette explains synthetic population sampling for the simplest case, wher
 
 ## Setup
 
-The first thing we need is our sample, and thus we need to know our *true* population proportion. For starters lets fix the truth at *p = 0.5*, sample size at *10*, and simulate a population of size *100*.
+The first thing we need is our sample, and thus we need to know our *true* population proportion. For starters lets fix the truth at *p = 0.5*, sample size at *10*, and simulate a population of size *100*. Lets work with a sample that has a 40%/60% split of classes.
 
 
 ```r
-p <- 0.5; n <- 10; N <- 100
-obs <- sample(c(0, 1), size = n, replace = TRUE, prob = c(1-p, p))
+p <- 0.5
+obs <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
+N <- 100
+n <- length(obs)
+
 y <- sum(obs)
-y <- 5
 ```
 
 ## Calculating the Posterior
@@ -46,7 +48,7 @@ $$
 $$
 It can be thought of as the probability of sampling *y* white balls in a sample of size *n* from a population of *N* balls, of which *Y* are white.
 
-Since we observe a sample **from** the population, our population must have at least as many *1*s and *0*s as our sample. Let's construct a **data.frame** with all the information we will need.
+Since we observe a sample **from** the population, our population must have at least as many *1*s and *0*s as our sample. Let's construct a `data.frame` with all the information we will need.
 
 
 ```r
@@ -92,8 +94,30 @@ df <- df %>%
     Likelihood = exp(LogLikelihood),
     Posterior = exp(LogPosterior)
   )
+df <- as.data.frame(df)
 ```
 
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 
+### Sampling
+
+Lets actually get samples. For illustration purposes, we shall first sample using a flat prior.
+
+
+```r
+flat_samples <- mcmc_binary(obs, N, prior = "flat", nsteps = 2000)
+Y_samples <- data.frame(Y = rowSums(flat_samples))
+```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+
+Note this graph is centered at *Y* = 50. Does this make sense, considering our sample was not evenly split? No; lets try the uninformative prior.
+
+
+```r
+uninformative_samples <- mcmc_binary(obs, N, prior = "uninformative", nsteps = 2000)
+Y_samples <- data.frame(Y = rowSums(uninformative_samples))
+```
+
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)

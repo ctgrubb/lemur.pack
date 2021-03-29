@@ -4,7 +4,7 @@
 \alias{lemur.control}
 \title{Construct a control object used by lemur.pack functions}
 \usage{
-lemur.control(nchains = 1, nsteps = 1000, burnin = 100, thin = 1)
+lemur.control(nchains = 1, nsteps = 1000, burnin = 100, thin = 1, a = 1, b = 1)
 }
 \arguments{
 \item{nchains}{number of chains to construct}
@@ -14,6 +14,8 @@ lemur.control(nchains = 1, nsteps = 1000, burnin = 100, thin = 1)
 \item{burnin}{number of steps to take during burn-in}
 
 \item{thin}{thinning interval; rounded to nearest integer}
+
+\item{...}{other arguments, typically used for prior hyperparameters}
 }
 \description{
 Construct a control object used by lemur.pack functions
