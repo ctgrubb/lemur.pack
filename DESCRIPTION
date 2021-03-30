@@ -1,6 +1,8 @@
 Package: lemur.pack
 Title: Package for Team Lemur functional codebase
 Version: 0.0.0.9000
+BugReports: https://github.com/ctgrubb/lemur.pack/issues/
+URL: https://ctgrubb.github.io/lemur.pack/
 Authors@R: 
     person(given = "Christopher",
            family = "Grubb",
