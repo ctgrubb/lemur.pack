@@ -65,5 +65,26 @@ Ysamp <- multivariate_multinomial_postpred(obs, 1000, 100, 0.5)
 
 
 # Synthetic Data
+grouped2d_pop <- data.frame(
+  Group = sample(LETTERS[1:3], size = 5000, replace = TRUE, prob = c(0.2, 0.45, 0.35)),
+  X1 = NA,
+  X2 = NA
+)
+
+grouped2d_pop$X1[grouped2d_pop$Group == "A"] <- rt(sum(grouped2d_pop$Group == "A"), 4, ncp = 350)
+grouped2d_pop$X1[grouped2d_pop$Group == "B"] <- rt(sum(grouped2d_pop$Group == "B"), 6, ncp = 250)
+grouped2d_pop$X1[grouped2d_pop$Group == "C"] <- rt(sum(grouped2d_pop$Group == "C"), 8, ncp = 150)
+
+grouped2d_pop$X2[grouped2d_pop$Group == "A"] <- 0.6 * grouped2d_pop$X1[grouped2d_pop$Group == "A"] + rnorm(sum(grouped2d_pop$Group == "A"), 0, 100)
+grouped2d_pop$X2[grouped2d_pop$Group == "B"] <- 0.5 * grouped2d_pop$X1[grouped2d_pop$Group == "B"] + rnorm(sum(grouped2d_pop$Group == "B"), 0, 70)
+grouped2d_pop$X2[grouped2d_pop$Group == "C"] <- 0.4 * grouped2d_pop$X1[grouped2d_pop$Group == "C"] + rnorm(sum(grouped2d_pop$Group == "C"), 0, 50)
+
+hist(grouped2d_pop$X1, probability = TRUE, breaks = 20)
+hist(grouped2d_pop$X2, probability = TRUE, breaks = 20)
+
+plot(grouped2d_pop$X1, grouped2d_pop$X2, col = as.numeric(as.factor(grouped2d_pop$Group)))
+
+
+
 
 

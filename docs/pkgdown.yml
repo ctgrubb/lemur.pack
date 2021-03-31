@@ -3,7 +3,7 @@ pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
   binary_1d_example: binary_1d_example.html
-last_built: 2021-03-30T16:10Z
+last_built: 2021-03-31T01:56Z
 urls:
   reference: https://ctgrubb.github.io/lemur.pack//reference
   article: https://ctgrubb.github.io/lemur.pack//articles
