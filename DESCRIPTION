@@ -26,5 +26,6 @@ Suggests:
     rmarkdown,
     mathjaxr,
     tidyr,
-    ggplot2
+    ggplot2,
+    covr
 VignetteBuilder: knitr

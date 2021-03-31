@@ -1,6 +1,7 @@
 # lemur.pack
 
 [![R-CMD-check](https://github.com/ctgrubb/lemur.pack/workflows/R-CMD-check/badge.svg)](https://github.com/ctgrubb/lemur.pack/actions)
+[![Codecov test coverage](https://codecov.io/gh/ctgrubb/lemur.pack/branch/master/graph/badge.svg)](https://codecov.io/gh/ctgrubb/lemur.pack?branch=master)
 
 The R package **lemur.pack** provides resources for the creation of synthetic populations, leveraging information from 
 simple random samples and censored marginal information.
