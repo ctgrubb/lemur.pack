@@ -25,7 +25,7 @@
 #' @param k numeric vector representing the number of times each category was chosen.
 #' @export
 mnchoose <- function(n, k) {
-  exp(sum(log(1:n)) - sum(sapply(k, function(x) sum(log(1:x)))))
+  round(exp(sum(log(1:n)) - sum(sapply(k, function(x) sum(log(1:x))))))
 }
 
 #' @rdname Special
