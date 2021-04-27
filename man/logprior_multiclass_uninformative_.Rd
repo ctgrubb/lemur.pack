@@ -4,7 +4,7 @@
 \alias{logprior_multiclass_uninformative_}
 \title{Calculates the uninformative log-prior for a 1-d multi-class population}
 \usage{
-logprior_multiclass_uninformative_(N, Y, ...)
+logprior_multiclass_uninformative_(N, Y)
 }
 \arguments{
 \item{N}{the population size}

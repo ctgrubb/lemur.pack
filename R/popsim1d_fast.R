@@ -7,6 +7,7 @@
 #' @param ... arguments to be used to form the \code{control} object if it is not supplied directly.
 #' @importFrom coda mcmc
 #' @importFrom stats runif
+#' @importFrom stats rbinom
 #' @importFrom stats window
 #' @export
 mcmc_binary_fast <- function(obs, N, prior = "beta", control = list(...), ...) {
@@ -62,6 +63,8 @@ mcmc_binary_fast <- function(obs, N, prior = "beta", control = list(...), ...) {
 #' @param pop numeric vector representing the population
 #' @param obs numeric vector representing the observed sample
 #' @param lprior function uses to calculate the log-prior
+#' @param a fix later
+#' @param b fix later
 #' @param ... other arguments, passed to the lprior function
 #' @export
 logpost_binary_fast <- function(pop, obs, lprior, a, b, ...) {

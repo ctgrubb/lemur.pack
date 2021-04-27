@@ -207,7 +207,7 @@ logprior_binary_uninformative_ <- function(N, Y, ...) {
 #'
 #' @param N the population size
 #' @param Y a vector indicating the amount of each class in the population.
-logprior_multiclass_uninformative_ <- function(N, Y, ...) {
+logprior_multiclass_uninformative_ <- function(N, Y) {
   -lmnchoose(N, Y)
 }
 

@@ -13,6 +13,10 @@ logpost_binary_fast(pop, obs, lprior, a, b, ...)
 
 \item{lprior}{function uses to calculate the log-prior}
 
+\item{a}{fix later}
+
+\item{b}{fix later}
+
 \item{...}{other arguments, passed to the lprior function}
 }
 \description{

@@ -77,6 +77,11 @@ Note that this induce a flat prior on $K$ if we were to instead use a flat prior
 
 Now, we create a basic function to sample from this posterior.
 
+```{r, echo = FALSE}
+obs <- c(1, 1, 1, 1, 1, 1, 0, 0, 0, 0)
+N <- 100
+```
+
 ```{r}
 logprior <- function(K, N) {
   -log(pi) + lgamma(K + 1/2) + lgamma(N - K + 1/2) - lgamma(K + 1) - lgamma(N - K + 1)
@@ -85,6 +90,12 @@ logprior <- function(K, N) {
 logpost <- function(K, N, J, n) {
   dhyper(J, K, N - K, n, log = TRUE) + logprior(K, N)
 }
+```
+
+And we can sample from that posterior with MCMC using Metropolis-Hastings.
+
+```{r}
+
 ```
 
 
