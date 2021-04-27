@@ -1,0 +1,90 @@
+---
+title: "Binary Example using Hypergeometric"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo = FALSE, message = FALSE}
+library(lemur.pack)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+## Introduction
+
+For a population $Y$, sample $X$, and parameter set $\theta$,
+
+\begin{align*}
+  f(\theta, Y = y| X = x) &= \frac{ f(X = x | \theta, Y = y) f(\theta, Y = y) }{ f(X = x) } \\
+                          &\propto f(X = x | \theta) f(Y = y | \theta) f(\theta) \\
+                          &\propto \pi(\theta | X = x) f(Y = y | \theta)
+\end{align*}
+
+## Redefining the Hypergeometric Distribution
+
+Let $f(Y, K, X, J)$ denote the discrete Hypergeometric probability function, and let $y$, $k$, $x$, and $j$ denote realizations of $Y$, $K$, $X$, and $J$ respectively, where:
+
+  * Y is the population (i.e., the vector of $\{0, 1\}$ with length $N$)
+  * K is the number of successes (1's) in the population Y
+  * X is the sample, with length $n$
+  * J is the number of successes (1's) in the sample X
+
+\begin{align*}
+  f(Y = y, K = k | X = x, J = j) &= \frac{ f(X = x, J = j | Y = y, K = k) f(Y = y, K = k) }{ f(X = x, J = j) } \\
+                                 &\propto f(X = x, J = j | K = k) f(Y = y | K = k) f(K = k) \\
+                                 &\propto \pi(K | X = x, J = j) f(Y = y | K = k)
+\end{align*}
+
+## What Prior to Use?
+
+We need to choose $\pi(K)$, the prior on the number of successes in the population. If we were working with instead a parameter $p$ denoting the probability of success or failure, we would use the $Beta(\frac{1}{2}, \frac{1}{2})$ prior.
+
+From Jeffreys (1946, 1961), the induced prior on $K$ can be found by constructing a hierarchical prior of the form
+
+$$ Binom(K | p) Beta(p | \frac{1}{2}, \frac{1}{2}) $$
+
+and then marginalizing to find $\pi(K)$. Thus, 
+
+\begin{align*}
+\pi(K) &= \int_{0}^{1} {N \choose K} p^K (1-p)^{N-K} \frac{1}{\pi} p^{-\frac{1}{2}} (1-p)^{-\frac{1}{2}} \\
+       &= \frac{1}{\pi} \frac{ \Gamma(K + \frac{1}{2}) \Gamma(N - K + \frac{1}{2}) }
+          { \Gamma(K + 1) \Gamma(N - K + 1) }
+\end{align*}
+
+We can visualize this prior for $N = 100$.
+
+```{r, echo = FALSE}
+piKf <- function(K, N) {
+  1 / pi * gamma(K + 1/2) * gamma(N - K + 1/2) / gamma(K + 1) / gamma(N - K + 1)
+}
+N <- 100
+K <- seq(0, 100, by = 1)
+piK <- piKf(K, N)
+
+plot(K, piK, ylab = "p(K)")
+lines(K, piK)
+```
+
+Note that this induce a flat prior on $K$ if we were to instead use a flat prior on $p$.
+
+## Simple Implementation
+
+Now, we create a basic function to sample from this posterior.
+
+```{r}
+logprior <- function(K, N) {
+  -log(pi) + lgamma(K + 1/2) + lgamma(N - K + 1/2) - lgamma(K + 1) - lgamma(N - K + 1)
+}
+
+logpost <- function(K, N, J, n) {
+  dhyper(J, K, N - K, n, log = TRUE) + logprior(K, N)
+}
+```
+
+
