@@ -95,7 +95,14 @@ logpost <- function(K, N, J, n) {
 And we can sample from that posterior with MCMC using Metropolis-Hastings.
 
 ```{r}
-
+popsim_hyperg <- function(obs, N, samples = 1000) {
+  out <- matrix(NA, nrow = samples + 1, ncol = N)
+  out[1, ] <- sample(c(0, 1), replace = TRUE, prob = c(1 - mean(obs), mean(obs)))
+  
+  for(i in 1:samples) {
+    
+  }
+}
 ```
 
 
