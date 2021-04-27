@@ -148,6 +148,15 @@
   <span class="fu"><a href="https://rdrr.io/r/stats/Hypergeometric.html">dhyper</a></span><span class="op">(</span><span class="va">J</span>, <span class="va">K</span>, <span class="va">N</span> <span class="op">-</span> <span class="va">K</span>, <span class="va">n</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu">logprior</span><span class="op">(</span><span class="va">K</span>, <span class="va">N</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>And we can sample from that posterior with MCMC using Metropolis-Hastings.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">popsim_hyperg</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="cn">NA</span>, nrow <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="va">N</span><span class="op">)</span>
+  <span class="va">out</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span>, prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">obs</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="va">obs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+  
+  <span class="kw">for</span><span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">samples</span><span class="op">)</span> <span class="op">{</span>
+    
+  <span class="op">}</span>
+<span class="op">}</span></code></pre></div>
 </div>
   </div>
 
