@@ -8,7 +8,7 @@ Authors@R:
            family = "Grubb",
            role = c("aut", "cre"),
            email = "ctgrubb@vt.edu",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0001-5971-8138"))
 Description: This package contains functions and vignette's for Team Lemur.
 License: file LICENSE
 Encoding: UTF-8

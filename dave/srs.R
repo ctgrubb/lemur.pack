@@ -1,6 +1,6 @@
 # Functional implementation of Dave's srs2 code
 # Minor modification to make first sample 50/50 0/1 instead of all 0
-srs2 <- function(obs, N, nsteps) {
+srs2 <- function(obs, N, nsteps = 1000) {
 
   logpost = function(Y, y) {
     n <- length(obs)
@@ -43,7 +43,8 @@ srs2 <- function(obs, N, nsteps) {
 # Functional implementation of Dave's srs3 code
 # Minor modification to make first sample 50/50 0/1 instead of all 0
 # Minor modification to check that the population contains at least as many 0 and 1 as the sample
-srs3 <- function(obs, N, nsteps) {
+# Changed prior to 0.5, 0.5
+srs3 <- function(obs, N, nsteps = 1000) {
 
   logpost <- function(Y, n0 = sum(obs == 0), n1 = sum(obs == 1)) {
     X <- sum(Y)
@@ -53,7 +54,7 @@ srs3 <- function(obs, N, nsteps) {
 
     p <- X / N
     logDensP <- dbeta(p, n1 + 1, n0 + 1, log = TRUE)
-    logPrior <- dbeta(p, 1, 1, log = TRUE)
+    logPrior <- dbeta(p, 0.5, 0.5, log = TRUE)
     logDensP + logPrior
   }
 
