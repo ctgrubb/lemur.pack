@@ -20,7 +20,6 @@
 #' @export
 multivariate_multinomial_postpred <- function(obs, N, nsamples, priors) {
 
-  priors = 0.5
   prior_grid <- expand.grid(priors)
   colnames(prior_grid) <- paste0(colnames(prior_grid), "_Prior")
   prior_grid$Product_Prior <- apply(prior_grid, 1, prod)

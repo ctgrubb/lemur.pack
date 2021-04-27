@@ -10,3 +10,8 @@
 ^docs$
 ^pkgdown$
 ^vignettes/articles$
+^\.github$
+^codecov\.yml$
+^tests$
+^dave$
+^chris$
