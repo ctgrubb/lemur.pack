@@ -147,6 +147,7 @@
 <span class="va">logpost</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">K</span>, <span class="va">N</span>, <span class="va">J</span>, <span class="va">n</span><span class="op">)</span> <span class="op">{</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/Hypergeometric.html">dhyper</a></span><span class="op">(</span><span class="va">J</span>, <span class="va">K</span>, <span class="va">N</span> <span class="op">-</span> <span class="va">K</span>, <span class="va">n</span>, log <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">+</span> <span class="fu">logprior</span><span class="op">(</span><span class="va">K</span>, <span class="va">N</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
+<p>And we can sample from that posterior with MCMC using Metropolis-Hastings.</p>
 </div>
   </div>
 
