@@ -57,7 +57,7 @@
       <a href="../../articles/articles/popsim_hyperg.html">Binary Example using Hypergeometric</a>
     </li>
     <li>
-      <a href="../../articles/binary_1d_example.html">binary_1d_example</a>
+      <a href="../../articles/binary_1d_example.html">Binary1dExample</a>
     </li>
   </ul>
 </li>
@@ -132,6 +132,7 @@
           { \Gamma(K + 1) \Gamma(N - K + 1) }
 \end{align*}\]</span></p>
 <p>We can visualize this prior for <span class="math inline">\(N = 100\)</span>.</p>
+<p><img src="popsim_hyperg_files/figure-html/unnamed-chunk-1-1.png" width="700"></p>
 <p>Note that this induce a flat prior on <span class="math inline">\(K\)</span> if we were to instead use a flat prior on <span class="math inline">\(p\)</span>.</p>
 </div>
 <div id="mcmc-implementation" class="section level2">
@@ -176,13 +177,14 @@
 <span class="op">}</span></code></pre></div>
 <p>Now lets test these samplers.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">test_1</span> <span class="op">&lt;-</span> <span class="fu">popsim_hyperg_1</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">100000</span><span class="op">)</span>
-<span class="va">test_srs2</span> <span class="op">&lt;-</span> <span class="fu">srs2</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">100000</span><span class="op">)</span>
-<span class="va">test_srs3</span> <span class="op">&lt;-</span> <span class="fu">srs3</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">100000</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">test_1</span> <span class="op">&lt;-</span> <span class="fu">popsim_hyperg_1</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">1000</span><span class="op">)</span>
+<span class="va">test_srs2</span> <span class="op">&lt;-</span> <span class="fu">srs2</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">1000</span><span class="op">)</span>
+<span class="va">test_srs3</span> <span class="op">&lt;-</span> <span class="fu">srs3</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="fl">1000</span><span class="op">)</span>
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/density.html">density</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">test_1</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/density.html">density</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">test_srs2</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/density.html">density</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">test_srs3</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"lightblue"</span><span class="op">)</span></code></pre></div>
+<p><img src="popsim_hyperg_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 </div>
   </div>
 
