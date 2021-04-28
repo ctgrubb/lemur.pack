@@ -5,7 +5,8 @@ title: "Binary Example using Hypergeometric"
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = nzchar(Sys.getenv("LEMUR_EVAL"))
 )
 ```
 
@@ -125,7 +126,7 @@ popsim_hyperg_1 <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 
 Now lets test these samplers.
 
-```{r, eval = FALSE}
+```{r}
 test_1 <- popsim_hyperg_1(obs, N, 100000)
 test_srs2 <- srs2(obs, N, 100000)
 test_srs3 <- srs3(obs, N, 100000)
