@@ -15,3 +15,6 @@
 ^tests$
 ^dave$
 ^chris$
+^useful_stuff\.R$
+^vignettes/precompile\.R$
+^vignettes/binary_1d_example\.Rmd\.orig$

@@ -1,20 +1,16 @@
 ---
-title: "binary_1d_example"
+title: "Binary1dExample"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{binary_1d_example}
+  %\VignetteIndexEntry{Binary1dExample}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
 
-```{r message = FALSE, warning = FALSE}
+
+
+```r
 library(lemur.pack)
 library(dplyr)
 library(tidyr)
@@ -29,7 +25,8 @@ This vignette explains synthetic population sampling for the simplest case, wher
 
 The first thing we need is our sample, and thus we need to know our *true* population proportion. For starters lets fix the truth at *p = 0.5*, sample size at *10*, and simulate a population of size *100*. Lets work with a sample that has a 40%/60% split of classes.
 
-```{r}
+
+```r
 p <- 0.5
 obs <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
 N <- 100
@@ -53,7 +50,8 @@ It can be thought of as the probability of sampling *y* white balls in a sample 
 
 Since we observe a sample **from** the population, our population must have at least as many *1*s and *0*s as our sample. Let's construct a `data.frame` with all the information we will need.
 
-```{r}
+
+```r
 df <- data.frame(Y = y:(N-n+y), LogLikelihood = NA, LogPriorFlat = NA, LogPriorUninformative = NA)
 
 for(i in 1:nrow(df)) {
@@ -66,7 +64,8 @@ for(i in 1:nrow(df)) {
 
 Lets start by using a flat prior. In log space this is actually just zero.
 
-```{r}
+
+```r
 for(i in 1:nrow(df)) {
   df$LogPriorFlat[i] <- lemur.pack:::logprior_binary_flat_()
 }
@@ -74,7 +73,8 @@ for(i in 1:nrow(df)) {
 
 Lets also add an uninformative prior.
 
-```{r}
+
+```r
 for(i in 1:nrow(df)) {
   df$LogPriorUninformative[i] <- lemur.pack:::logprior_binary_uninformative_(N, Y = df$Y[i])
 }
@@ -84,7 +84,8 @@ for(i in 1:nrow(df)) {
 
 Now we can add the log-likelihood and log-prior to get the log-posterior for each value of *Y*, and create a plot.
 
-```{r}
+
+```r
 df <- df %>%
   pivot_longer(contains("LogPrior"), names_to = "Prior", names_prefix = "LogPrior", 
                values_to = "LogPrior") %>%
@@ -96,39 +97,27 @@ df <- df %>%
 df <- as.data.frame(df)
 ```
 
-```{r echo = FALSE, fig.width = 6}
-  ggplot(data = df, mapping = aes(x = Y, y = LogPrior, color = Prior)) +
-  geom_line() + 
-  labs(x = "Y", y = "LogPrior")
-```
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 
 ### Sampling
 
 Lets actually get samples. For illustration purposes, we shall first sample using a flat prior.
 
-```{r}
+
+```r
 flat_samples <- mcmc_binary(obs, N, prior = "flat", nsteps = 2000)
 Y_samples <- data.frame(Y = rowSums(flat_samples))
 ```
 
-```{r echo = FALSE, fig.width = 6}
-ggplot(data = Y_samples, mapping = aes(x = Y)) + 
-  geom_density() + 
-  scale_x_continuous(limits = c(0, N)) + 
-  labs(y = "Density")
-```
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
 Note this graph is centered at *Y* = 50. Does this make sense, considering our sample was not evenly split? No; lets try the uninformative prior.
 
-```{r}
+
+```r
 uninformative_samples <- mcmc_binary(obs, N, prior = "uninformative", nsteps = 2000)
 Y_samples <- data.frame(Y = rowSums(uninformative_samples))
 ```
 
-```{r echo = FALSE, fig.width = 6}
-ggplot(data = Y_samples, mapping = aes(x = Y)) + 
-  geom_density() + 
-  scale_x_continuous(limits = c(0, N)) + 
-  labs(y = "Density")
-```
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
