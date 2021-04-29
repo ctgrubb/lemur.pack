@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   articles/binary-1d-example: binary-1d-example.html
   test: test.html
-last_built: 2021-04-29T05:34Z
+last_built: 2021-04-29T05:38Z
 urls:
   reference: https://ctgrubb.github.io/lemur.pack//reference
   article: https://ctgrubb.github.io/lemur.pack//articles
