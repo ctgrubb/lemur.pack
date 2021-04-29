@@ -1,12 +1,7 @@
 ---
 title: "Introduction to Population Synthesis"
 output:
-  rmarkdown::html_document:
-    number_sections: true
-    toc: true
-    toc_depth: 3
-    toc_float:
-      collapsed: false
+  rmarkdown::html_document
 ---
 
 
@@ -84,7 +79,7 @@ plot(K, piK, ylab = "p(K)")
 lines(K, piK)
 ```
 
-![](figure/discrete-Jeffreys-1.png)
+<img src="figure/discrete-Jeffreys-1.png" style="display: block; margin: auto;" />
 
 It is not a coincidence that this looks very similar to the shape of the Jeffreys prior on $p$; this is essentially just a discrete version of the same thing. Note that if we instead use a flat prior on $p$ (i.e. $\alpha = \beta = 1$), we induce a flat prior on $K$.
 
@@ -111,7 +106,7 @@ par(mar = c(4, 4, 1, 2))
 barplot(nCk / sum(nCk), names.arg = K, xlab = "K", ylab = "Probability")
 ```
 
-![](figure/correction-barplot-1.png)
+<img src="figure/correction-barplot-1.png" style="display: block; margin: auto;" />
 
 This means that without any prior knowledge, or even an observed sample, we would expect $K = 5$ to be $252$ times more likely than $K = 0$ or $K = 10$. This is clearly incorrect; if we know nothing about $K$, then the distribution over $K$ should be flat.
 
@@ -190,4 +185,4 @@ par(mar = c(4, 4, 1, 2))
 plot(density(rowSums(popsim_K_test)), col = "blue", main = "")
 ```
 
-![](figure/densities-1.png)
+<img src="figure/densities-1.png" style="display: block; margin: auto;" />

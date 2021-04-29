@@ -1,12 +1,7 @@
 ---
 title: "Introduction to Population Synthesis"
 output:
-  rmarkdown::html_document:
-    number_sections: true
-    toc: true
-    toc_depth: 3
-    toc_float:
-      collapsed: false
+  rmarkdown::html_document
 ---
 
 ```{r setup, include = FALSE}
@@ -77,7 +72,7 @@ and then marginalizing to find $\pi(K)$. Thus,
 
 If we use $\alpha = \beta = 1/2$, we end up with the Jeffreys prior. Lets visualize this prior for $N = 100$.
 
-```{r discrete-Jeffreys, fig.cap = ""}
+```{r discrete-Jeffreys, fig.cap = "", fig.align = "center"}
 piKf <- function(K, N) {1 / pi * gamma(K + 1/2) * gamma(N - K + 1/2) / gamma(K + 1) / gamma(N - K + 1)}
 N <- 100
 K <- seq(0, 100, by = 1)
@@ -103,7 +98,7 @@ Whether using the binomial or hypergeometric distribution, in both cases this te
 
 To illustrate, let $N = 10$. With such a small population, we can easily list every possible population. There are of course $2^{10}$ of them, since every subject in the population has two possible options. If we assume all possible populations are equally likely, we can visualize the probability distribution of $K$, the number of $1$'s in the population, with a simple bar plot.
 
-```{r correction-barplot, fig.cap = ""}
+```{r correction-barplot, fig.cap = "", fig.align = "center"}
 N <- 10
 K <- 0:10
 nCk <- choose(N, K)
@@ -179,7 +174,7 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 
 ## Comparisons
 
-```{r densities, fig.cap = ""}
+```{r densities, fig.cap = "", fig.align = "center"}
 popsim_K_test <- popsim_K(obs, N, 1000, 0.5, 0.5)
 
 par(mar = c(4, 4, 1, 2))
