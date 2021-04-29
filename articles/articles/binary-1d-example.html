@@ -44,6 +44,9 @@
   </a>
 </li>
 <li>
+  <a href="../../articles/lemur-pack.html">Get started</a>
+</li>
+<li>
   <a href="../../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
@@ -54,11 +57,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../../articles/test.html">test</a>
+      <a href="../../articles/articles/binary-1d-example.html">Binary 1-d Example</a>
     </li>
-    <li class="divider">
-    <li>
-      <a href="../../articles/index.html">More...</a>
+  </ul>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Vignettes
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+<li>
+      <a href="../../articles/test.html">Testing</a>
     </li>
   </ul>
 </li>
@@ -155,7 +166,7 @@
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">K</span>, <span class="va">piK</span>, ylab <span class="op">=</span> <span class="st">"p(K)"</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/lines.html">lines</a></span><span class="op">(</span><span class="va">K</span>, <span class="va">piK</span><span class="op">)</span></code></pre></div>
-<p><img src="figure/discrete-Jeffreys-1.png"></p>
+<p><img src="figure/discrete-Jeffreys-1.png" style="display: block; margin: auto;"></p>
 <p>It is not a coincidence that this looks very similar to the shape of the Jeffreys prior on <span class="math inline">\(p\)</span>; this is essentially just a discrete version of the same thing. Note that if we instead use a flat prior on <span class="math inline">\(p\)</span> (i.e. <span class="math inline">\(\alpha = \beta = 1\)</span>), we induce a flat prior on <span class="math inline">\(K\)</span>.</p>
 <p>Whatever choice of <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> we make, creating the posterior from here is fairly straightforward. For the hypergeometric case, this of course does not simplify in any nice ways; however, if we assume the population is distributed binomial, the conjugate beta prior will yield a beta posterior.</p>
 </div>
@@ -176,7 +187,7 @@
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">nCk</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">nCk</span><span class="op">)</span>, names.arg <span class="op">=</span> <span class="va">K</span>, xlab <span class="op">=</span> <span class="st">"K"</span>, ylab <span class="op">=</span> <span class="st">"Probability"</span><span class="op">)</span></code></pre></div>
-<p><img src="figure/correction-barplot-1.png"></p>
+<p><img src="figure/correction-barplot-1.png" style="display: block; margin: auto;"></p>
 <p>This means that without any prior knowledge, or even an observed sample, we would expect <span class="math inline">\(K = 5\)</span> to be <span class="math inline">\(252\)</span> times more likely than <span class="math inline">\(K = 0\)</span> or <span class="math inline">\(K = 10\)</span>. This is clearly incorrect; if we know nothing about <span class="math inline">\(K\)</span>, then the distribution over <span class="math inline">\(K\)</span> should be flat.</p>
 </div>
 </div>
@@ -250,7 +261,7 @@
 
 <span class="fu"><a href="https://rdrr.io/r/graphics/par.html">par</a></span><span class="op">(</span>mar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">4</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/density.html">density</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">popsim_K_test</span><span class="op">)</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"blue"</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></code></pre></div>
-<p><img src="figure/densities-1.png"></p>
+<p><img src="figure/densities-1.png" style="display: block; margin: auto;"></p>
 </div>
 </div>
   </div>
