@@ -1,3 +1,13 @@
 url: https://ctgrubb.github.io/lemur.pack/
 development:
   mode: auto
+articles:
+- title: Vignettes
+  navbar: ~
+  contents:
+  - test
+
+- title: Articles
+  desc: Not included with the package
+  contents:
+  - articles/binary-1d-example
