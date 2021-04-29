@@ -1,11 +1,11 @@
 ---
 title: "Introduction to Population Synthesis"
-output: 
+output:
   rmarkdown::html_document:
     number_sections: true
     toc: true
     toc_depth: 3
-    toc_float: 
+    toc_float:
       collapsed: false
 ---
 
@@ -62,7 +62,7 @@ From Jeffreys (1946, 1961), the induced prior on $K$ can be found by constructin
 
 $$ Binom(K | p) Beta(p | \alpha, \beta) $$
 
-and then marginalizing to find $\pi(K)$. Thus, 
+and then marginalizing to find $\pi(K)$. Thus,
 
 \begin{align*}
 \pi(K) &= \int_{0}^{1} {N \choose K} p^K (1-p)^{N-K} \frac{1}{\pi} p^{\alpha-1} (1-p)^{\beta-1} \\
@@ -84,7 +84,7 @@ plot(K, piK, ylab = "p(K)")
 lines(K, piK)
 ```
 
-![plot of chunk discrete-Jeffreys](figure/discrete-Jeffreys-1.png)
+![](figure/discrete-Jeffreys-1.png)
 
 It is not a coincidence that this looks very similar to the shape of the Jeffreys prior on $p$; this is essentially just a discrete version of the same thing. Note that if we instead use a flat prior on $p$ (i.e. $\alpha = \beta = 1$), we induce a flat prior on $K$.
 
@@ -111,9 +111,9 @@ par(mar = c(4, 4, 1, 2))
 barplot(nCk / sum(nCk), names.arg = K, xlab = "K", ylab = "Probability")
 ```
 
-![plot of chunk correction-barplot](figure/correction-barplot-1.png)
+![](figure/correction-barplot-1.png)
 
-This means that without any prior knowledge, or even an observed sample, we would expect $K = 5$ to be $252$ times more likely than $K = 0$ or $K = 10$. This is clearly incorrect; if we know nothing about $K$, then the distribution over $K$ should be flat. 
+This means that without any prior knowledge, or even an observed sample, we would expect $K = 5$ to be $252$ times more likely than $K = 0$ or $K = 10$. This is clearly incorrect; if we know nothing about $K$, then the distribution over $K$ should be flat.
 
 # Creating a Sampler
 
@@ -144,7 +144,7 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
   logcorrection <- function(N, K) {
     -lchoose(N, K)
   }
-  
+
   logprior <- function(K, N, a, b) {
     -log(pi) + lgamma(K + a) + lgamma(N - K + b) - lgamma(K + 1) - lgamma(N - K + 1)
   }
@@ -152,22 +152,22 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
   logpost <- function(K, N, J, n, a, b) {
     dhyper(J, K, N - K, n, log = TRUE) + logprior(K, N, a, b) + logcorrection(N, K)
   }
-  
+
   J <- sum(obs)
   n <- length(obs)
-  
+
   out <- matrix(NA, nrow = samples + 1, ncol = N)
   out[1, ] <- sample(c(0, 1), size = N, replace = TRUE, prob = c(1 - mean(obs), mean(obs)))
-  
+
   current_lp <- logpost(sum(out[1, ]), N, J, n, a, b)
-  
+
   for(i in 2:(samples + 1)) {
     current <- out[i - 1, ]
     for(k in 1:N) {
       proposal <- current
       proposal[k] <- as.integer(!current[k])
       proposal_lp <- logpost(sum(proposal), N, J, n, a, b)
-      
+
       u <- runif(1)
       if(log(u) <= proposal_lp - current_lp) {
         current <- proposal
@@ -190,4 +190,4 @@ par(mar = c(4, 4, 1, 2))
 plot(density(rowSums(popsim_K_test)), col = "blue", main = "")
 ```
 
-![plot of chunk densities](figure/densities-1.png)
+![](figure/densities-1.png)

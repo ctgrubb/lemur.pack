@@ -16,5 +16,5 @@
 ^chris$
 ^vignettes/precompile\.R$
 ^vignettes/figure$
-^vignettes/binary_1d_example\.Rmd\.orig$
 ^vignettes/articles$
+
