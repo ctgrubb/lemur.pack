@@ -2,9 +2,9 @@ pandoc: 2.7.3
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
-  articles/popsim_hyperg: popsim_hyperg.html
-  binary_1d_example: binary_1d_example.html
-last_built: 2021-04-28T21:29Z
+  binary-1d-example: binary-1d-example.html
+  test: test.html
+last_built: 2021-04-29T05:28Z
 urls:
   reference: https://ctgrubb.github.io/lemur.pack//reference
   article: https://ctgrubb.github.io/lemur.pack//articles
