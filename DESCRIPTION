@@ -24,8 +24,9 @@ Imports:
     dplyr
 Suggests: 
     markdown,
-    knitr,
     rmarkdown,
+    knitr,
+    kableExtra,
     mathjaxr,
     tidyr,
     ggplot2,
