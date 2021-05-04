@@ -21,4 +21,4 @@ This section will be written at a later date.
 
 ## Usage
 
-For a basic example, see [`binary_1d_example`](https://ctgrubb.github.io/lemur.pack/articles/binary_1d_example.html).
+For a basic example, see \code{vignette("articles/binary-1d-example")}.
