@@ -13,6 +13,8 @@ navbar:
       menu:
       - text: Binary 1-d Example
         href: articles/articles/binary-1d-example.html
+      - text: Extending to 2-d
+        href: articles/articles/binary-2d-example.html
     vignettes:
       text: Vignettes
       menu:
