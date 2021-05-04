@@ -1,14 +1,25 @@
 ---
 title: "Introduction to Population Synthesis"
 output:
-  rmarkdown::html_document
+  rmarkdown::html_document:
+    code_folding: show
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
 ---
+
+
+
 
 
 
 
 ```r
 library(lemur.pack)
+library(knitr)
+library(kableExtra)
+library(proftools)
 ```
 
 This vignette explains synthetic population sampling for the simplest case, where each individual is defined by one $\mathbf{\{0, 1\}}$ variable. The only piece of information used to inform what the population looks like is a simple random sample of size $n$, which can be thought of as an $n$-vector $\mathbf{x}$, which is a realization of $\mathbf{X}$. Our goal is to synthesize numerous realizations of the population $\mathbf{Y}$ with size $N$. A realization of the population is denoted $\mathbf{y}$, and we will assume that $N$ is known.
@@ -43,7 +54,7 @@ Let $f(\mathbf{Y}, K, \mathbf{X}, J)$ denote the discrete Hypergeometric probabi
   * $\mathbf{X}$ is the sample, with length $n$
   * $J$ is the number of successes ($1$'s) in the sample $\mathbf{X}$
 
-Now, we can apply the above theory to our specific distribution
+Now, we can apply the above theory to our specific distribution, and we get
 
 \begin{align*}
   f(\mathbf{Y} = \mathbf{y}, \mathbf{K} | \mathbf{X} = \mathbf{x}, J) &= \frac{ f(\mathbf{X} = \mathbf{x}, J | \mathbf{Y} = \mathbf{y}, K) f(\mathbf{Y} = \mathbf{y}, K) }{ f(\mathbf{X} = \mathbf{x}, J) } \\
@@ -51,41 +62,55 @@ Now, we can apply the above theory to our specific distribution
                                  &\propto \pi(K | \mathbf{X} = \mathbf{x}, J) f(\mathbf{Y} = \mathbf{y} | K)
 \end{align*}
 
-We also need to choose $\pi(K)$, the prior on the number of successes in the population. If we were working with instead a parameter $p$ denoting the probability of success or failure, we would likely want to use some version of the conjugate prior, $Beta(\alpha, \beta)$.
+We also need to choose $\pi(K)$, the prior on the number of successes in the population. If we were working with instead a parameter $p$ denoting the probability of success or failure, we would likely want to use some version of the conjugate prior, $Beta(a, b)$.
 
 From Jeffreys (1946, 1961), the induced prior on $K$ can be found by constructing a hierarchical prior of the form
 
-$$ Binom(K | p) Beta(p | \alpha, \beta) $$
+$$ Binom(K | p) Beta(p | a, b) $$
 
 and then marginalizing to find $\pi(K)$. Thus,
 
 \begin{align*}
-\pi(K) &= \int_{0}^{1} {N \choose K} p^K (1-p)^{N-K} \frac{1}{\pi} p^{\alpha-1} (1-p)^{\beta-1} \\
-       &= \frac{1}{\pi} \frac{\Gamma(K+\alpha)\Gamma(N-K+\beta)}
-          {\Gamma(K+1) \Gamma(N-K+1)}
+\pi(K) &= \int_{0}^{1} {N \choose K} p^K (1-p)^{N-K} \frac{1}{\beta(a, b)} p^{a-1} (1-p)^{b-1} dp \\
+       &= {N \choose K} \frac{\beta(K+a, N-K+b)}{\beta(a, b)} \\
+       &= {N \choose K} \frac{\Gamma(a+b)}{\Gamma(a) \Gamma(b)} \frac{\Gamma(K+a) \Gamma(N-K+b)}{\Gamma(N+a+b)}
+        
 \end{align*}
 
-If we use $\alpha = \beta = 1/2$, we end up with the Jeffreys prior. Lets visualize this prior for $N = 100$.
+For certain values of $a$ and $b$, this will simplify much further. Lets visualize this prior for $N = 100$.
 
 
 ```r
-piKf <- function(K, N) {1 / pi * gamma(K + 1/2) * gamma(N - K + 1/2) / gamma(K + 1) / gamma(N - K + 1)}
+piKf <- function(K, N, a, b) {choose(N, K) * beta(K + a, N - K + b) / beta(a, b)}
 N <- 100
 K <- seq(0, 100, by = 1)
-piK <- piKf(K, N)
+piK1 <- piKf(K, N, 0.5, 0.5)
+piK2 <- piKf(K, N, 1, 1)
+piK3 <- piKf(K, N, 2, 0.5)
 
 par(mar = c(4, 4, 1, 2))
-plot(K, piK, ylab = "p(K)")
-lines(K, piK)
+plot(K, piK1, ylab = "p(K)", pch = " ", xlim = c(0, 100), ylim = c(0, 0.1))
+lines(K, piK1, col = "blue")
+lines(K, piK2, col = "darkgreen")
+lines(K, piK3, col = "red")
+legend("topleft", legend = c("a = b = 0.5", "a = b = 1", "a = 2, b = 0.5"), col = c("blue", "darkgreen", "red"), lty = 1)
 ```
 
 <img src="figure/discrete-Jeffreys-1.png" style="display: block; margin: auto;" />
 
-It is not a coincidence that this looks very similar to the shape of the Jeffreys prior on $p$; this is essentially just a discrete version of the same thing. Note that if we instead use a flat prior on $p$ (i.e. $\alpha = \beta = 1$), we induce a flat prior on $K$.
-
-Whatever choice of $\alpha$ and $\beta$ we make, creating the posterior from here is fairly straightforward. For the hypergeometric case, this of course does not simplify in any nice ways; however, if we assume the population is distributed binomial, the conjugate beta prior will yield a beta posterior.
+Whatever choice of $a$ and $b$ we make, creating the posterior from here is fairly straightforward. For the hypergeometric case, this of course does not simplify in any nice ways; however, if we assume the population is distributed binomial, the conjugate beta prior will yield a beta posterior.
 
 ## Binomial
+
+Things are much more easier if we drop the hypergeometric in favor of the binomial. If we apply the above theory to the binomial instead, we get
+
+\begin{align*}
+  f(\mathbf{Y} = \mathbf{y}, \mathbf{p} | \mathbf{X} = \mathbf{x}) &= \frac{ f(\mathbf{X} = \mathbf{x} | \mathbf{Y} = \mathbf{y}, p) f(\mathbf{Y} = \mathbf{y}, p) }{ f(\mathbf{X} = \mathbf{x}) } \\
+                                 &\propto f(\mathbf{X} = \mathbf{x} | p ) f(\mathbf{Y} = \mathbf{y} | p) \pi(p) \\
+                                 &\propto \pi(p | \mathbf{X} = \mathbf{x}) f(\mathbf{Y} = \mathbf{y} | p)
+\end{align*}
+
+Using the conjugate $Beta(a, b)$ prior gives us the normal $Beta(K+a, N-K+b)$ posterior. There is a slight complication here. Typically when we are trying to learn $p$, it is in a setting where $p$ will never exactly evaluate to either $0$ or $1$. However, in our case we are going to calculate $p$ from a jittered $Y$. If the mean of the observed $x$ is $0$ or $1$, there is the possibility that our population will be completely $0$ or $1$. If we used an improper (but commonly used) $a = b = 1/2$ $Beta$ prior, our posterior will also be improper and thus, our sampler won't work. In the real world, it seems unlikely that we would encounter this problem, but it is worth being aware of. Also worth pointing out is that the hypergeometric solution does not have the same issue, as the hierarchical prior, with $p$ marginalized out, is always proper.
 
 ## Correction Factor
 
@@ -141,7 +166,7 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
   }
 
   logprior <- function(K, N, a, b) {
-    -log(pi) + lgamma(K + a) + lgamma(N - K + b) - lgamma(K + 1) - lgamma(N - K + 1)
+    lchoose(N, K) + lbeta(K + a, N - K + b) - lbeta(a, b)
   }
 
   logpost <- function(K, N, J, n, a, b) {
@@ -164,7 +189,7 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
       proposal_lp <- logpost(sum(proposal), N, J, n, a, b)
 
       u <- runif(1)
-      if(log(u) <= proposal_lp - current_lp) {
+      if(!is.na(proposal_lp) & log(u) <= proposal_lp - current_lp) {
         current <- proposal
         current_lp <- proposal_lp
       }
@@ -175,14 +200,252 @@ popsim_K <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 }
 ```
 
-## Comparisons
+### P Space
+
+We can do the exact same thing, using $p$ instead of $K$.
 
 
 ```r
-popsim_K_test <- popsim_K(obs, N, 1000, 0.5, 0.5)
+popsim_p <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
+  logcorrection <- function(N, p) {
+    -lchoose(N, N * p)
+  }
 
-par(mar = c(4, 4, 1, 2))
-plot(density(rowSums(popsim_K_test)), col = "blue", main = "")
+  logprior <- function(p, a, b) {
+    dbeta(p, a, b, log = TRUE)
+  }
+
+  logpost <- function(p, J, n, a, b) {
+    dbinom(J, n, p, log = TRUE) + logprior(p, a, b) + logcorrection(N, p)
+  }
+
+  J <- sum(obs)
+  n <- length(obs)
+
+  out <- matrix(NA, nrow = samples + 1, ncol = N)
+  out[1, ] <- sample(c(0, 1), size = N, replace = TRUE, prob = c(1 - mean(obs), mean(obs)))
+
+  current_lp <- logpost(mean(out[1, ]), J, n, a, b)
+
+  for(i in 2:(samples + 1)) {
+    current <- out[i - 1, ]
+    for(k in 1:N) {
+      proposal <- current
+      proposal[k] <- as.integer(!current[k])
+      proposal_lp <- logpost(mean(proposal), J, n, a, b)
+
+      u <- runif(1)
+      if(!is.na(proposal_lp) & log(u) <= proposal_lp - current_lp) {
+        current <- proposal
+        current_lp <- proposal_lp
+      }
+    }
+    out[i, ] <- current
+  }
+  return(out[-1, ])
+}
 ```
 
-<img src="figure/densities-1.png" style="display: block; margin: auto;" />
+# Comparisons
+
+## Location
+
+We can compare the location of the posterior in terms of K to see if the two methods give similar results.
+
+
+```r
+popsim_K_prof <- profileExpr(popsim_K_test <- popsim_K(obs, N, comp_iters, 0.5, 0.5))
+popsim_p_prof <- profileExpr(popsim_p_test <- popsim_p(obs, N, comp_iters, 0.5, 0.5))
+
+par(mar = c(4, 4, 1, 2))
+plot(density(rowSums(popsim_K_test)), col = "blue", main = "", xlab = "K or N * p")
+lines(density(rowSums(popsim_p_test)), col = "red")
+```
+
+<img src="figure/denscomp-1.png" style="display: block; margin: auto;" />
+
+## Time
+
+Likewise, we can look at how long each method takes. Neither of these functions are optimized in any way; though they are written to be as similar as possible so the comparison is potentially useful.
+
+
+```r
+prof_K <- as.matrix(flatProfile(popsim_K_prof, byTotal = TRUE, GC = FALSE))[1:6, ]
+prof_p <- as.matrix(flatProfile(popsim_p_prof, byTotal = TRUE, GC = FALSE))[1:6, ]
+```
+
+As we can see, the method using $K$ is quite a bit faster.
+
+<table class="table" style="width: auto !important; float: left; margin-right: 10px;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Total % </th>
+   <th style="text-align:right;"> Total Time </th>
+   <th style="text-align:right;"> Self % </th>
+   <th style="text-align:right;"> Self Time </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> popsim_K </td>
+   <td style="text-align:right;"> 100.00 </td>
+   <td style="text-align:right;"> 1.12 </td>
+   <td style="text-align:right;"> 30.36 </td>
+   <td style="text-align:right;"> 0.34 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logpost </td>
+   <td style="text-align:right;"> 44.64 </td>
+   <td style="text-align:right;"> 0.50 </td>
+   <td style="text-align:right;"> 19.64 </td>
+   <td style="text-align:right;"> 0.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> runif </td>
+   <td style="text-align:right;"> 19.64 </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 19.64 </td>
+   <td style="text-align:right;"> 0.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> dhyper </td>
+   <td style="text-align:right;"> 12.50 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 10.71 </td>
+   <td style="text-align:right;"> 0.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 8.93 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 8.93 </td>
+   <td style="text-align:right;"> 0.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> cmp </td>
+   <td style="text-align:right;"> 3.57 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 0.00 </td>
+  </tr>
+</tbody>
+</table>
+
+<table class="table" style="width: auto !important; ">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> Total % </th>
+   <th style="text-align:right;"> Total Time </th>
+   <th style="text-align:right;"> Self % </th>
+   <th style="text-align:right;"> Self Time </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> popsim_p </td>
+   <td style="text-align:right;"> 100.00 </td>
+   <td style="text-align:right;"> 0.98 </td>
+   <td style="text-align:right;"> 22.45 </td>
+   <td style="text-align:right;"> 0.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logpost </td>
+   <td style="text-align:right;"> 67.35 </td>
+   <td style="text-align:right;"> 0.66 </td>
+   <td style="text-align:right;"> 10.20 </td>
+   <td style="text-align:right;"> 0.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> dbinom </td>
+   <td style="text-align:right;"> 34.69 </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 12.24 </td>
+   <td style="text-align:right;"> 0.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mean </td>
+   <td style="text-align:right;"> 22.45 </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 12.24 </td>
+   <td style="text-align:right;"> 0.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 14.29 </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> 8.16 </td>
+   <td style="text-align:right;"> 0.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mean.default </td>
+   <td style="text-align:right;"> 10.20 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 8.16 </td>
+   <td style="text-align:right;"> 0.08 </td>
+  </tr>
+</tbody>
+</table>
+
+
+## Coverage
+
+We can also consider the empirical coverage rates of credible intervals. Since the method based on $p$ can have issues with improper priors, we will use $a = b = 1$.
+
+
+```r
+cov_mat <- matrix(0, nrow = 2, ncol = cov_points, 
+                  dimnames = list(
+                    Method = c("K Space", "p Space"), 
+                    K = round(seq(0, N, length.out = 2 * cov_points + 1)[2*(1:cov_points)])
+                  )
+)
+
+for(k in 1:cov_points) {
+  K <- as.integer(colnames(cov_mat))[k]
+  pop <- c(rep(1, K), rep(0, N - K))
+  for(i in 1:cov_iters) {
+    sample <- sample(pop, size = n, replace = FALSE)
+    popsim_K_res <- quantile(rowSums(popsim_K(sample, N, cov_samples, 1, 1)), probs = c(0.05, 0.95))
+    popsim_p_res <- quantile(rowSums(popsim_p(sample, N, cov_samples, 1, 1)), probs = c(0.05, 0.95))
+    if(popsim_K_res[1] <= K & K <= popsim_K_res[2]) {
+      cov_mat[1, k] <- cov_mat[1, k] + 1
+    }
+    if(popsim_p_res[1] <= K & K <= popsim_p_res[2]) {
+      cov_mat[2, k] <- cov_mat[2, k] + 1
+    }
+  }
+}
+
+cov_mat <- cov_mat / cov_iters * 100
+```
+
+Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well, as expected.
+
+<table class=" lightable-classic" style='font-family: "Arial Narrow", "Source Sans Pro", sans-serif; margin-left: auto; margin-right: auto;'>
+ <thead>
+<tr>
+<th style="padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="1"><div style="border-bottom: 1px solid #111111; margin-bottom: -1px; ">Method</div></th>
+<th style="padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2"><div style="border-bottom: 1px solid #111111; margin-bottom: -1px; ">K</div></th>
+</tr>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:right;"> 25 </th>
+   <th style="text-align:right;"> 75 </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> K Space </td>
+   <td style="text-align:right;"> 100 </td>
+   <td style="text-align:right;"> 80 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> p Space </td>
+   <td style="text-align:right;"> 90 </td>
+   <td style="text-align:right;"> 80 </td>
+  </tr>
+</tbody>
+</table>
+
