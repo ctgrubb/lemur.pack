@@ -21,7 +21,6 @@ knitr::opts_chunk$set(
 library(lemur.pack)
 library(knitr)
 library(kableExtra)
-library(proftools)
 library(magrittr)
 ```
 

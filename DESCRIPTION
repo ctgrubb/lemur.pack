@@ -29,6 +29,7 @@ Suggests:
     kableExtra,
     mathjaxr,
     tidyr,
+    magrittr,
     ggplot2,
     covr,
     testthat (>= 3.0.0)
