@@ -91,7 +91,19 @@
 
       
 
-      </header><script src="discreteIntro_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="discreteIntro_files/jquery-1.11.3/jquery.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="discreteIntro_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script src="discreteIntro_files/bootstrap-3.3.5/js/bootstrap.min.js"></script><script src="discreteIntro_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script><script src="discreteIntro_files/bootstrap-3.3.5/shim/respond.min.js"></script><style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="discreteIntro_files/jqueryui-1.11.4/jquery-ui.min.js"></script><link href="discreteIntro_files/tocify-1.9.1/jquery.tocify.css" rel="stylesheet">
+<script src="discreteIntro_files/tocify-1.9.1/jquery.tocify.js"></script><script src="discreteIntro_files/navigation-1.1/tabsets.js"></script><script src="discreteIntro_files/navigation-1.1/codefolding.js"></script><script src="discreteIntro_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Introduction to Univariate Discrete Population Synthesis</h1>
@@ -119,7 +131,7 @@
 <p>In both cases, the only piece of information used to inform what the population looks like is a simple random sample of size <span class="math inline">\(n\)</span>, which can be thought of as an <span class="math inline">\(n\)</span>-vector <span class="math inline">\(\mathbf{x}\)</span>, which is a realization of <span class="math inline">\(\mathbf{X}\)</span>. Our goal is to synthesize numerous realizations of the population <span class="math inline">\(\mathbf{Y}\)</span> with size <span class="math inline">\(N\)</span>. A realization of the population is denoted <span class="math inline">\(\mathbf{y}\)</span>, and we will assume that <span class="math inline">\(N\)</span> is known.</p>
 <div id="theory" class="section level1">
 <h1 class="hasAnchor">
-<a href="#theory" class="anchor"></a>Theory</h1>
+<a href="#theory" class="anchor"></a><span class="header-section-number">1</span> Theory</h1>
 <p>For a population <span class="math inline">\(\mathbf{Y}\)</span>, sample <span class="math inline">\(\mathbf{X}\)</span>, and parameter set <span class="math inline">\(\theta\)</span>, we can use Bayes’ theorem to get the distribution for <span class="math inline">\(\mathbf{Y}\)</span>, conditioned on our observed sample, <span class="math inline">\(\mathbf{x}\)</span>.</p>
 <p><span class="math display">\[\begin{align*}
   f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) &amp;= \frac{ f(\mathbf{X} = \mathbf{x} | \theta, \mathbf{Y} = \mathbf{y}) f(\theta, \mathbf{Y} = \mathbf{y}) }{ f(\mathbf{X} = \mathbf{x}) } \\
@@ -184,7 +196,7 @@ MV Hypergeometric
 <p>As we will see the multi-category extensions of these distributions does not change much. Thus, we will start with the binary versions and then discuss what changes when we switch to having three or more categories.</p>
 <div id="binomial" class="section level2">
 <h2 class="hasAnchor">
-<a href="#binomial" class="anchor"></a>Binomial</h2>
+<a href="#binomial" class="anchor"></a><span class="header-section-number">1.1</span> Binomial</h2>
 <p>Things are very simple if we choose to use a <span class="math inline">\(Binomial\)</span> likelihood. If we apply the above theory to the binomial, we get</p>
 <p><span class="math display">\[\begin{align*}
   f(\mathbf{Y} = \mathbf{y}, \mathbf{p} | \mathbf{X} = \mathbf{x}) &amp;= \frac{ f(\mathbf{X} = \mathbf{x} | \mathbf{Y} = \mathbf{y}, p) f(\mathbf{Y} = \mathbf{y}, p) }{ f(\mathbf{X} = \mathbf{x}) } \\
@@ -195,12 +207,12 @@ MV Hypergeometric
 </div>
 <div id="multinomial" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multinomial" class="anchor"></a>Multinomial</h2>
+<a href="#multinomial" class="anchor"></a><span class="header-section-number">1.2</span> Multinomial</h2>
 <p>If we are instead using the <span class="math inline">\(Multinomial\)</span> likelihood, there is not much that changes. Notably, <span class="math inline">\(p\)</span> and <span class="math inline">\(K\)</span> are now vectors of length <span class="math inline">\(c\)</span>, where <span class="math inline">\(c\)</span> is the number of categories, and our prior will likely be <span class="math inline">\(Dirichlet(\alpha)\)</span>, the conjugate prior for the <span class="math inline">\(Multinomial\)</span> distribution. The new posterior with the conjugate prior is <span class="math inline">\(Dirichlet(K_1 + \alpha_1, \dots, K_c + \alpha_c)\)</span>.</p>
 </div>
 <div id="hypergeometric" class="section level2">
 <h2 class="hasAnchor">
-<a href="#hypergeometric" class="anchor"></a>Hypergeometric</h2>
+<a href="#hypergeometric" class="anchor"></a><span class="header-section-number">1.3</span> Hypergeometric</h2>
 <p>The common parameterization of the <span class="math inline">\(Hypergeometric\)</span> distribution can make this rather confusing. Instead of working with that, lets make our own.</p>
 <p>Let <span class="math inline">\(f(\mathbf{Y}, K, \mathbf{X}, J)\)</span> denote the <span class="math inline">\(Hypergeometric\)</span> probability mass function, where:</p>
 <ul>
@@ -255,7 +267,7 @@ MV Hypergeometric
 </div>
 <div id="multivariate-hypergeometric" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multivariate-hypergeometric" class="anchor"></a>Multivariate Hypergeometric</h2>
+<a href="#multivariate-hypergeometric" class="anchor"></a><span class="header-section-number">1.4</span> Multivariate Hypergeometric</h2>
 <p>We will define the multivariate <span class="math inline">\(Hypergeometric\)</span> distribution in the same fashion as before, except this time <span class="math inline">\(\mathbf{K}\)</span> and <span class="math inline">\(\mathbf{J}\)</span> are vectors.</p>
 <p>Additionally, we need to find a prior <span class="math inline">\(\pi(\mathbf{K})\)</span>. Suppose there are <span class="math inline">\(c\)</span> categories; following the same steps as the simple 1-dimensional example, we have:</p>
 <p><span class="math display">\[\begin{align*}
@@ -267,7 +279,7 @@ MV Hypergeometric
 </div>
 <div id="correction-factor" class="section level2">
 <h2 class="hasAnchor">
-<a href="#correction-factor" class="anchor"></a>Correction Factor</h2>
+<a href="#correction-factor" class="anchor"></a><span class="header-section-number">1.5</span> Correction Factor</h2>
 <p>Returning to the distribution we are trying to sample from, we had</p>
 <p><span class="math display">\[ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) \propto \pi(\theta | \mathbf{X} = \mathbf{x}) f(\mathbf{Y} = \mathbf{y} | \theta). \]</span> Whether using the <span class="math inline">\(Binomial\)</span> or <span class="math inline">\(Hypergeometric\)</span> distribution, in both cases this term is essential and cannot be forgotten; without it, the sample ends up essentially not mattering.</p>
 <p>To illustrate, let <span class="math inline">\(N = 10\)</span>. With such a small population, we can easily list every possible population. There are of course <span class="math inline">\(2^{10}\)</span> of them, since every subject in the population has two possible options. If we assume all possible populations are equally likely, we can visualize the probability distribution of <span class="math inline">\(K\)</span>, the number of <span class="math inline">\(1\)</span>’s in the population, with a simple bar plot.</p>
@@ -284,13 +296,13 @@ MV Hypergeometric
 </div>
 <div id="samplers" class="section level1">
 <h1 class="hasAnchor">
-<a href="#samplers" class="anchor"></a>Samplers</h1>
+<a href="#samplers" class="anchor"></a><span class="header-section-number">2</span> Samplers</h1>
 <p>Here we will outline straightforward approaches to synthesis for all four possible distributions. There are a few things worth discussing further.</p>
 <p><strong>Should we make all populations include our sample?</strong> For example, if we observe a vector <span class="math inline">\(x = (1, 0, 0, 0, 1, 0)\)</span> and there are <span class="math inline">\(c = 2\)</span> classes, should <em>all</em> synthetic populations contain at least four <span class="math inline">\(0\)</span>’s and two <span class="math inline">\(1's\)</span>? If we are using the <span class="math inline">\(Hypergeometric\)</span> distribution, this actually happens automatically, but if we use the <span class="math inline">\(Binomial\)</span> distribution, we have the choice of enforing this criterion or not.</p>
 <p>For the purpose of a more fair comparison, in this document we <em>will not</em> enforce that all populations contain the sample.</p>
 <div id="binomial-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#binomial-1" class="anchor"></a>Binomial</h2>
+<a href="#binomial-1" class="anchor"></a><span class="header-section-number">2.1</span> Binomial</h2>
 <p>Here is a very basic function that will jitter <span class="math inline">\(\mathbf{Y}\)</span>, and use the posterior in terms of <span class="math inline">\(p\)</span> to determine whether to accept or reject synthesized populations.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_binomial</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span>, <span class="va">a</span> <span class="op">=</span> <span class="fl">0.5</span>, <span class="va">b</span> <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">{</span>
@@ -334,7 +346,7 @@ MV Hypergeometric
 </div>
 <div id="multinomial-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multinomial-1" class="anchor"></a>Multinomial</h2>
+<a href="#multinomial-1" class="anchor"></a><span class="header-section-number">2.2</span> Multinomial</h2>
 <p>Not much has to change here. Depending how you code multiple categories, working with them can be quite difficult. The easiest set of categories to work with is <span class="math inline">\(\{1, 2, \dots, c\}\)</span>. This simplifies things a lot, mainly because <code>x[i] == i</code>. The code below will fail if you pass it a sample with either of the following properties:</p>
 <ul>
 <li>A category denoted as <span class="math inline">\(0\)</span> (e.g. <code>obs = c(1, 0, 1, 0, 1, 1, 1, 0)</code>)
@@ -391,7 +403,7 @@ MV Hypergeometric
 </div>
 <div id="hypergeometric-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#hypergeometric-1" class="anchor"></a>Hypergeometric</h2>
+<a href="#hypergeometric-1" class="anchor"></a><span class="header-section-number">2.3</span> Hypergeometric</h2>
 <p>Now we do the same thing, but instead use the posterior in terms of <span class="math inline">\(K\)</span> to determine whether to accept or reject synthesized populations.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_hypergeometric</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span>, <span class="va">a</span> <span class="op">=</span> <span class="fl">0.5</span>, <span class="va">b</span> <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">{</span>
@@ -435,7 +447,7 @@ MV Hypergeometric
 </div>
 <div id="multivariate-hypergeometric-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multivariate-hypergeometric-1" class="anchor"></a>Multivariate Hypergeometric</h2>
+<a href="#multivariate-hypergeometric-1" class="anchor"></a><span class="header-section-number">2.4</span> Multivariate Hypergeometric</h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_mvhypergeometric</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span>, <span class="va">alpha</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">obs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">logcorrection</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">N</span>, <span class="va">K</span><span class="op">)</span> <span class="op">{</span>
@@ -459,7 +471,7 @@ MV Hypergeometric
 
   <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="cn">NA</span>, nrow <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="fl">1</span>, ncol <span class="op">=</span> <span class="va">N</span><span class="op">)</span>
   <span class="va">out</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="va">obs</span>, length.out <span class="op">=</span> <span class="va">N</span><span class="op">)</span>
-  
+
 
   <span class="va">current_lp</span> <span class="op">&lt;-</span> <span class="fu">logpost</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html">table</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="va">N</span>, <span class="va">J</span>, <span class="va">n</span>, <span class="va">alpha</span><span class="op">)</span>
 
@@ -484,10 +496,10 @@ MV Hypergeometric
 </div>
 <div id="comparisons" class="section level1">
 <h1 class="hasAnchor">
-<a href="#comparisons" class="anchor"></a>Comparisons</h1>
+<a href="#comparisons" class="anchor"></a><span class="header-section-number">3</span> Comparisons</h1>
 <div id="setup" class="section level2">
 <h2 class="hasAnchor">
-<a href="#setup" class="anchor"></a>Setup</h2>
+<a href="#setup" class="anchor"></a><span class="header-section-number">3.1</span> Setup</h2>
 <p>The first thing we need is our samples. We are going to use the following:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obs_binary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>
@@ -495,7 +507,7 @@ MV Hypergeometric
 </div>
 <div id="location" class="section level2">
 <h2 class="hasAnchor">
-<a href="#location" class="anchor"></a>Location</h2>
+<a href="#location" class="anchor"></a><span class="header-section-number">3.2</span> Location</h2>
 <p>For the binary methods, we can compare the location of the posterior to see if the two methods give similar results.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_binom_prof_100</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/proftools/man/profileExpr.html">profileExpr</a></span><span class="op">(</span><span class="va">popsim_binom_test_100</span> <span class="op">&lt;-</span> <span class="fu">popsim_binomial</span><span class="op">(</span><span class="va">obs_binary</span>, N <span class="op">=</span> <span class="fl">100</span>, <span class="va">comp_iters_binary</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>
@@ -529,7 +541,7 @@ MV Hypergeometric
 </div>
 <div id="time" class="section level2">
 <h2 class="hasAnchor">
-<a href="#time" class="anchor"></a>Time</h2>
+<a href="#time" class="anchor"></a><span class="header-section-number">3.3</span> Time</h2>
 <p>Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">prof_binom_100</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/proftools/man/flatProfile.html">flatProfile</a></span><span class="op">(</span><span class="va">popsim_binom_prof_100</span>, byTotal <span class="op">=</span> <span class="cn">TRUE</span>, GC <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="op">]</span>
@@ -537,6 +549,7 @@ MV Hypergeometric
 
 <span class="va">prof_hyperg_100</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/proftools/man/flatProfile.html">flatProfile</a></span><span class="op">(</span><span class="va">popsim_hyperg_prof_100</span>, byTotal <span class="op">=</span> <span class="cn">TRUE</span>, GC <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="op">]</span>
 <span class="va">prof_hyperg_1000</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/proftools/man/flatProfile.html">flatProfile</a></span><span class="op">(</span><span class="va">popsim_hyperg_prof_1000</span>, byTotal <span class="op">=</span> <span class="cn">TRUE</span>, GC <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="op">]</span>
+<span class="co">#&gt; Error in as.matrix(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, : subscript out of bounds</span>
 
 <span class="va">prof_multinom_100</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/proftools/man/flatProfile.html">flatProfile</a></span><span class="op">(</span><span class="va">popsim_multinom_prof_100</span>, byTotal <span class="op">=</span> <span class="cn">TRUE</span>, GC <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="op">]</span>
 <span class="va">prof_multinom_1000</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/proftools/man/flatProfile.html">flatProfile</a></span><span class="op">(</span><span class="va">popsim_multinom_prof_1000</span>, byTotal <span class="op">=</span> <span class="cn">TRUE</span>, GC <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span>, <span class="op">]</span>
@@ -546,9 +559,9 @@ MV Hypergeometric
 
 <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kables</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_binom_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for K Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_binom_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_left"</span><span class="op">)</span>,
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_binom_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for p Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_binom_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_right"</span><span class="op">)</span>
   <span class="op">)</span>,
   caption <span class="op">=</span> <span class="st">"Profile for Binomial, N = 100 (left) vs. N = 1000 (right)"</span>
@@ -561,9 +574,6 @@ Profile for Binomial, N = 100 (left) vs. N = 1000 (right)
 <tbody><tr>
 <td>
 <table class="table table">
-<caption>
-Profiling for K Method
-</caption>
 <thead><tr>
 <th style="text-align:left;">
 </th>
@@ -586,16 +596,16 @@ Self Time
 popsim_binomial
 </td>
 <td style="text-align:right;">
-100.00
+81.25
 </td>
 <td style="text-align:right;">
-1.18
+2.34
 </td>
 <td style="text-align:right;">
-20.34
+27.78
 </td>
 <td style="text-align:right;">
-0.24
+0.80
 </td>
 </tr>
 <tr>
@@ -603,16 +613,16 @@ popsim_binomial
 logpost
 </td>
 <td style="text-align:right;">
-66.10
+52.08
 </td>
 <td style="text-align:right;">
-0.78
+1.50
 </td>
 <td style="text-align:right;">
-8.47
+23.61
 </td>
 <td style="text-align:right;">
-0.10
+0.68
 </td>
 </tr>
 <tr>
@@ -620,33 +630,33 @@ logpost
 dbinom
 </td>
 <td style="text-align:right;">
-28.81
+23.61
 </td>
 <td style="text-align:right;">
-0.34
+0.68
 </td>
 <td style="text-align:right;">
-8.47
+13.89
 </td>
 <td style="text-align:right;">
-0.10
+0.40
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-logprior
+&lt;Other&gt;
 </td>
 <td style="text-align:right;">
-22.03
+18.75
 </td>
 <td style="text-align:right;">
-0.26
+0.54
 </td>
 <td style="text-align:right;">
-10.17
+18.75
 </td>
 <td style="text-align:right;">
-0.12
+0.54
 </td>
 </tr>
 <tr>
@@ -654,30 +664,30 @@ logprior
 mean
 </td>
 <td style="text-align:right;">
-20.34
+9.72
 </td>
 <td style="text-align:right;">
-0.24
+0.28
 </td>
 <td style="text-align:right;">
-8.47
+5.56
 </td>
 <td style="text-align:right;">
-0.10
+0.16
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-dbeta
+logprior
 </td>
 <td style="text-align:right;">
-11.86
+4.86
 </td>
 <td style="text-align:right;">
 0.14
 </td>
 <td style="text-align:right;">
-11.86
+4.86
 </td>
 <td style="text-align:right;">
 0.14
@@ -688,9 +698,6 @@ dbeta
 </td>
 <td>
 <table class="table table">
-<caption>
-Profiling for p Method
-</caption>
 <thead><tr>
 <th style="text-align:left;">
 </th>
@@ -713,16 +720,16 @@ Self Time
 popsim_binomial
 </td>
 <td style="text-align:right;">
-100.00
+77.50
 </td>
 <td style="text-align:right;">
-11.86
+24.04
 </td>
 <td style="text-align:right;">
-27.49
+22.50
 </td>
 <td style="text-align:right;">
-3.26
+6.98
 </td>
 </tr>
 <tr>
@@ -730,16 +737,16 @@ popsim_binomial
 logpost
 </td>
 <td style="text-align:right;">
-61.55
+55.00
 </td>
 <td style="text-align:right;">
-7.30
+17.06
 </td>
 <td style="text-align:right;">
-8.43
+20.44
 </td>
 <td style="text-align:right;">
-1.00
+6.34
 </td>
 </tr>
 <tr>
@@ -747,16 +754,33 @@ logpost
 dbinom
 </td>
 <td style="text-align:right;">
-35.24
+27.14
 </td>
 <td style="text-align:right;">
-4.18
+8.42
 </td>
 <td style="text-align:right;">
-8.09
+12.83
 </td>
 <td style="text-align:right;">
-0.96
+3.98
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+&lt;Other&gt;
+</td>
+<td style="text-align:right;">
+22.50
+</td>
+<td style="text-align:right;">
+6.98
+</td>
+<td style="text-align:right;">
+22.50
+</td>
+<td style="text-align:right;">
+6.98
 </td>
 </tr>
 <tr>
@@ -764,33 +788,16 @@ dbinom
 mean
 </td>
 <td style="text-align:right;">
-27.15
+14.31
 </td>
 <td style="text-align:right;">
-3.22
+4.44
 </td>
 <td style="text-align:right;">
-6.91
+12.89
 </td>
 <td style="text-align:right;">
-0.82
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-mean.default
-</td>
-<td style="text-align:right;">
-20.24
-</td>
-<td style="text-align:right;">
-2.40
-</td>
-<td style="text-align:right;">
-19.90
-</td>
-<td style="text-align:right;">
-2.36
+4.00
 </td>
 </tr>
 <tr>
@@ -798,16 +805,16 @@ mean.default
 logprior
 </td>
 <td style="text-align:right;">
-14.00
+7.41
 </td>
 <td style="text-align:right;">
-1.66
+2.30
 </td>
 <td style="text-align:right;">
-5.06
+7.41
 </td>
 <td style="text-align:right;">
-0.60
+2.30
 </td>
 </tr>
 </tbody>
@@ -819,282 +826,21 @@ logprior
 <code class="sourceCode R">
 <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kables</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_hyperg_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for K Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_hyperg_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_left"</span><span class="op">)</span>,
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_hyperg_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for p Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_hyperg_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_right"</span><span class="op">)</span>
   <span class="op">)</span>,
   caption <span class="op">=</span> <span class="st">"Profile for Hypergeometric, N = 100 (left) vs. N = 1000 (right)"</span>
 <span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<table class="table kable_wrapper table">
-<caption>
-Profile for Hypergeometric, N = 100 (left) vs. N = 1000 (right)
-</caption>
-<tbody><tr>
-<td>
-<table class="table table">
-<caption>
-Profiling for K Method
-</caption>
-<thead><tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Total %
-</th>
-<th style="text-align:right;">
-Total Time
-</th>
-<th style="text-align:right;">
-Self %
-</th>
-<th style="text-align:right;">
-Self Time
-</th>
-</tr></thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-popsim_hypergeometric
-</td>
-<td style="text-align:right;">
-100.00
-</td>
-<td style="text-align:right;">
-0.76
-</td>
-<td style="text-align:right;">
-10.53
-</td>
-<td style="text-align:right;">
-0.08
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logpost
-</td>
-<td style="text-align:right;">
-76.32
-</td>
-<td style="text-align:right;">
-0.58
-</td>
-<td style="text-align:right;">
-15.79
-</td>
-<td style="text-align:right;">
-0.12
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logprior
-</td>
-<td style="text-align:right;">
-28.95
-</td>
-<td style="text-align:right;">
-0.22
-</td>
-<td style="text-align:right;">
-28.95
-</td>
-<td style="text-align:right;">
-0.22
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-dhyper
-</td>
-<td style="text-align:right;">
-26.32
-</td>
-<td style="text-align:right;">
-0.20
-</td>
-<td style="text-align:right;">
-23.68
-</td>
-<td style="text-align:right;">
-0.18
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-runif
-</td>
-<td style="text-align:right;">
-10.53
-</td>
-<td style="text-align:right;">
-0.08
-</td>
-<td style="text-align:right;">
-10.53
-</td>
-<td style="text-align:right;">
-0.08
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logcorrection
-</td>
-<td style="text-align:right;">
-5.26
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-5.26
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-<td>
-<table class="table table">
-<caption>
-Profiling for p Method
-</caption>
-<thead><tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Total %
-</th>
-<th style="text-align:right;">
-Total Time
-</th>
-<th style="text-align:right;">
-Self %
-</th>
-<th style="text-align:right;">
-Self Time
-</th>
-</tr></thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-popsim_hypergeometric
-</td>
-<td style="text-align:right;">
-100.00
-</td>
-<td style="text-align:right;">
-9.38
-</td>
-<td style="text-align:right;">
-36.25
-</td>
-<td style="text-align:right;">
-3.40
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logpost
-</td>
-<td style="text-align:right;">
-52.24
-</td>
-<td style="text-align:right;">
-4.90
-</td>
-<td style="text-align:right;">
-12.79
-</td>
-<td style="text-align:right;">
-1.20
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-dhyper
-</td>
-<td style="text-align:right;">
-21.11
-</td>
-<td style="text-align:right;">
-1.98
-</td>
-<td style="text-align:right;">
-11.73
-</td>
-<td style="text-align:right;">
-1.10
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logprior
-</td>
-<td style="text-align:right;">
-14.07
-</td>
-<td style="text-align:right;">
-1.32
-</td>
-<td style="text-align:right;">
-14.07
-</td>
-<td style="text-align:right;">
-1.32
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-runif
-</td>
-<td style="text-align:right;">
-10.45
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-<td style="text-align:right;">
-10.45
-</td>
-<td style="text-align:right;">
-0.98
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-sum
-</td>
-<td style="text-align:right;">
-9.38
-</td>
-<td style="text-align:right;">
-0.88
-</td>
-<td style="text-align:right;">
-9.38
-</td>
-<td style="text-align:right;">
-0.88
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr></tbody>
-</table>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R">
+  <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; Error in kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", : object 'prof_hyperg_1000' not found</span>
+
 <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kables</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_multinom_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for K Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_multinom_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_left"</span><span class="op">)</span>,
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_multinom_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for p Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_multinom_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_right"</span><span class="op">)</span>
   <span class="op">)</span>,
   caption <span class="op">=</span> <span class="st">"Profile for Multinomial, N = 100 (left) vs. N = 1000 (right)"</span>
@@ -1107,9 +853,6 @@ Profile for Multinomial, N = 100 (left) vs. N = 1000 (right)
 <tbody><tr>
 <td>
 <table class="table table">
-<caption>
-Profiling for K Method
-</caption>
 <thead><tr>
 <th style="text-align:left;">
 </th>
@@ -1132,16 +875,16 @@ Self Time
 popsim_multinomial
 </td>
 <td style="text-align:right;">
-100.00
+97.32
 </td>
 <td style="text-align:right;">
-1.66
+4.36
 </td>
 <td style="text-align:right;">
-0.00
+8.04
 </td>
 <td style="text-align:right;">
-0.00
+0.36
 </td>
 </tr>
 <tr>
@@ -1149,16 +892,16 @@ popsim_multinomial
 logpost
 </td>
 <td style="text-align:right;">
-98.80
+85.27
 </td>
 <td style="text-align:right;">
-1.64
+3.82
 </td>
 <td style="text-align:right;">
-0.00
+10.71
 </td>
 <td style="text-align:right;">
-0.00
+0.48
 </td>
 </tr>
 <tr>
@@ -1166,177 +909,16 @@ logpost
 table
 </td>
 <td style="text-align:right;">
-84.34
+50.45
 </td>
 <td style="text-align:right;">
-1.40
+2.26
 </td>
 <td style="text-align:right;">
-9.64
+27.23
 </td>
 <td style="text-align:right;">
-0.16
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-factor
-</td>
-<td style="text-align:right;">
-57.83
-</td>
-<td style="text-align:right;">
-0.96
-</td>
-<td style="text-align:right;">
-33.73
-</td>
-<td style="text-align:right;">
-0.56
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-order
-</td>
-<td style="text-align:right;">
-12.05
-</td>
-<td style="text-align:right;">
-0.20
-</td>
-<td style="text-align:right;">
-6.02
-</td>
-<td style="text-align:right;">
-0.10
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-unique
-</td>
-<td style="text-align:right;">
-8.43
-</td>
-<td style="text-align:right;">
-0.14
-</td>
-<td style="text-align:right;">
-6.02
-</td>
-<td style="text-align:right;">
-0.10
-</td>
-</tr>
-</tbody>
-</table>
-</td>
-<td>
-<table class="table table">
-<caption>
-Profiling for p Method
-</caption>
-<thead><tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Total %
-</th>
-<th style="text-align:right;">
-Total Time
-</th>
-<th style="text-align:right;">
-Self %
-</th>
-<th style="text-align:right;">
-Self Time
-</th>
-</tr></thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-popsim_multinomial
-</td>
-<td style="text-align:right;">
-100.00
-</td>
-<td style="text-align:right;">
-63.20
-</td>
-<td style="text-align:right;">
-0.35
-</td>
-<td style="text-align:right;">
-0.22
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-logpost
-</td>
-<td style="text-align:right;">
-98.77
-</td>
-<td style="text-align:right;">
-62.42
-</td>
-<td style="text-align:right;">
-0.44
-</td>
-<td style="text-align:right;">
-0.28
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-table
-</td>
-<td style="text-align:right;">
-90.44
-</td>
-<td style="text-align:right;">
-57.16
-</td>
-<td style="text-align:right;">
-3.16
-</td>
-<td style="text-align:right;">
-2.00
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-factor
-</td>
-<td style="text-align:right;">
-83.51
-</td>
-<td style="text-align:right;">
-52.78
-</td>
-<td style="text-align:right;">
-77.47
-</td>
-<td style="text-align:right;">
-48.96
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-lmnchoose
-</td>
-<td style="text-align:right;">
-5.70
-</td>
-<td style="text-align:right;">
-3.60
-</td>
-<td style="text-align:right;">
-1.68
-</td>
-<td style="text-align:right;">
-1.06
+1.22
 </td>
 </tr>
 <tr>
@@ -1344,16 +926,174 @@ lmnchoose
 logcorrection
 </td>
 <td style="text-align:right;">
-5.70
+20.54
+</td>
+<td style="text-align:right;">
+0.92
+</td>
+<td style="text-align:right;">
+2.23
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+lmnchoose
+</td>
+<td style="text-align:right;">
+18.30
+</td>
+<td style="text-align:right;">
+0.82
+</td>
+<td style="text-align:right;">
+1.79
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+sapply
+</td>
+<td style="text-align:right;">
+16.52
+</td>
+<td style="text-align:right;">
+0.74
+</td>
+<td style="text-align:right;">
+4.46
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+<td>
+<table class="table table">
+<thead><tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+Total %
+</th>
+<th style="text-align:right;">
+Total Time
+</th>
+<th style="text-align:right;">
+Self %
+</th>
+<th style="text-align:right;">
+Self Time
+</th>
+</tr></thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+popsim_multinomial
+</td>
+<td style="text-align:right;">
+98.95
+</td>
+<td style="text-align:right;">
+124.04
+</td>
+<td style="text-align:right;">
+1.66
+</td>
+<td style="text-align:right;">
+2.08
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+logpost
+</td>
+<td style="text-align:right;">
+96.67
+</td>
+<td style="text-align:right;">
+121.18
+</td>
+<td style="text-align:right;">
+5.55
+</td>
+<td style="text-align:right;">
+6.96
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+table
+</td>
+<td style="text-align:right;">
+77.82
+</td>
+<td style="text-align:right;">
+97.56
+</td>
+<td style="text-align:right;">
+64.53
+</td>
+<td style="text-align:right;">
+80.90
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+logcorrection
+</td>
+<td style="text-align:right;">
+10.91
+</td>
+<td style="text-align:right;">
+13.68
+</td>
+<td style="text-align:right;">
+3.73
+</td>
+<td style="text-align:right;">
+4.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+factor
+</td>
+<td style="text-align:right;">
+10.42
+</td>
+<td style="text-align:right;">
+13.06
+</td>
+<td style="text-align:right;">
+2.87
 </td>
 <td style="text-align:right;">
 3.60
 </td>
-<td style="text-align:right;">
-0.00
+</tr>
+<tr>
+<td style="text-align:left;">
+lmnchoose
 </td>
 <td style="text-align:right;">
-0.00
+7.18
+</td>
+<td style="text-align:right;">
+9.00
+</td>
+<td style="text-align:right;">
+0.72
+</td>
+<td style="text-align:right;">
+0.90
 </td>
 </tr>
 </tbody>
@@ -1361,13 +1101,13 @@ logcorrection
 </td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R">
 <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kables</a></span><span class="op">(</span>
   <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_mvhyperg_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for K Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_mvhyperg_100</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_left"</span><span class="op">)</span>,
-    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_mvhyperg_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span>, caption <span class="op">=</span> <span class="st">"Profiling for p Method"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+    <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span><span class="va">prof_mvhyperg_1000</span>, col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"Total %"</span>, <span class="st">"Total Time"</span>, <span class="st">"Self %"</span>, <span class="st">"Self Time"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
       <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/kable_styling.html">kable_styling</a></span><span class="op">(</span>full_width <span class="op">=</span> <span class="cn">FALSE</span>, position <span class="op">=</span> <span class="st">"float_right"</span><span class="op">)</span>
   <span class="op">)</span>,
   caption <span class="op">=</span> <span class="st">"Profile for Multivariate Hypergeometric, N = 100 (left) vs. N = 1000 (right)"</span>
@@ -1380,9 +1120,6 @@ Profile for Multivariate Hypergeometric, N = 100 (left) vs. N = 1000 (right)
 <tbody><tr>
 <td>
 <table class="table table">
-<caption>
-Profiling for K Method
-</caption>
 <thead><tr>
 <th style="text-align:left;">
 </th>
@@ -1405,16 +1142,16 @@ Self Time
 popsim_mvhypergeometric
 </td>
 <td style="text-align:right;">
-100.00
+97.91
 </td>
 <td style="text-align:right;">
-1.72
+4.68
 </td>
 <td style="text-align:right;">
-1.16
+2.09
 </td>
 <td style="text-align:right;">
-0.02
+0.10
 </td>
 </tr>
 <tr>
@@ -1422,16 +1159,16 @@ popsim_mvhypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-96.51
+92.47
 </td>
 <td style="text-align:right;">
-1.66
+4.42
 </td>
 <td style="text-align:right;">
-2.33
+7.95
 </td>
 <td style="text-align:right;">
-0.04
+0.38
 </td>
 </tr>
 <tr>
@@ -1439,16 +1176,16 @@ logpost
 table
 </td>
 <td style="text-align:right;">
-58.14
+60.25
 </td>
 <td style="text-align:right;">
-1.00
+2.88
 </td>
 <td style="text-align:right;">
-9.30
+25.10
 </td>
 <td style="text-align:right;">
-0.16
+1.20
 </td>
 </tr>
 <tr>
@@ -1456,16 +1193,16 @@ table
 factor
 </td>
 <td style="text-align:right;">
-39.53
+23.85
 </td>
 <td style="text-align:right;">
-0.68
+1.14
 </td>
 <td style="text-align:right;">
-26.74
+6.69
 </td>
 <td style="text-align:right;">
-0.46
+0.32
 </td>
 </tr>
 <tr>
@@ -1473,16 +1210,16 @@ factor
 lmnchoose
 </td>
 <td style="text-align:right;">
-26.74
+19.25
 </td>
 <td style="text-align:right;">
-0.46
+0.92
 </td>
 <td style="text-align:right;">
-2.33
+1.26
 </td>
 <td style="text-align:right;">
-0.04
+0.06
 </td>
 </tr>
 <tr>
@@ -1490,16 +1227,16 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-20.93
+17.99
 </td>
 <td style="text-align:right;">
-0.36
+0.86
 </td>
 <td style="text-align:right;">
-1.16
+8.79
 </td>
 <td style="text-align:right;">
-0.02
+0.42
 </td>
 </tr>
 </tbody>
@@ -1507,9 +1244,6 @@ sapply
 </td>
 <td>
 <table class="table table">
-<caption>
-Profiling for p Method
-</caption>
 <thead><tr>
 <th style="text-align:left;">
 </th>
@@ -1532,16 +1266,16 @@ Self Time
 popsim_mvhypergeometric
 </td>
 <td style="text-align:right;">
-100.00
+99.20
 </td>
 <td style="text-align:right;">
-65.52
+133.64
 </td>
 <td style="text-align:right;">
-0.61
+1.47
 </td>
 <td style="text-align:right;">
-0.40
+1.98
 </td>
 </tr>
 <tr>
@@ -1549,16 +1283,16 @@ popsim_mvhypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-98.44
+97.09
 </td>
 <td style="text-align:right;">
-64.50
+130.80
 </td>
 <td style="text-align:right;">
-0.34
+4.71
 </td>
 <td style="text-align:right;">
-0.22
+6.34
 </td>
 </tr>
 <tr>
@@ -1566,33 +1300,16 @@ logpost
 table
 </td>
 <td style="text-align:right;">
-86.26
+70.74
 </td>
 <td style="text-align:right;">
-56.52
+95.30
 </td>
 <td style="text-align:right;">
-3.54
+59.65
 </td>
 <td style="text-align:right;">
-2.32
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-factor
-</td>
-<td style="text-align:right;">
-78.88
-</td>
-<td style="text-align:right;">
-51.68
-</td>
-<td style="text-align:right;">
-72.62
-</td>
-<td style="text-align:right;">
-47.58
+80.36
 </td>
 </tr>
 <tr>
@@ -1600,16 +1317,16 @@ factor
 lmnchoose
 </td>
 <td style="text-align:right;">
-10.20
+12.50
 </td>
 <td style="text-align:right;">
-6.68
+16.84
 </td>
 <td style="text-align:right;">
-3.79
+1.10
 </td>
 <td style="text-align:right;">
-2.48
+1.48
 </td>
 </tr>
 <tr>
@@ -1617,16 +1334,33 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-5.98
+11.40
 </td>
 <td style="text-align:right;">
-3.92
+15.36
 </td>
 <td style="text-align:right;">
-0.49
+1.92
 </td>
 <td style="text-align:right;">
-0.32
+2.58
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+logprior
+</td>
+<td style="text-align:right;">
+10.63
+</td>
+<td style="text-align:right;">
+14.32
+</td>
+<td style="text-align:right;">
+4.02
+</td>
+<td style="text-align:right;">
+5.42
 </td>
 </tr>
 </tbody>
@@ -1637,9 +1371,9 @@ sapply
 </div>
 <div id="coverage" class="section level2">
 <h2 class="hasAnchor">
-<a href="#coverage" class="anchor"></a>Coverage</h2>
+<a href="#coverage" class="anchor"></a><span class="header-section-number">3.4</span> Coverage</h2>
 <p>We can also consider the empirical coverage rates of credible intervals. We will only include the binary methods here, because the multiclass methods take far too long using the simple formulations above. They can be optimized further, of course; in particular, the requirement of using <code>table</code> instead of <code>mean</code> is particularly taxing. However, it is possible to update the table during the iterations instead of recalculating it. We haven’t done so here because wanted the most simple formulations. For these coverage rates, we will use <span class="math inline">\(N = 100,\ n = 10\)</span></p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">100</span>
 <span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">10</span>
 
