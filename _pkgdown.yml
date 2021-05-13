@@ -1,5 +1,8 @@
 url: https://ctgrubb.github.io/lemur.pack/
 
+pkgdown:
+  as_is: true
+
 development:
   mode: auto
 
