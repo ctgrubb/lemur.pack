@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Calculate the multinomial coefficient. — Special • lemur.pack</title>
+<title>(More) Special Functions of Mathematics — Special • lemur.pack</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,11 @@
 
 
 
-<meta property="og:title" content="Calculate the multinomial coefficient. — Special" />
+<meta property="og:title" content="(More) Special Functions of Mathematics — Special" />
 <meta property="og:description" content="
 
-mnchoose returns the multinomial coefficient.
-lmnchoose returns the natural logarithm of the multinomial coefficient." />
+Special mathematical functions not included in base R, specifically the multivariate form of the beta function and the
+multinomial coefficient." />
 
 
 
@@ -101,10 +101,7 @@ lmnchoose returns the natural logarithm of the multinomial coefficient." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/articles/binary-1d-example.html">Binary 1-d Example</a>
-    </li>
-    <li>
-      <a href="../articles/articles/binary-2d-example.html">Extending to 2-d</a>
+      <a href="../articles/articles/discreteIntro.html">Intro - Univariate Discrete</a>
     </li>
   </ul>
 </li>
@@ -141,47 +138,68 @@ lmnchoose returns the natural logarithm of the multinomial coefficient." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Calculate the multinomial coefficient.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/ctgrubb/lemur.pack/blob/master/R/lmnchoose.R'><code>R/lmnchoose.R</code></a></small>
+    <h1>(More) Special Functions of Mathematics</h1>
+    
     <div class="hidden name"><code>Special.Rd</code></div>
     </div>
 
     <div class="ref-description">
     <p><script id="MathJax-script" async src="../../mathjaxr/doc/mathjax/es5/tex-chtml-full.js"></script>
 
-<code>mnchoose</code> returns the multinomial coefficient.
-<code>lmnchoose</code> returns the natural logarithm of the multinomial coefficient.</p>
+Special mathematical functions not included in base R, specifically the multivariate form of the beta function and the
+multinomial coefficient.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>mnchoose</span><span class='op'>(</span><span class='va'>n</span>, <span class='va'>k</span><span class='op'>)</span>
+    <pre class="usage"><span class='fu'>mvbeta</span><span class='op'>(</span><span class='va'>a</span><span class='op'>)</span>
+<span class='fu'>lmvbeta</span><span class='op'>(</span><span class='va'>a</span><span class='op'>)</span>
 
+<span class='fu'>mnchoose</span><span class='op'>(</span><span class='va'>n</span>, <span class='va'>k</span><span class='op'>)</span>
 <span class='fu'>lmnchoose</span><span class='op'>(</span><span class='va'>n</span>, <span class='va'>k</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>a</th>
+      <td><p>non-negative numeric vector.</p></td>
+    </tr>
+    <tr>
       <th>n</th>
-      <td><p>number representing the size of the sample.</p></td>
+      <td><p>non-negative integer.</p></td>
     </tr>
     <tr>
       <th>k</th>
-      <td><p>numeric vector representing the number of times each category was chosen.</p></td>
+      <td><p>non-negative integer vector.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The multinomail coefficient is the
-generalization of the binomial coefficient, and represents the number of ways it is possible to choose
-\(k_1\) objects of class 1, \(k_2\) objects of class 2, up to \(k_m\) objects of class m,
-from a sample of size <code>n</code>.</p>
-<p>The multinomail coefficient can be expressed as
-\[{n \choose \mathbb{k}} = \frac{n!}{k_1! k_2! ... k_m!}\]</p>
-<p>This calculation is difficult (or impossible) for large <code>n</code>, so it is calculated in log space, which is much
-easier. If the logarithm is not desired, the result is exponentiated, but beware this can also fail if <code>n</code> is
-large enough.</p>
+    <p>The functions <code>mvbeta</code> and <code>lmvbeta</code> return the multivariate beta function and the natural logarithm of the
+multivariate beta function,
+\[\beta(a) = \Gamma(a_1)\Gamma(a_2) ... \Gamma(a_m)/\Gamma(a_1 + a_2 + \dots + a_m).\]</p>
+<p>The functions <code>mnchoose</code> and <code>lmnchoose</code> return the multinomial coefficient and the natural logarithm of the
+multinomial coefficent,
+\[{n \choose \mathbb{k}} = \frac{n!}{k_1! k_2! \dots k_m!}.\]</p>
+<p>These calculations are difficult (or impossible) for large <code>n</code>, so it is calculated in log space, which is much
+easier. If the logarithm is not desired, the result is exponentiated (and rounded, because
+\({n \choose \mathbb{k}}\) should be an integer), but beware this can also fail if <code>n</code> is large enough.</p>
+    <h2 class="hasAnchor" id="references"><a class="anchor" href="#references"></a>References</h2>
 
+    <p><a href='https://en.wikipedia.org/wiki/Beta_function#Multivariate_beta_function'>https://en.wikipedia.org/wiki/Beta_function#Multivariate_beta_function</a>
+<a href='https://en.wikipedia.org/wiki/Multinomial_theorem#Multinomial_coefficients'>https://en.wikipedia.org/wiki/Multinomial_theorem#Multinomial_coefficients</a></p>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p>See <code><a href='https://rdrr.io/r/base/Special.html'>Special</a></code> for the univariate beta function and the binomial coefficient.</p></div>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='fu'>mvbeta</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>0.5</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.5235988</div><div class='input'><span class='fu'>lmvbeta</span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.5</span>, <span class='fl'>1</span>, <span class='fl'>0.5</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] -0.6470296</div><div class='input'>
+<span class='fu'>mnchoose</span><span class='op'>(</span><span class='fl'>12</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 277200</div><div class='input'><span class='fu'>lmnchoose</span><span class='op'>(</span><span class='fl'>12</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>3</span>, <span class='fl'>3</span>, <span class='fl'>4</span>, <span class='fl'>2</span><span class='op'>)</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 12.53249</div><div class='input'>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
