@@ -1,5 +1,7 @@
 ---
 title: "Introduction to Univariate Discrete Population Synthesis"
+pkgdown:
+  as_is: true
 output:
   rmarkdown::html_document:
     number_sections: true
@@ -26,7 +28,7 @@ library(magrittr)
 ```
 
 This vignette explains population synthesis for the discrete cases; in particular we will talk about the situations where subjects are described by the following:
-  
+
   * (Case 1) A single binary $\mathbf{\{0, 1\}}$ variable
   * (Case 2) A single ternary (or higher) $\mathbf{\{0, 1, \dots, c\}}$ variable
 
@@ -46,7 +48,7 @@ For the univariate discrete case, this is actually quite simple, however we do h
   * What is the distribution of $f(\mathbf{X} = \mathbf{x} | \theta)$?
   * What prior $\pi(\theta)$ should we use?
 
-The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the **multivariate** $Hypergeometric$, even though it is still univariate. 
+The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the **multivariate** $Hypergeometric$, even though it is still univariate.
 
 If the population is sufficiently large, or we know it was sampled with replacement, we may choose to use a $Binomial$ or $Multinomial$ likelihood, instead. Sampling with replacement results in independent samples; sampling without replacement yields samples that are not independent. This document will not go into detail about the difference between these two, but you should be aware that extreme samples (e.g., a sample very close to being all $1$'s or all $0$'s) are more likely when sampling with replacement. In essence, this results in our distribution over $K$ (the number of successes in the population) having fatter tails when we use the $Binomial$ likelihood versus the $Hypergeometric$ likelihood. The table below summarizes which distribution we will use for our likelihood.
 
@@ -76,7 +78,7 @@ If the population is sufficiently large, or we know it was sampled with replacem
 </tbody>
 </table>
 
-Of course, the choice of prior $\pi(\theta)$ depends on the likelihood we choose. This document will focus on the likely choice; if we are using a $Binomial$ or $Multinomial$ likelihood, we probably will use some form of the conjugate prior, $Beta(a, b)$ or $Dirichlet(\alpha)$, respectively. In particular, the most common choices are $Beta(1, 1)$, the continuous uniform, and $Beta(1/2, 1/2)$, the Jeffreys prior, for the $Binomial$ case. Likewise, these have direct extensions in $Dirichlet(1, \dots, 1)$, and $Dirichlet(1/2, \dots, 1/2)$ for the $Multinomial$ case. 
+Of course, the choice of prior $\pi(\theta)$ depends on the likelihood we choose. This document will focus on the likely choice; if we are using a $Binomial$ or $Multinomial$ likelihood, we probably will use some form of the conjugate prior, $Beta(a, b)$ or $Dirichlet(\alpha)$, respectively. In particular, the most common choices are $Beta(1, 1)$, the continuous uniform, and $Beta(1/2, 1/2)$, the Jeffreys prior, for the $Binomial$ case. Likewise, these have direct extensions in $Dirichlet(1, \dots, 1)$, and $Dirichlet(1/2, \dots, 1/2)$ for the $Multinomial$ case.
 
 As we will see the multi-category extensions of these distributions does not change much. Thus, we will start with the binary versions and then discuss what changes when we switch to having three or more categories.
 
@@ -299,7 +301,7 @@ popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(u
   return(out[-1, ])
 }
 ```
- 
+
 ## Hypergeometric
 
 Now we do the same thing, but instead use the posterior in terms of $K$ to determine whether to accept or reject synthesized populations.
@@ -372,7 +374,7 @@ popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, len
 
   out <- matrix(NA, nrow = samples + 1, ncol = N)
   out[1, ] <- rep(obs, length.out = N)
-  
+
 
   current_lp <- logpost(as.numeric(table(out[1, ])), N, J, n, alpha)
 
@@ -451,7 +453,7 @@ lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col
 
 ## Time
 
-Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible. 
+Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible.
 
 
 ```r
@@ -460,6 +462,7 @@ prof_binom_1000 <- as.matrix(flatProfile(popsim_binom_prof_1000, byTotal = TRUE,
 
 prof_hyperg_100 <- as.matrix(flatProfile(popsim_hyperg_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
 prof_hyperg_1000 <- as.matrix(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
+#> Error in as.matrix(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, : subscript out of bounds
 
 prof_multinom_100 <- as.matrix(flatProfile(popsim_multinom_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
 prof_multinom_1000 <- as.matrix(flatProfile(popsim_multinom_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
@@ -469,9 +472,9 @@ prof_mvhyperg_1000 <- as.matrix(flatProfile(popsim_mvhyperg_prof_1000, byTotal =
 
 kables(
   list(
-    kable(prof_binom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_binom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_binom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_binom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Binomial, N = 100 (left) vs. N = 1000 (right)"
@@ -486,7 +489,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: left; margin-right: 10px;">
-<caption>Profiling for K Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -499,44 +501,44 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_binomial </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 1.18 </td>
-   <td style="text-align:right;"> 20.34 </td>
-   <td style="text-align:right;"> 0.24 </td>
+   <td style="text-align:right;"> 81.25 </td>
+   <td style="text-align:right;"> 2.34 </td>
+   <td style="text-align:right;"> 27.78 </td>
+   <td style="text-align:right;"> 0.80 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 66.10 </td>
-   <td style="text-align:right;"> 0.78 </td>
-   <td style="text-align:right;"> 8.47 </td>
-   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 52.08 </td>
+   <td style="text-align:right;"> 1.50 </td>
+   <td style="text-align:right;"> 23.61 </td>
+   <td style="text-align:right;"> 0.68 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dbinom </td>
-   <td style="text-align:right;"> 28.81 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 8.47 </td>
-   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 23.61 </td>
+   <td style="text-align:right;"> 0.68 </td>
+   <td style="text-align:right;"> 13.89 </td>
+   <td style="text-align:right;"> 0.40 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 22.03 </td>
-   <td style="text-align:right;"> 0.26 </td>
-   <td style="text-align:right;"> 10.17 </td>
-   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:left;"> &lt;Other&gt; </td>
+   <td style="text-align:right;"> 18.75 </td>
+   <td style="text-align:right;"> 0.54 </td>
+   <td style="text-align:right;"> 18.75 </td>
+   <td style="text-align:right;"> 0.54 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mean </td>
-   <td style="text-align:right;"> 20.34 </td>
-   <td style="text-align:right;"> 0.24 </td>
-   <td style="text-align:right;"> 8.47 </td>
-   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:right;"> 9.72 </td>
+   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 5.56 </td>
+   <td style="text-align:right;"> 0.16 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> dbeta </td>
-   <td style="text-align:right;"> 11.86 </td>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 4.86 </td>
    <td style="text-align:right;"> 0.14 </td>
-   <td style="text-align:right;"> 11.86 </td>
+   <td style="text-align:right;"> 4.86 </td>
    <td style="text-align:right;"> 0.14 </td>
   </tr>
 </tbody>
@@ -546,7 +548,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: right; margin-left: 10px;">
-<caption>Profiling for p Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -559,45 +560,45 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_binomial </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 11.86 </td>
-   <td style="text-align:right;"> 27.49 </td>
-   <td style="text-align:right;"> 3.26 </td>
+   <td style="text-align:right;"> 77.50 </td>
+   <td style="text-align:right;"> 24.04 </td>
+   <td style="text-align:right;"> 22.50 </td>
+   <td style="text-align:right;"> 6.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 61.55 </td>
-   <td style="text-align:right;"> 7.30 </td>
-   <td style="text-align:right;"> 8.43 </td>
-   <td style="text-align:right;"> 1.00 </td>
+   <td style="text-align:right;"> 55.00 </td>
+   <td style="text-align:right;"> 17.06 </td>
+   <td style="text-align:right;"> 20.44 </td>
+   <td style="text-align:right;"> 6.34 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dbinom </td>
-   <td style="text-align:right;"> 35.24 </td>
-   <td style="text-align:right;"> 4.18 </td>
-   <td style="text-align:right;"> 8.09 </td>
-   <td style="text-align:right;"> 0.96 </td>
+   <td style="text-align:right;"> 27.14 </td>
+   <td style="text-align:right;"> 8.42 </td>
+   <td style="text-align:right;"> 12.83 </td>
+   <td style="text-align:right;"> 3.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> &lt;Other&gt; </td>
+   <td style="text-align:right;"> 22.50 </td>
+   <td style="text-align:right;"> 6.98 </td>
+   <td style="text-align:right;"> 22.50 </td>
+   <td style="text-align:right;"> 6.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mean </td>
-   <td style="text-align:right;"> 27.15 </td>
-   <td style="text-align:right;"> 3.22 </td>
-   <td style="text-align:right;"> 6.91 </td>
-   <td style="text-align:right;"> 0.82 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mean.default </td>
-   <td style="text-align:right;"> 20.24 </td>
-   <td style="text-align:right;"> 2.40 </td>
-   <td style="text-align:right;"> 19.90 </td>
-   <td style="text-align:right;"> 2.36 </td>
+   <td style="text-align:right;"> 14.31 </td>
+   <td style="text-align:right;"> 4.44 </td>
+   <td style="text-align:right;"> 12.89 </td>
+   <td style="text-align:right;"> 4.00 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 14.00 </td>
-   <td style="text-align:right;"> 1.66 </td>
-   <td style="text-align:right;"> 5.06 </td>
-   <td style="text-align:right;"> 0.60 </td>
+   <td style="text-align:right;"> 7.41 </td>
+   <td style="text-align:right;"> 2.30 </td>
+   <td style="text-align:right;"> 7.41 </td>
+   <td style="text-align:right;"> 2.30 </td>
   </tr>
 </tbody>
 </table>
@@ -611,151 +612,21 @@ kables(
 
 kables(
   list(
-    kable(prof_hyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_hyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Hypergeometric, N = 100 (left) vs. N = 1000 (right)"
 ) %>%
   kable_styling(full_width = TRUE)
-```
-
-<table class="kable_wrapper table" style="margin-left: auto; margin-right: auto;">
-<caption>Profile for Hypergeometric, N = 100 (left) vs. N = 1000 (right)</caption>
-<tbody>
-  <tr>
-   <td> 
-
-<table class="table" style="width: auto !important; float: left; margin-right: 10px;">
-<caption>Profiling for K Method</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> Total % </th>
-   <th style="text-align:right;"> Total Time </th>
-   <th style="text-align:right;"> Self % </th>
-   <th style="text-align:right;"> Self Time </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> popsim_hypergeometric </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 0.76 </td>
-   <td style="text-align:right;"> 10.53 </td>
-   <td style="text-align:right;"> 0.08 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 76.32 </td>
-   <td style="text-align:right;"> 0.58 </td>
-   <td style="text-align:right;"> 15.79 </td>
-   <td style="text-align:right;"> 0.12 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 28.95 </td>
-   <td style="text-align:right;"> 0.22 </td>
-   <td style="text-align:right;"> 28.95 </td>
-   <td style="text-align:right;"> 0.22 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> dhyper </td>
-   <td style="text-align:right;"> 26.32 </td>
-   <td style="text-align:right;"> 0.20 </td>
-   <td style="text-align:right;"> 23.68 </td>
-   <td style="text-align:right;"> 0.18 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> runif </td>
-   <td style="text-align:right;"> 10.53 </td>
-   <td style="text-align:right;"> 0.08 </td>
-   <td style="text-align:right;"> 10.53 </td>
-   <td style="text-align:right;"> 0.08 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> logcorrection </td>
-   <td style="text-align:right;"> 5.26 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 5.26 </td>
-   <td style="text-align:right;"> 0.04 </td>
-  </tr>
-</tbody>
-</table>
-
- </td>
-   <td> 
-
-<table class="table" style="width: auto !important; float: right; margin-left: 10px;">
-<caption>Profiling for p Method</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">   </th>
-   <th style="text-align:right;"> Total % </th>
-   <th style="text-align:right;"> Total Time </th>
-   <th style="text-align:right;"> Self % </th>
-   <th style="text-align:right;"> Self Time </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> popsim_hypergeometric </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 9.38 </td>
-   <td style="text-align:right;"> 36.25 </td>
-   <td style="text-align:right;"> 3.40 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 52.24 </td>
-   <td style="text-align:right;"> 4.90 </td>
-   <td style="text-align:right;"> 12.79 </td>
-   <td style="text-align:right;"> 1.20 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> dhyper </td>
-   <td style="text-align:right;"> 21.11 </td>
-   <td style="text-align:right;"> 1.98 </td>
-   <td style="text-align:right;"> 11.73 </td>
-   <td style="text-align:right;"> 1.10 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 14.07 </td>
-   <td style="text-align:right;"> 1.32 </td>
-   <td style="text-align:right;"> 14.07 </td>
-   <td style="text-align:right;"> 1.32 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> runif </td>
-   <td style="text-align:right;"> 10.45 </td>
-   <td style="text-align:right;"> 0.98 </td>
-   <td style="text-align:right;"> 10.45 </td>
-   <td style="text-align:right;"> 0.98 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> sum </td>
-   <td style="text-align:right;"> 9.38 </td>
-   <td style="text-align:right;"> 0.88 </td>
-   <td style="text-align:right;"> 9.38 </td>
-   <td style="text-align:right;"> 0.88 </td>
-  </tr>
-</tbody>
-</table>
-
- </td>
-  </tr>
-</tbody>
-</table>
-
-```r
+#> Error in kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", : object 'prof_hyperg_1000' not found
 
 kables(
   list(
-    kable(prof_multinom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_multinom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_multinom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_multinom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Multinomial, N = 100 (left) vs. N = 1000 (right)"
@@ -770,7 +641,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: left; margin-right: 10px;">
-<caption>Profiling for K Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -783,45 +653,45 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_multinomial </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 1.66 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 97.32 </td>
+   <td style="text-align:right;"> 4.36 </td>
+   <td style="text-align:right;"> 8.04 </td>
+   <td style="text-align:right;"> 0.36 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 98.80 </td>
-   <td style="text-align:right;"> 1.64 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 85.27 </td>
+   <td style="text-align:right;"> 3.82 </td>
+   <td style="text-align:right;"> 10.71 </td>
+   <td style="text-align:right;"> 0.48 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> table </td>
-   <td style="text-align:right;"> 84.34 </td>
-   <td style="text-align:right;"> 1.40 </td>
-   <td style="text-align:right;"> 9.64 </td>
-   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 50.45 </td>
+   <td style="text-align:right;"> 2.26 </td>
+   <td style="text-align:right;"> 27.23 </td>
+   <td style="text-align:right;"> 1.22 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> factor </td>
-   <td style="text-align:right;"> 57.83 </td>
-   <td style="text-align:right;"> 0.96 </td>
-   <td style="text-align:right;"> 33.73 </td>
-   <td style="text-align:right;"> 0.56 </td>
+   <td style="text-align:left;"> logcorrection </td>
+   <td style="text-align:right;"> 20.54 </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 2.23 </td>
+   <td style="text-align:right;"> 0.10 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> order </td>
-   <td style="text-align:right;"> 12.05 </td>
+   <td style="text-align:left;"> lmnchoose </td>
+   <td style="text-align:right;"> 18.30 </td>
+   <td style="text-align:right;"> 0.82 </td>
+   <td style="text-align:right;"> 1.79 </td>
+   <td style="text-align:right;"> 0.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sapply </td>
+   <td style="text-align:right;"> 16.52 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 4.46 </td>
    <td style="text-align:right;"> 0.20 </td>
-   <td style="text-align:right;"> 6.02 </td>
-   <td style="text-align:right;"> 0.10 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> unique </td>
-   <td style="text-align:right;"> 8.43 </td>
-   <td style="text-align:right;"> 0.14 </td>
-   <td style="text-align:right;"> 6.02 </td>
-   <td style="text-align:right;"> 0.10 </td>
   </tr>
 </tbody>
 </table>
@@ -830,7 +700,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: right; margin-left: 10px;">
-<caption>Profiling for p Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -843,45 +712,45 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_multinomial </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 63.20 </td>
-   <td style="text-align:right;"> 0.35 </td>
-   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 98.95 </td>
+   <td style="text-align:right;"> 124.04 </td>
+   <td style="text-align:right;"> 1.66 </td>
+   <td style="text-align:right;"> 2.08 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 98.77 </td>
-   <td style="text-align:right;"> 62.42 </td>
-   <td style="text-align:right;"> 0.44 </td>
-   <td style="text-align:right;"> 0.28 </td>
+   <td style="text-align:right;"> 96.67 </td>
+   <td style="text-align:right;"> 121.18 </td>
+   <td style="text-align:right;"> 5.55 </td>
+   <td style="text-align:right;"> 6.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> table </td>
-   <td style="text-align:right;"> 90.44 </td>
-   <td style="text-align:right;"> 57.16 </td>
-   <td style="text-align:right;"> 3.16 </td>
-   <td style="text-align:right;"> 2.00 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> factor </td>
-   <td style="text-align:right;"> 83.51 </td>
-   <td style="text-align:right;"> 52.78 </td>
-   <td style="text-align:right;"> 77.47 </td>
-   <td style="text-align:right;"> 48.96 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 5.70 </td>
-   <td style="text-align:right;"> 3.60 </td>
-   <td style="text-align:right;"> 1.68 </td>
-   <td style="text-align:right;"> 1.06 </td>
+   <td style="text-align:right;"> 77.82 </td>
+   <td style="text-align:right;"> 97.56 </td>
+   <td style="text-align:right;"> 64.53 </td>
+   <td style="text-align:right;"> 80.90 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logcorrection </td>
-   <td style="text-align:right;"> 5.70 </td>
+   <td style="text-align:right;"> 10.91 </td>
+   <td style="text-align:right;"> 13.68 </td>
+   <td style="text-align:right;"> 3.73 </td>
+   <td style="text-align:right;"> 4.68 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> factor </td>
+   <td style="text-align:right;"> 10.42 </td>
+   <td style="text-align:right;"> 13.06 </td>
+   <td style="text-align:right;"> 2.87 </td>
    <td style="text-align:right;"> 3.60 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lmnchoose </td>
+   <td style="text-align:right;"> 7.18 </td>
+   <td style="text-align:right;"> 9.00 </td>
+   <td style="text-align:right;"> 0.72 </td>
+   <td style="text-align:right;"> 0.90 </td>
   </tr>
 </tbody>
 </table>
@@ -895,9 +764,9 @@ kables(
 
 kables(
   list(
-    kable(prof_mvhyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_mvhyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_mvhyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_mvhyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Multivariate Hypergeometric, N = 100 (left) vs. N = 1000 (right)"
@@ -912,7 +781,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: left; margin-right: 10px;">
-<caption>Profiling for K Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -925,45 +793,45 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_mvhypergeometric </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 1.72 </td>
-   <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 97.91 </td>
+   <td style="text-align:right;"> 4.68 </td>
+   <td style="text-align:right;"> 2.09 </td>
+   <td style="text-align:right;"> 0.10 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 96.51 </td>
-   <td style="text-align:right;"> 1.66 </td>
-   <td style="text-align:right;"> 2.33 </td>
-   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 92.47 </td>
+   <td style="text-align:right;"> 4.42 </td>
+   <td style="text-align:right;"> 7.95 </td>
+   <td style="text-align:right;"> 0.38 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> table </td>
-   <td style="text-align:right;"> 58.14 </td>
-   <td style="text-align:right;"> 1.00 </td>
-   <td style="text-align:right;"> 9.30 </td>
-   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:right;"> 60.25 </td>
+   <td style="text-align:right;"> 2.88 </td>
+   <td style="text-align:right;"> 25.10 </td>
+   <td style="text-align:right;"> 1.20 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> factor </td>
-   <td style="text-align:right;"> 39.53 </td>
-   <td style="text-align:right;"> 0.68 </td>
-   <td style="text-align:right;"> 26.74 </td>
-   <td style="text-align:right;"> 0.46 </td>
+   <td style="text-align:right;"> 23.85 </td>
+   <td style="text-align:right;"> 1.14 </td>
+   <td style="text-align:right;"> 6.69 </td>
+   <td style="text-align:right;"> 0.32 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 26.74 </td>
-   <td style="text-align:right;"> 0.46 </td>
-   <td style="text-align:right;"> 2.33 </td>
-   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 19.25 </td>
+   <td style="text-align:right;"> 0.92 </td>
+   <td style="text-align:right;"> 1.26 </td>
+   <td style="text-align:right;"> 0.06 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sapply </td>
-   <td style="text-align:right;"> 20.93 </td>
-   <td style="text-align:right;"> 0.36 </td>
-   <td style="text-align:right;"> 1.16 </td>
-   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 17.99 </td>
+   <td style="text-align:right;"> 0.86 </td>
+   <td style="text-align:right;"> 8.79 </td>
+   <td style="text-align:right;"> 0.42 </td>
   </tr>
 </tbody>
 </table>
@@ -972,7 +840,6 @@ kables(
    <td> 
 
 <table class="table" style="width: auto !important; float: right; margin-left: 10px;">
-<caption>Profiling for p Method</caption>
  <thead>
   <tr>
    <th style="text-align:left;">   </th>
@@ -985,45 +852,45 @@ kables(
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_mvhypergeometric </td>
-   <td style="text-align:right;"> 100.00 </td>
-   <td style="text-align:right;"> 65.52 </td>
-   <td style="text-align:right;"> 0.61 </td>
-   <td style="text-align:right;"> 0.40 </td>
+   <td style="text-align:right;"> 99.20 </td>
+   <td style="text-align:right;"> 133.64 </td>
+   <td style="text-align:right;"> 1.47 </td>
+   <td style="text-align:right;"> 1.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 98.44 </td>
-   <td style="text-align:right;"> 64.50 </td>
-   <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 97.09 </td>
+   <td style="text-align:right;"> 130.80 </td>
+   <td style="text-align:right;"> 4.71 </td>
+   <td style="text-align:right;"> 6.34 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> table </td>
-   <td style="text-align:right;"> 86.26 </td>
-   <td style="text-align:right;"> 56.52 </td>
-   <td style="text-align:right;"> 3.54 </td>
-   <td style="text-align:right;"> 2.32 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> factor </td>
-   <td style="text-align:right;"> 78.88 </td>
-   <td style="text-align:right;"> 51.68 </td>
-   <td style="text-align:right;"> 72.62 </td>
-   <td style="text-align:right;"> 47.58 </td>
+   <td style="text-align:right;"> 70.74 </td>
+   <td style="text-align:right;"> 95.30 </td>
+   <td style="text-align:right;"> 59.65 </td>
+   <td style="text-align:right;"> 80.36 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 10.20 </td>
-   <td style="text-align:right;"> 6.68 </td>
-   <td style="text-align:right;"> 3.79 </td>
-   <td style="text-align:right;"> 2.48 </td>
+   <td style="text-align:right;"> 12.50 </td>
+   <td style="text-align:right;"> 16.84 </td>
+   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 1.48 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sapply </td>
-   <td style="text-align:right;"> 5.98 </td>
-   <td style="text-align:right;"> 3.92 </td>
-   <td style="text-align:right;"> 0.49 </td>
-   <td style="text-align:right;"> 0.32 </td>
+   <td style="text-align:right;"> 11.40 </td>
+   <td style="text-align:right;"> 15.36 </td>
+   <td style="text-align:right;"> 1.92 </td>
+   <td style="text-align:right;"> 2.58 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 10.63 </td>
+   <td style="text-align:right;"> 14.32 </td>
+   <td style="text-align:right;"> 4.02 </td>
+   <td style="text-align:right;"> 5.42 </td>
   </tr>
 </tbody>
 </table>

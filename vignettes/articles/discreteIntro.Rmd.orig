@@ -1,5 +1,7 @@
 ---
 title: "Introduction to Univariate Discrete Population Synthesis"
+pkgdown:
+  as_is: true
 output:
   rmarkdown::html_document:
     number_sections: true
@@ -23,15 +25,15 @@ quick_eval <- TRUE
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
   comp_iters_binary <- 1000
-  comp_iters_mc <- 100  
-    
+  comp_iters_mc <- 100
+
   cov_points <- 3
   cov_samples <- 10
   cov_iters <- 100
 } else {
   comp_iters_binary <- 100000
-  comp_iters_mc <- 5000  
-    
+  comp_iters_mc <- 5000
+
   cov_points <- 15
   cov_samples <- 100
   cov_iters <- 1000
@@ -51,7 +53,7 @@ library(magrittr)
 ```
 
 This vignette explains population synthesis for the discrete cases; in particular we will talk about the situations where subjects are described by the following:
-  
+
   * (Case 1) A single binary $\mathbf{\{0, 1\}}$ variable
   * (Case 2) A single ternary (or higher) $\mathbf{\{0, 1, \dots, c\}}$ variable
 
@@ -71,14 +73,14 @@ For the univariate discrete case, this is actually quite simple, however we do h
   * What is the distribution of $f(\mathbf{X} = \mathbf{x} | \theta)$?
   * What prior $\pi(\theta)$ should we use?
 
-The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the **multivariate** $Hypergeometric$, even though it is still univariate. 
+The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the **multivariate** $Hypergeometric$, even though it is still univariate.
 
 If the population is sufficiently large, or we know it was sampled with replacement, we may choose to use a $Binomial$ or $Multinomial$ likelihood, instead. Sampling with replacement results in independent samples; sampling without replacement yields samples that are not independent. This document will not go into detail about the difference between these two, but you should be aware that extreme samples (e.g., a sample very close to being all $1$'s or all $0$'s) are more likely when sampling with replacement. In essence, this results in our distribution over $K$ (the number of successes in the population) having fatter tails when we use the $Binomial$ likelihood versus the $Hypergeometric$ likelihood. The table below summarizes which distribution we will use for our likelihood.
 
 ```{r method_table, echo = FALSE, eval = TRUE}
 table.df <- data.frame(
-  Case = c(1, 2), 
-  Yes = c("Binomial", "Multinomial"), 
+  Case = c(1, 2),
+  Yes = c("Binomial", "Multinomial"),
   No = c("Hypergeometric", "MV Hypergeometric")
 )
 
@@ -87,7 +89,7 @@ kable(table.df, format = "html", align = "c") %>%
   kable_styling(full_width = TRUE)
 ```
 
-Of course, the choice of prior $\pi(\theta)$ depends on the likelihood we choose. This document will focus on the likely choice; if we are using a $Binomial$ or $Multinomial$ likelihood, we probably will use some form of the conjugate prior, $Beta(a, b)$ or $Dirichlet(\alpha)$, respectively. In particular, the most common choices are $Beta(1, 1)$, the continuous uniform, and $Beta(1/2, 1/2)$, the Jeffreys prior, for the $Binomial$ case. Likewise, these have direct extensions in $Dirichlet(1, \dots, 1)$, and $Dirichlet(1/2, \dots, 1/2)$ for the $Multinomial$ case. 
+Of course, the choice of prior $\pi(\theta)$ depends on the likelihood we choose. This document will focus on the likely choice; if we are using a $Binomial$ or $Multinomial$ likelihood, we probably will use some form of the conjugate prior, $Beta(a, b)$ or $Dirichlet(\alpha)$, respectively. In particular, the most common choices are $Beta(1, 1)$, the continuous uniform, and $Beta(1/2, 1/2)$, the Jeffreys prior, for the $Binomial$ case. Likewise, these have direct extensions in $Dirichlet(1, \dots, 1)$, and $Dirichlet(1/2, \dots, 1/2)$ for the $Multinomial$ case.
 
 As we will see the multi-category extensions of these distributions does not change much. Thus, we will start with the binary versions and then discuss what changes when we switch to having three or more categories.
 
@@ -302,7 +304,7 @@ popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(u
   return(out[-1, ])
 }
 ```
- 
+
 ## Hypergeometric
 
 Now we do the same thing, but instead use the posterior in terms of $K$ to determine whether to accept or reject synthesized populations.
@@ -373,7 +375,7 @@ popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, len
 
   out <- matrix(NA, nrow = samples + 1, ncol = N)
   out[1, ] <- rep(obs, length.out = N)
-  
+
 
   current_lp <- logpost(as.numeric(table(out[1, ])), N, J, n, alpha)
 
@@ -445,7 +447,7 @@ lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col
 
 ## Time
 
-Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible. 
+Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible.
 
 ```{r timecomp, eval = TRUE, eval = TRUE}
 prof_binom_100 <- as.matrix(flatProfile(popsim_binom_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
@@ -462,9 +464,9 @@ prof_mvhyperg_1000 <- as.matrix(flatProfile(popsim_mvhyperg_prof_1000, byTotal =
 
 kables(
   list(
-    kable(prof_binom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_binom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_binom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_binom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Binomial, N = 100 (left) vs. N = 1000 (right)"
@@ -473,9 +475,9 @@ kables(
 
 kables(
   list(
-    kable(prof_hyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_hyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_hyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Hypergeometric, N = 100 (left) vs. N = 1000 (right)"
@@ -484,9 +486,9 @@ kables(
 
 kables(
   list(
-    kable(prof_multinom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_multinom_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_multinom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_multinom_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Multinomial, N = 100 (left) vs. N = 1000 (right)"
@@ -495,9 +497,9 @@ kables(
 
 kables(
   list(
-    kable(prof_mvhyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for K Method") %>%
+    kable(prof_mvhyperg_100, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_mvhyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time"), caption = "Profiling for p Method") %>%
+    kable(prof_mvhyperg_1000, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_right")
   ),
   caption = "Profile for Multivariate Hypergeometric, N = 100 (left) vs. N = 1000 (right)"
