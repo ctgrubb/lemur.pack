@@ -11,10 +11,8 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: Binary 1-d Example
-        href: articles/articles/binary-1d-example.html
-      - text: Extending to 2-d
-        href: articles/articles/binary-2d-example.html
+      - text: Intro - Univariate Discrete
+        href: articles/articles/discreteIntro.html
     vignettes:
       text: Vignettes
       menu:
