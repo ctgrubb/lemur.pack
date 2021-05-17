@@ -19,16 +19,16 @@ knitr::opts_chunk$set(
   eval = TRUE
 )
 
-quick_eval <- TRUE
+quick_eval <- FALSE
 ```
 
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
-  comp_iters_binary <- 1000
-  comp_iters_mc <- 100
+  comp_iters_binary <- 500
+  comp_iters_mc <- 200
 
   cov_points <- 3
-  cov_samples <- 10
+  cov_samples <- 5
   cov_iters <- 100
 } else {
   comp_iters_binary <- 100000
@@ -49,6 +49,7 @@ library(extraDistr)
 library(knitr)
 library(kableExtra)
 library(proftools)
+library(dplyr)
 library(magrittr)
 ```
 
@@ -270,28 +271,26 @@ popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(u
   }
 
   logpost <- function(K, N, J, n, alpha) {
-    if(length(K) != length(J)) {
-      return(-Inf)
-    }
     p <- K / N
     dmultinom(J, prob = p, log = TRUE) + logprior(p, alpha) + logcorrection(N, K)
   }
 
-  J <- as.numeric(table(obs))
+  J <- tabulate(obs)
   uniq <- sort(unique(obs))
+  classes <- max(uniq)
   n <- length(obs)
 
   out <- matrix(NA, nrow = samples + 1, ncol = N)
   out[1, ] <- rep(obs, length.out = N)
 
-  current_lp <- logpost(as.numeric(table(out[1, ])), N, J, n, alpha)
+  current_lp <- logpost(tabulate(out[1, ], nbins = classes), N, J, n, alpha)
 
   for(i in 2:(samples + 1)) {
     current <- out[i - 1, ]
     for(k in 1:N) {
       proposal <- current
       proposal[k] <- sample(uniq[-proposal[k]], 1)
-      proposal_lp <- logpost(as.numeric(table(proposal)), N, J, n, alpha)
+      proposal_lp <- logpost(tabulate(proposal, nbins = classes), N, J, n, alpha)
 
       u <- runif(1)
       if(!is.na(proposal_lp) & log(u) <= proposal_lp - current_lp) {
@@ -363,28 +362,26 @@ popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, len
   }
 
   logpost <- function(K, N, J, n, alpha) {
-    if(length(K) != length(J)) {
-      return(-Inf)
-    }
     dmvhyper(J, K, n, log = TRUE) + logprior(K, N, alpha) + logcorrection(N, K)
   }
 
-  J <- as.numeric(table(obs))
+  J <- tabulate(obs)
   uniq <- sort(unique(obs))
+  classes <- max(uniq)
   n <- length(obs)
 
   out <- matrix(NA, nrow = samples + 1, ncol = N)
   out[1, ] <- rep(obs, length.out = N)
 
 
-  current_lp <- logpost(as.numeric(table(out[1, ])), N, J, n, alpha)
+  current_lp <- logpost(tabulate(out[1, ], nbins = classes), N, J, n, alpha)
 
   for(i in 2:(samples + 1)) {
     current <- out[i - 1, ]
     for(k in 1:N) {
       proposal <- current
       proposal[k] <- sample(uniq[-proposal[k]], 1)
-      proposal_lp <- logpost(as.numeric(table(proposal)), N, J, n, alpha)
+      proposal_lp <- logpost(tabulate(proposal, nbins = classes), N, J, n, alpha)
 
       u <- runif(1)
       if(!is.na(proposal_lp) & log(u) <= proposal_lp - current_lp) {
@@ -404,7 +401,7 @@ popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, len
 
 The first thing we need is our samples. We are going to use the following:
 
-```{r sample, class.source = "fold-show", eval = TRUE}
+```{r sample, class.source = "fold-show"}
 obs_binary <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
 obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)
 ```
@@ -413,14 +410,14 @@ obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)
 
 For the binary methods, we can compare the location of the posterior to see if the two methods give similar results.
 
-```{r denscomp_binary, fig.cap = "Comparison of density for N = 100 (left) and N = 1000 (right), showing Binomial (red) and Hypergeometric (blue)", fig.show = "hold", out.width = "50%", eval = TRUE}
+```{r denscomp_binary, fig.cap = "Comparison of density for N = 100 (left) and N = 1000 (right), showing Binomial (red) and Hypergeometric (blue)", out.width = "100%", fig.width = 12, fig.height = 6}
 popsim_binom_prof_100 <- profileExpr(popsim_binom_test_100 <- popsim_binomial(obs_binary, N = 100, comp_iters_binary, 0.5, 0.5))
 popsim_hyperg_prof_100 <- profileExpr(popsim_hyperg_test_100 <- popsim_hypergeometric(obs_binary, N = 100, comp_iters_binary, 0.5, 0.5))
 
 popsim_binom_prof_1000 <- profileExpr(popsim_binom_test_1000 <- popsim_binomial(obs_binary, N = 1000, comp_iters_binary, 0.5, 0.5))
 popsim_hyperg_prof_1000 <- profileExpr(popsim_hyperg_test_1000 <- popsim_hypergeometric(obs_binary, N = 1000, comp_iters_binary, 0.5, 0.5))
 
-par(mar = c(4, 4, 1, 2))
+par(mar = c(4, 4, 1, 2), mfrow = c(1, 2))
 plot(density(rowSums(popsim_hyperg_test_100)), col = "blue", main = "", xlab = "K or N * p")
 lines(density(rowSums(popsim_binom_test_100)), col = "red")
 
@@ -430,14 +427,14 @@ lines(density(rowSums(popsim_binom_test_1000)), col = "red")
 
 For the multiclass methods, we can look at the margins; here are the margins for category $1$.
 
-```{r denscomp_mc, fig.cap = "Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)", fig.show = "hold", out.width = "50%", eval = TRUE}
+```{r denscomp_mc, fig.cap = "Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)", out.width = "100%", fig.width = 12, fig.height = 6}
 popsim_multinom_prof_100 <- profileExpr(popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
 popsim_mvhyperg_prof_100 <- profileExpr(popsim_mvhyperg_test_100 <- popsim_mvhypergeometric(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
 
 popsim_multinom_prof_1000 <- profileExpr(popsim_multinom_test_1000 <- popsim_multinomial(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
 popsim_mvhyperg_prof_1000 <- profileExpr(popsim_mvhyperg_test_1000 <- popsim_mvhypergeometric(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
 
-par(mar = c(4, 4, 1, 2))
+par(mar = c(4, 4, 1, 2), mfrow = c(1, 2))
 plot(density(apply(popsim_mvhyperg_test_100, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N * p")
 lines(density(apply(popsim_multinom_test_100, 1, function(x) sum(x == 1))), col = "red")
 
@@ -449,18 +446,27 @@ lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col
 
 Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible.
 
-```{r timecomp, eval = TRUE, eval = TRUE}
-prof_binom_100 <- as.matrix(flatProfile(popsim_binom_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
-prof_binom_1000 <- as.matrix(flatProfile(popsim_binom_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
+```{r timecomp, echo = FALSE}
+prof_binom_100 <- slice_max(data.frame(flatProfile(popsim_binom_prof_100, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
+prof_binom_1000 <- slice_max(data.frame(flatProfile(popsim_binom_prof_1000, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
 
-prof_hyperg_100 <- as.matrix(flatProfile(popsim_hyperg_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
-prof_hyperg_1000 <- as.matrix(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
 
-prof_multinom_100 <- as.matrix(flatProfile(popsim_multinom_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
-prof_multinom_1000 <- as.matrix(flatProfile(popsim_multinom_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
+prof_hyperg_100 <- slice_max(data.frame(flatProfile(popsim_hyperg_prof_100, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
+prof_hyperg_1000 <- slice_max(data.frame(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
 
-prof_mvhyperg_100 <- as.matrix(flatProfile(popsim_mvhyperg_prof_100, byTotal = TRUE, GC = FALSE))[1:6, ]
-prof_mvhyperg_1000 <- as.matrix(flatProfile(popsim_mvhyperg_prof_1000, byTotal = TRUE, GC = FALSE))[1:6, ]
+prof_multinom_100 <- slice_max(data.frame(flatProfile(popsim_multinom_prof_100, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
+prof_multinom_1000 <- slice_max(data.frame(flatProfile(popsim_multinom_prof_1000, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
+
+prof_mvhyperg_100 <- slice_max(data.frame(flatProfile(popsim_mvhyperg_prof_100, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
+prof_mvhyperg_1000 <- slice_max(data.frame(flatProfile(popsim_mvhyperg_prof_1000, byTotal = TRUE, GC = FALSE)),
+                            total.time, n = 6, with_ties = FALSE)
 
 kables(
   list(
@@ -541,9 +547,9 @@ for(k in 1:cov_points) {
 cov_mat <- cov_mat / cov_iters * 100
 ```
 
-Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well, as expected.
+Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well with K close to $0.5 * N$; however, the binomial approximation does quite poorly near the edges.
 
-```{r coverage_table, echo = FALSE}
+```{r coverage_table, echo = FALSE, out.width = "100%"}
 kable(cov_mat, format = "html") %>%
   add_header_above(c("Method" = 1, "K" = cov_points)) %>%
   kable_styling(full_width = TRUE)
