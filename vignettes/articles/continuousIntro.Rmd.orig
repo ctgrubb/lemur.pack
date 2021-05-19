@@ -23,7 +23,7 @@ quick_eval <- FALSE
 if(quick_eval) {
   comp_iters <- 1000
 } else {
-  comp_iters <- 100000
+  comp_iters <- 10000
 }
 
 set.seed(1234)

@@ -16,6 +16,8 @@ navbar:
       menu:
       - text: Intro - Univariate Discrete
         href: articles/articles/discreteIntro.html
+      - text: Intro - Univariate Continuous
+        href: articles/articles/countinuousIntro.html
     vignettes:
       text: Vignettes
       menu:
