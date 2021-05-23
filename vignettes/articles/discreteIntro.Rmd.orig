@@ -406,6 +406,19 @@ obs_binary <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
 obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)
 ```
 
+```{r compile_run, echo = FALSE}
+# Run to compile the functions, since R > 3.4 will compile the function the first time it is run.
+# This way, the compilation stays out of the profile.
+test <- popsim_binomial(obs_binary, N = 100, samples = 10)
+test <- popsim_hypergeometric(obs_binary, N = 100, samples = 10)
+test <- popsim_multinomial(obs_mc, N = 100, samples = 10)
+test <- popsim_mvhypergeometric(obs_mc, N = 100, samples = 10)
+test <- popsim_binomial(obs_binary, N = 1000, samples = 10)
+test <- popsim_hypergeometric(obs_binary, N = 1000, samples = 10)
+test <- popsim_multinomial(obs_mc, N = 1000, samples = 10)
+test <- popsim_mvhypergeometric(obs_mc, N = 1000, samples = 10)
+```
+
 ## Location
 
 For the binary methods, we can compare the location of the posterior to see if the two methods give similar results.
@@ -428,17 +441,25 @@ lines(density(rowSums(popsim_binom_test_1000)), col = "red")
 For the multiclass methods, we can look at the margins; here are the margins for category $1$.
 
 ```{r denscomp_mc, fig.cap = "Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)", out.width = "100%", fig.width = 12, fig.height = 6}
-popsim_multinom_prof_100 <- profileExpr(popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
-popsim_mvhyperg_prof_100 <- profileExpr(popsim_mvhyperg_test_100 <- popsim_mvhypergeometric(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
+popsim_multinom_prof_100 <- profileExpr(
+  popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
+popsim_mvhyperg_prof_100 <- profileExpr(
+  popsim_mvhyperg_test_100 <- popsim_mvhypergeometric(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
 
-popsim_multinom_prof_1000 <- profileExpr(popsim_multinom_test_1000 <- popsim_multinomial(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
-popsim_mvhyperg_prof_1000 <- profileExpr(popsim_mvhyperg_test_1000 <- popsim_mvhypergeometric(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
+popsim_multinom_prof_1000 <- profileExpr(
+  popsim_multinom_test_1000 <- popsim_multinomial(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
+popsim_mvhyperg_prof_1000 <- profileExpr(
+  popsim_mvhyperg_test_1000 <- popsim_mvhypergeometric(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
 
 par(mar = c(4, 4, 1, 2), mfrow = c(1, 2))
-plot(density(apply(popsim_mvhyperg_test_100, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N * p")
+plot(density(apply(popsim_mvhyperg_test_100, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N*p")
 lines(density(apply(popsim_multinom_test_100, 1, function(x) sum(x == 1))), col = "red")
 
-plot(density(apply(popsim_mvhyperg_test_1000, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N * p")
+plot(density(apply(popsim_mvhyperg_test_1000, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N*p")
 lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col = "red")
 ```
 
@@ -448,25 +469,24 @@ Likewise, we can look at how long each method takes. None of these functions are
 
 ```{r timecomp, echo = FALSE}
 prof_binom_100 <- slice_max(data.frame(flatProfile(popsim_binom_prof_100, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 prof_binom_1000 <- slice_max(data.frame(flatProfile(popsim_binom_prof_1000, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
-
+                            total.time, n = 10, with_ties = FALSE)
 
 prof_hyperg_100 <- slice_max(data.frame(flatProfile(popsim_hyperg_prof_100, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 prof_hyperg_1000 <- slice_max(data.frame(flatProfile(popsim_hyperg_prof_1000, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 
 prof_multinom_100 <- slice_max(data.frame(flatProfile(popsim_multinom_prof_100, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 prof_multinom_1000 <- slice_max(data.frame(flatProfile(popsim_multinom_prof_1000, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 
 prof_mvhyperg_100 <- slice_max(data.frame(flatProfile(popsim_mvhyperg_prof_100, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 prof_mvhyperg_1000 <- slice_max(data.frame(flatProfile(popsim_mvhyperg_prof_1000, byTotal = TRUE, GC = FALSE)),
-                            total.time, n = 6, with_ties = FALSE)
+                            total.time, n = 10, with_ties = FALSE)
 
 kables(
   list(

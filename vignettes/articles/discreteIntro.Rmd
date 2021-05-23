@@ -4,6 +4,7 @@ pkgdown:
   as_is: true
 output:
   rmarkdown::html_document:
+    fig_caption: yes
     number_sections: true
     code_folding: hide
     toc: true
@@ -406,6 +407,8 @@ obs_binary <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
 obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)
 ```
 
+
+
 ## Location
 
 For the binary methods, we can compare the location of the posterior to see if the two methods give similar results.
@@ -426,27 +429,35 @@ plot(density(rowSums(popsim_hyperg_test_1000)), col = "blue", main = "", xlab = 
 lines(density(rowSums(popsim_binom_test_1000)), col = "red")
 ```
 
-<img src="figure/denscomp_binary-1.png" title="Comparison of density for N = 100 (left) and N = 1000 (right), showing Binomial (red) and Hypergeometric (blue)" alt="Comparison of density for N = 100 (left) and N = 1000 (right), showing Binomial (red) and Hypergeometric (blue)" width="100%" />
+<img src="figure/denscomp_binary-1.png" title="This is a test." width="100%" />
 
 For the multiclass methods, we can look at the margins; here are the margins for category $1$.
 
 
 ```r
-popsim_multinom_prof_100 <- profileExpr(popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
-popsim_mvhyperg_prof_100 <- profileExpr(popsim_mvhyperg_test_100 <- popsim_mvhypergeometric(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5)))
+popsim_multinom_prof_100 <- profileExpr(
+  popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
+popsim_mvhyperg_prof_100 <- profileExpr(
+  popsim_mvhyperg_test_100 <- popsim_mvhypergeometric(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
 
-popsim_multinom_prof_1000 <- profileExpr(popsim_multinom_test_1000 <- popsim_multinomial(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
-popsim_mvhyperg_prof_1000 <- profileExpr(popsim_mvhyperg_test_1000 <- popsim_mvhypergeometric(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5)))
+popsim_multinom_prof_1000 <- profileExpr(
+  popsim_multinom_test_1000 <- popsim_multinomial(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
+popsim_mvhyperg_prof_1000 <- profileExpr(
+  popsim_mvhyperg_test_1000 <- popsim_mvhypergeometric(obs_mc, N = 1000, comp_iters_mc, c(0.5, 0.5, 0.5))
+)
 
 par(mar = c(4, 4, 1, 2), mfrow = c(1, 2))
-plot(density(apply(popsim_mvhyperg_test_100, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N * p")
+plot(density(apply(popsim_mvhyperg_test_100, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N*p")
 lines(density(apply(popsim_multinom_test_100, 1, function(x) sum(x == 1))), col = "red")
 
-plot(density(apply(popsim_mvhyperg_test_1000, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N * p")
+plot(density(apply(popsim_mvhyperg_test_1000, 1, function(x) sum(x == 1))), col = "blue", main = "", xlab = "K or N*p")
 lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col = "red")
 ```
 
-<img src="figure/denscomp_mc-1.png" title="Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)" alt="Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)" width="100%" />
+<img src="figure/denscomp_mc-1.png" title="This is a test." width="100%" />
 
 ## Time
 
@@ -471,45 +482,52 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_binomial </td>
-   <td style="text-align:right;"> 81.36 </td>
-   <td style="text-align:right;"> 221.28 </td>
-   <td style="text-align:right;"> 25.78 </td>
-   <td style="text-align:right;"> 70.12 </td>
+   <td style="text-align:right;"> 81.78 </td>
+   <td style="text-align:right;"> 359.24 </td>
+   <td style="text-align:right;"> 25.83 </td>
+   <td style="text-align:right;"> 113.48 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 55.57 </td>
-   <td style="text-align:right;"> 151.12 </td>
-   <td style="text-align:right;"> 22.39 </td>
-   <td style="text-align:right;"> 60.90 </td>
+   <td style="text-align:right;"> 55.95 </td>
+   <td style="text-align:right;"> 245.76 </td>
+   <td style="text-align:right;"> 23.23 </td>
+   <td style="text-align:right;"> 102.06 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dbinom </td>
-   <td style="text-align:right;"> 23.47 </td>
-   <td style="text-align:right;"> 63.82 </td>
-   <td style="text-align:right;"> 13.59 </td>
-   <td style="text-align:right;"> 36.96 </td>
+   <td style="text-align:right;"> 22.74 </td>
+   <td style="text-align:right;"> 99.88 </td>
+   <td style="text-align:right;"> 13.29 </td>
+   <td style="text-align:right;"> 58.36 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;Other&gt; </td>
-   <td style="text-align:right;"> 18.64 </td>
-   <td style="text-align:right;"> 50.68 </td>
-   <td style="text-align:right;"> 18.64 </td>
-   <td style="text-align:right;"> 50.68 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> mean </td>
-   <td style="text-align:right;"> 9.88 </td>
-   <td style="text-align:right;"> 26.86 </td>
-   <td style="text-align:right;"> 7.93 </td>
-   <td style="text-align:right;"> 21.58 </td>
+   <td style="text-align:right;"> 18.22 </td>
+   <td style="text-align:right;"> 80.04 </td>
+   <td style="text-align:right;"> 18.22 </td>
+   <td style="text-align:right;"> 80.04 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 9.71 </td>
-   <td style="text-align:right;"> 26.40 </td>
-   <td style="text-align:right;"> 9.71 </td>
-   <td style="text-align:right;"> 26.40 </td>
+   <td style="text-align:right;"> 9.98 </td>
+   <td style="text-align:right;"> 43.82 </td>
+   <td style="text-align:right;"> 9.98 </td>
+   <td style="text-align:right;"> 43.82 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mean </td>
+   <td style="text-align:right;"> 9.45 </td>
+   <td style="text-align:right;"> 41.52 </td>
+   <td style="text-align:right;"> 7.67 </td>
+   <td style="text-align:right;"> 33.70 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mean.default </td>
+   <td style="text-align:right;"> 1.78 </td>
+   <td style="text-align:right;"> 7.82 </td>
+   <td style="text-align:right;"> 1.78 </td>
+   <td style="text-align:right;"> 7.82 </td>
   </tr>
 </tbody>
 </table>
@@ -530,45 +548,52 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_binomial </td>
-   <td style="text-align:right;"> 79.75 </td>
-   <td style="text-align:right;"> 2440.58 </td>
-   <td style="text-align:right;"> 22.86 </td>
-   <td style="text-align:right;"> 699.60 </td>
+   <td style="text-align:right;"> 80.28 </td>
+   <td style="text-align:right;"> 3870.62 </td>
+   <td style="text-align:right;"> 23.73 </td>
+   <td style="text-align:right;"> 1144.08 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 56.89 </td>
-   <td style="text-align:right;"> 1740.98 </td>
-   <td style="text-align:right;"> 20.66 </td>
-   <td style="text-align:right;"> 632.38 </td>
+   <td style="text-align:right;"> 56.55 </td>
+   <td style="text-align:right;"> 2726.54 </td>
+   <td style="text-align:right;"> 21.40 </td>
+   <td style="text-align:right;"> 1031.72 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dbinom </td>
-   <td style="text-align:right;"> 27.42 </td>
-   <td style="text-align:right;"> 839.22 </td>
-   <td style="text-align:right;"> 12.51 </td>
-   <td style="text-align:right;"> 382.72 </td>
+   <td style="text-align:right;"> 26.05 </td>
+   <td style="text-align:right;"> 1256.12 </td>
+   <td style="text-align:right;"> 12.71 </td>
+   <td style="text-align:right;"> 612.66 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;Other&gt; </td>
-   <td style="text-align:right;"> 20.25 </td>
-   <td style="text-align:right;"> 619.78 </td>
-   <td style="text-align:right;"> 20.25 </td>
-   <td style="text-align:right;"> 619.78 </td>
+   <td style="text-align:right;"> 19.72 </td>
+   <td style="text-align:right;"> 951.04 </td>
+   <td style="text-align:right;"> 19.72 </td>
+   <td style="text-align:right;"> 951.04 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> mean </td>
-   <td style="text-align:right;"> 14.92 </td>
-   <td style="text-align:right;"> 456.50 </td>
-   <td style="text-align:right;"> 13.30 </td>
-   <td style="text-align:right;"> 406.96 </td>
+   <td style="text-align:right;"> 13.35 </td>
+   <td style="text-align:right;"> 643.46 </td>
+   <td style="text-align:right;"> 11.64 </td>
+   <td style="text-align:right;"> 561.42 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 8.80 </td>
-   <td style="text-align:right;"> 269.38 </td>
-   <td style="text-align:right;"> 8.80 </td>
-   <td style="text-align:right;"> 269.38 </td>
+   <td style="text-align:right;"> 9.10 </td>
+   <td style="text-align:right;"> 438.70 </td>
+   <td style="text-align:right;"> 9.10 </td>
+   <td style="text-align:right;"> 438.70 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> mean.default </td>
+   <td style="text-align:right;"> 1.70 </td>
+   <td style="text-align:right;"> 82.04 </td>
+   <td style="text-align:right;"> 1.70 </td>
+   <td style="text-align:right;"> 82.04 </td>
   </tr>
 </tbody>
 </table>
@@ -597,45 +622,31 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_hypergeometric </td>
-   <td style="text-align:right;"> 76.85 </td>
-   <td style="text-align:right;"> 151.56 </td>
-   <td style="text-align:right;"> 33.89 </td>
-   <td style="text-align:right;"> 66.84 </td>
+   <td style="text-align:right;"> 76.73 </td>
+   <td style="text-align:right;"> 263.16 </td>
+   <td style="text-align:right;"> 32.93 </td>
+   <td style="text-align:right;"> 112.92 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 42.94 </td>
-   <td style="text-align:right;"> 84.68 </td>
-   <td style="text-align:right;"> 38.66 </td>
-   <td style="text-align:right;"> 76.24 </td>
+   <td style="text-align:right;"> 43.81 </td>
+   <td style="text-align:right;"> 150.24 </td>
+   <td style="text-align:right;"> 40.38 </td>
+   <td style="text-align:right;"> 138.50 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;Other&gt; </td>
-   <td style="text-align:right;"> 23.15 </td>
-   <td style="text-align:right;"> 45.66 </td>
-   <td style="text-align:right;"> 23.15 </td>
-   <td style="text-align:right;"> 45.66 </td>
+   <td style="text-align:right;"> 23.27 </td>
+   <td style="text-align:right;"> 79.80 </td>
+   <td style="text-align:right;"> 23.27 </td>
+   <td style="text-align:right;"> 79.80 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dhyper </td>
-   <td style="text-align:right;"> 4.28 </td>
-   <td style="text-align:right;"> 8.44 </td>
-   <td style="text-align:right;"> 4.28 </td>
-   <td style="text-align:right;"> 8.44 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cmp </td>
-   <td style="text-align:right;"> 0.02 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> cmpCall </td>
-   <td style="text-align:right;"> 0.02 </td>
-   <td style="text-align:right;"> 0.04 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> 3.42 </td>
+   <td style="text-align:right;"> 11.74 </td>
+   <td style="text-align:right;"> 3.42 </td>
+   <td style="text-align:right;"> 11.74 </td>
   </tr>
 </tbody>
 </table>
@@ -656,31 +667,31 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_hypergeometric </td>
-   <td style="text-align:right;"> 73.42 </td>
-   <td style="text-align:right;"> 1694.48 </td>
-   <td style="text-align:right;"> 31.27 </td>
-   <td style="text-align:right;"> 721.54 </td>
+   <td style="text-align:right;"> 75.01 </td>
+   <td style="text-align:right;"> 2795.98 </td>
+   <td style="text-align:right;"> 30.87 </td>
+   <td style="text-align:right;"> 1150.52 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 42.16 </td>
-   <td style="text-align:right;"> 972.94 </td>
-   <td style="text-align:right;"> 34.07 </td>
-   <td style="text-align:right;"> 786.18 </td>
+   <td style="text-align:right;"> 44.15 </td>
+   <td style="text-align:right;"> 1645.46 </td>
+   <td style="text-align:right;"> 37.66 </td>
+   <td style="text-align:right;"> 1403.62 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> &lt;Other&gt; </td>
-   <td style="text-align:right;"> 26.58 </td>
-   <td style="text-align:right;"> 613.30 </td>
-   <td style="text-align:right;"> 26.58 </td>
-   <td style="text-align:right;"> 613.30 </td>
+   <td style="text-align:right;"> 24.99 </td>
+   <td style="text-align:right;"> 931.26 </td>
+   <td style="text-align:right;"> 24.99 </td>
+   <td style="text-align:right;"> 931.26 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> dhyper </td>
-   <td style="text-align:right;"> 8.09 </td>
-   <td style="text-align:right;"> 186.76 </td>
-   <td style="text-align:right;"> 8.09 </td>
-   <td style="text-align:right;"> 186.76 </td>
+   <td style="text-align:right;"> 6.49 </td>
+   <td style="text-align:right;"> 241.84 </td>
+   <td style="text-align:right;"> 6.49 </td>
+   <td style="text-align:right;"> 241.84 </td>
   </tr>
 </tbody>
 </table>
@@ -709,45 +720,73 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_multinomial </td>
-   <td style="text-align:right;"> 99.08 </td>
-   <td style="text-align:right;"> 426.92 </td>
-   <td style="text-align:right;"> 1.99 </td>
-   <td style="text-align:right;"> 8.58 </td>
+   <td style="text-align:right;"> 94.09 </td>
+   <td style="text-align:right;"> 92.08 </td>
+   <td style="text-align:right;"> 12.28 </td>
+   <td style="text-align:right;"> 12.02 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> cmp </td>
-   <td style="text-align:right;"> 84.35 </td>
-   <td style="text-align:right;"> 363.46 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:left;"> logpost </td>
+   <td style="text-align:right;"> 75.66 </td>
+   <td style="text-align:right;"> 74.04 </td>
+   <td style="text-align:right;"> 12.94 </td>
+   <td style="text-align:right;"> 12.66 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> cmpCall </td>
-   <td style="text-align:right;"> 84.35 </td>
-   <td style="text-align:right;"> 363.46 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:left;"> logcorrection </td>
+   <td style="text-align:right;"> 40.40 </td>
+   <td style="text-align:right;"> 39.54 </td>
+   <td style="text-align:right;"> 6.07 </td>
+   <td style="text-align:right;"> 5.94 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> cmpfun </td>
-   <td style="text-align:right;"> 84.35 </td>
-   <td style="text-align:right;"> 363.46 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:left;"> lmnchoose </td>
+   <td style="text-align:right;"> 34.33 </td>
+   <td style="text-align:right;"> 33.60 </td>
+   <td style="text-align:right;"> 4.13 </td>
+   <td style="text-align:right;"> 4.04 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> compiler:::tryCmpfun </td>
-   <td style="text-align:right;"> 84.35 </td>
-   <td style="text-align:right;"> 363.46 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:left;"> sapply </td>
+   <td style="text-align:right;"> 30.21 </td>
+   <td style="text-align:right;"> 29.56 </td>
+   <td style="text-align:right;"> 10.10 </td>
+   <td style="text-align:right;"> 9.88 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> doTryCatch </td>
-   <td style="text-align:right;"> 84.35 </td>
-   <td style="text-align:right;"> 363.46 </td>
-   <td style="text-align:right;"> 0.00 </td>
-   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 16.76 </td>
+   <td style="text-align:right;"> 16.40 </td>
+   <td style="text-align:right;"> 5.35 </td>
+   <td style="text-align:right;"> 5.24 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ddirichlet </td>
+   <td style="text-align:right;"> 11.40 </td>
+   <td style="text-align:right;"> 11.16 </td>
+   <td style="text-align:right;"> 11.22 </td>
+   <td style="text-align:right;"> 10.98 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simplify2array </td>
+   <td style="text-align:right;"> 10.44 </td>
+   <td style="text-align:right;"> 10.22 </td>
+   <td style="text-align:right;"> 5.64 </td>
+   <td style="text-align:right;"> 5.52 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lapply </td>
+   <td style="text-align:right;"> 9.07 </td>
+   <td style="text-align:right;"> 8.88 </td>
+   <td style="text-align:right;"> 7.26 </td>
+   <td style="text-align:right;"> 7.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sample </td>
+   <td style="text-align:right;"> 6.15 </td>
+   <td style="text-align:right;"> 6.02 </td>
+   <td style="text-align:right;"> 5.52 </td>
+   <td style="text-align:right;"> 5.40 </td>
   </tr>
 </tbody>
 </table>
@@ -768,45 +807,73 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_multinomial </td>
-   <td style="text-align:right;"> 95.70 </td>
-   <td style="text-align:right;"> 975.14 </td>
-   <td style="text-align:right;"> 8.15 </td>
-   <td style="text-align:right;"> 83.02 </td>
+   <td style="text-align:right;"> 95.40 </td>
+   <td style="text-align:right;"> 1473.62 </td>
+   <td style="text-align:right;"> 7.93 </td>
+   <td style="text-align:right;"> 122.44 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 83.65 </td>
-   <td style="text-align:right;"> 852.28 </td>
-   <td style="text-align:right;"> 8.80 </td>
-   <td style="text-align:right;"> 89.70 </td>
+   <td style="text-align:right;"> 83.44 </td>
+   <td style="text-align:right;"> 1288.92 </td>
+   <td style="text-align:right;"> 8.72 </td>
+   <td style="text-align:right;"> 134.64 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logcorrection </td>
-   <td style="text-align:right;"> 58.40 </td>
-   <td style="text-align:right;"> 595.02 </td>
-   <td style="text-align:right;"> 19.89 </td>
-   <td style="text-align:right;"> 202.70 </td>
+   <td style="text-align:right;"> 58.13 </td>
+   <td style="text-align:right;"> 897.96 </td>
+   <td style="text-align:right;"> 19.03 </td>
+   <td style="text-align:right;"> 293.96 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 38.50 </td>
-   <td style="text-align:right;"> 392.32 </td>
-   <td style="text-align:right;"> 3.51 </td>
-   <td style="text-align:right;"> 35.76 </td>
+   <td style="text-align:right;"> 39.10 </td>
+   <td style="text-align:right;"> 604.00 </td>
+   <td style="text-align:right;"> 3.62 </td>
+   <td style="text-align:right;"> 55.94 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sapply </td>
-   <td style="text-align:right;"> 34.99 </td>
-   <td style="text-align:right;"> 356.56 </td>
-   <td style="text-align:right;"> 6.35 </td>
-   <td style="text-align:right;"> 64.74 </td>
+   <td style="text-align:right;"> 35.48 </td>
+   <td style="text-align:right;"> 548.06 </td>
+   <td style="text-align:right;"> 6.63 </td>
+   <td style="text-align:right;"> 102.46 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lapply </td>
    <td style="text-align:right;"> 21.74 </td>
-   <td style="text-align:right;"> 221.48 </td>
-   <td style="text-align:right;"> 20.21 </td>
-   <td style="text-align:right;"> 205.94 </td>
+   <td style="text-align:right;"> 335.84 </td>
+   <td style="text-align:right;"> 20.23 </td>
+   <td style="text-align:right;"> 312.44 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> logprior </td>
+   <td style="text-align:right;"> 10.26 </td>
+   <td style="text-align:right;"> 158.46 </td>
+   <td style="text-align:right;"> 3.12 </td>
+   <td style="text-align:right;"> 48.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ddirichlet </td>
+   <td style="text-align:right;"> 7.14 </td>
+   <td style="text-align:right;"> 110.34 </td>
+   <td style="text-align:right;"> 6.97 </td>
+   <td style="text-align:right;"> 107.66 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simplify2array </td>
+   <td style="text-align:right;"> 6.78 </td>
+   <td style="text-align:right;"> 104.66 </td>
+   <td style="text-align:right;"> 3.82 </td>
+   <td style="text-align:right;"> 59.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> &lt;Other&gt; </td>
+   <td style="text-align:right;"> 4.60 </td>
+   <td style="text-align:right;"> 71.12 </td>
+   <td style="text-align:right;"> 4.60 </td>
+   <td style="text-align:right;"> 71.12 </td>
   </tr>
 </tbody>
 </table>
@@ -835,45 +902,73 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_mvhypergeometric </td>
-   <td style="text-align:right;"> 95.47 </td>
-   <td style="text-align:right;"> 81.00 </td>
-   <td style="text-align:right;"> 9.15 </td>
-   <td style="text-align:right;"> 7.76 </td>
+   <td style="text-align:right;"> 95.75 </td>
+   <td style="text-align:right;"> 125.26 </td>
+   <td style="text-align:right;"> 7.37 </td>
+   <td style="text-align:right;"> 9.64 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 82.04 </td>
-   <td style="text-align:right;"> 69.60 </td>
-   <td style="text-align:right;"> 6.62 </td>
-   <td style="text-align:right;"> 5.62 </td>
+   <td style="text-align:right;"> 84.31 </td>
+   <td style="text-align:right;"> 110.30 </td>
+   <td style="text-align:right;"> 6.86 </td>
+   <td style="text-align:right;"> 8.98 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 50.12 </td>
-   <td style="text-align:right;"> 42.52 </td>
-   <td style="text-align:right;"> 6.51 </td>
-   <td style="text-align:right;"> 5.52 </td>
+   <td style="text-align:right;"> 52.35 </td>
+   <td style="text-align:right;"> 68.48 </td>
+   <td style="text-align:right;"> 7.38 </td>
+   <td style="text-align:right;"> 9.66 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sapply </td>
-   <td style="text-align:right;"> 43.61 </td>
-   <td style="text-align:right;"> 37.00 </td>
-   <td style="text-align:right;"> 13.88 </td>
-   <td style="text-align:right;"> 11.78 </td>
+   <td style="text-align:right;"> 44.96 </td>
+   <td style="text-align:right;"> 58.82 </td>
+   <td style="text-align:right;"> 15.10 </td>
+   <td style="text-align:right;"> 19.76 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 34.82 </td>
-   <td style="text-align:right;"> 29.54 </td>
-   <td style="text-align:right;"> 7.61 </td>
-   <td style="text-align:right;"> 6.46 </td>
+   <td style="text-align:right;"> 36.19 </td>
+   <td style="text-align:right;"> 47.34 </td>
+   <td style="text-align:right;"> 7.54 </td>
+   <td style="text-align:right;"> 9.86 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logcorrection </td>
-   <td style="text-align:right;"> 27.91 </td>
-   <td style="text-align:right;"> 23.68 </td>
-   <td style="text-align:right;"> 3.96 </td>
-   <td style="text-align:right;"> 3.36 </td>
+   <td style="text-align:right;"> 29.35 </td>
+   <td style="text-align:right;"> 38.40 </td>
+   <td style="text-align:right;"> 4.31 </td>
+   <td style="text-align:right;"> 5.64 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simplify2array </td>
+   <td style="text-align:right;"> 15.58 </td>
+   <td style="text-align:right;"> 20.38 </td>
+   <td style="text-align:right;"> 8.78 </td>
+   <td style="text-align:right;"> 11.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lapply </td>
+   <td style="text-align:right;"> 13.38 </td>
+   <td style="text-align:right;"> 17.50 </td>
+   <td style="text-align:right;"> 11.02 </td>
+   <td style="text-align:right;"> 14.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> dmvhyper </td>
+   <td style="text-align:right;"> 11.91 </td>
+   <td style="text-align:right;"> 15.58 </td>
+   <td style="text-align:right;"> 10.87 </td>
+   <td style="text-align:right;"> 14.22 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> unique </td>
+   <td style="text-align:right;"> 6.80 </td>
+   <td style="text-align:right;"> 8.90 </td>
+   <td style="text-align:right;"> 5.50 </td>
+   <td style="text-align:right;"> 7.20 </td>
   </tr>
 </tbody>
 </table>
@@ -894,45 +989,73 @@ Likewise, we can look at how long each method takes. None of these functions are
 <tbody>
   <tr>
    <td style="text-align:left;"> popsim_mvhypergeometric </td>
-   <td style="text-align:right;"> 97.27 </td>
-   <td style="text-align:right;"> 1517.62 </td>
-   <td style="text-align:right;"> 4.71 </td>
-   <td style="text-align:right;"> 73.42 </td>
+   <td style="text-align:right;"> 97.06 </td>
+   <td style="text-align:right;"> 2306.32 </td>
+   <td style="text-align:right;"> 4.45 </td>
+   <td style="text-align:right;"> 105.64 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logpost </td>
-   <td style="text-align:right;"> 90.08 </td>
-   <td style="text-align:right;"> 1405.46 </td>
-   <td style="text-align:right;"> 3.80 </td>
-   <td style="text-align:right;"> 59.22 </td>
+   <td style="text-align:right;"> 90.07 </td>
+   <td style="text-align:right;"> 2140.14 </td>
+   <td style="text-align:right;"> 3.47 </td>
+   <td style="text-align:right;"> 82.52 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> lmnchoose </td>
-   <td style="text-align:right;"> 48.89 </td>
-   <td style="text-align:right;"> 762.76 </td>
-   <td style="text-align:right;"> 4.19 </td>
-   <td style="text-align:right;"> 65.38 </td>
+   <td style="text-align:right;"> 50.20 </td>
+   <td style="text-align:right;"> 1192.84 </td>
+   <td style="text-align:right;"> 4.56 </td>
+   <td style="text-align:right;"> 108.32 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> sapply </td>
-   <td style="text-align:right;"> 44.70 </td>
-   <td style="text-align:right;"> 697.38 </td>
-   <td style="text-align:right;"> 8.10 </td>
-   <td style="text-align:right;"> 126.40 </td>
+   <td style="text-align:right;"> 45.64 </td>
+   <td style="text-align:right;"> 1084.52 </td>
+   <td style="text-align:right;"> 8.32 </td>
+   <td style="text-align:right;"> 197.60 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logprior </td>
-   <td style="text-align:right;"> 39.97 </td>
-   <td style="text-align:right;"> 623.58 </td>
-   <td style="text-align:right;"> 14.35 </td>
-   <td style="text-align:right;"> 223.82 </td>
+   <td style="text-align:right;"> 40.35 </td>
+   <td style="text-align:right;"> 958.82 </td>
+   <td style="text-align:right;"> 14.00 </td>
+   <td style="text-align:right;"> 332.74 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> logcorrection </td>
-   <td style="text-align:right;"> 36.79 </td>
-   <td style="text-align:right;"> 573.96 </td>
-   <td style="text-align:right;"> 12.84 </td>
-   <td style="text-align:right;"> 200.26 </td>
+   <td style="text-align:right;"> 36.78 </td>
+   <td style="text-align:right;"> 873.94 </td>
+   <td style="text-align:right;"> 12.29 </td>
+   <td style="text-align:right;"> 292.06 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> lapply </td>
+   <td style="text-align:right;"> 28.51 </td>
+   <td style="text-align:right;"> 677.40 </td>
+   <td style="text-align:right;"> 26.61 </td>
+   <td style="text-align:right;"> 632.30 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> dmvhyper </td>
+   <td style="text-align:right;"> 9.46 </td>
+   <td style="text-align:right;"> 224.86 </td>
+   <td style="text-align:right;"> 6.60 </td>
+   <td style="text-align:right;"> 156.86 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> simplify2array </td>
+   <td style="text-align:right;"> 8.37 </td>
+   <td style="text-align:right;"> 198.82 </td>
+   <td style="text-align:right;"> 4.74 </td>
+   <td style="text-align:right;"> 112.74 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> unique </td>
+   <td style="text-align:right;"> 3.63 </td>
+   <td style="text-align:right;"> 86.18 </td>
+   <td style="text-align:right;"> 2.88 </td>
+   <td style="text-align:right;"> 68.32 </td>
   </tr>
 </tbody>
 </table>
@@ -977,7 +1100,7 @@ for(k in 1:cov_points) {
 cov_mat <- cov_mat / cov_iters * 100
 ```
 
-Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well with K close to $0.5 * N$; however, the binomial approximation does quite poorly near the edges. 
+Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well with K close to $0.5 * N$; however, the binomial approximation does quite poorly near the edges.
 
 <table class="table" style="margin-left: auto; margin-right: auto;">
  <thead>
@@ -1007,39 +1130,39 @@ Below we see the empirical rates of capturing the *true* $K$, the number of $1$'
 <tbody>
   <tr>
    <td style="text-align:left;"> Binomial </td>
-   <td style="text-align:right;"> 22.3 </td>
-   <td style="text-align:right;"> 59.7 </td>
-   <td style="text-align:right;"> 81.3 </td>
-   <td style="text-align:right;"> 87.4 </td>
+   <td style="text-align:right;"> 21.8 </td>
+   <td style="text-align:right;"> 62.1 </td>
+   <td style="text-align:right;"> 80.5 </td>
    <td style="text-align:right;"> 88.2 </td>
+   <td style="text-align:right;"> 87.8 </td>
+   <td style="text-align:right;"> 88.6 </td>
+   <td style="text-align:right;"> 89.8 </td>
    <td style="text-align:right;"> 88.8 </td>
-   <td style="text-align:right;"> 89.1 </td>
-   <td style="text-align:right;"> 91.0 </td>
-   <td style="text-align:right;"> 89.5 </td>
-   <td style="text-align:right;"> 87.1 </td>
-   <td style="text-align:right;"> 88.4 </td>
-   <td style="text-align:right;"> 88.5 </td>
-   <td style="text-align:right;"> 80 </td>
-   <td style="text-align:right;"> 60.4 </td>
-   <td style="text-align:right;"> 22.7 </td>
+   <td style="text-align:right;"> 88.6 </td>
+   <td style="text-align:right;"> 88.8 </td>
+   <td style="text-align:right;"> 89.3 </td>
+   <td style="text-align:right;"> 86.1 </td>
+   <td style="text-align:right;"> 80.4 </td>
+   <td style="text-align:right;"> 62.3 </td>
+   <td style="text-align:right;"> 21.3 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Hypergeometric </td>
-   <td style="text-align:right;"> 94.7 </td>
-   <td style="text-align:right;"> 90.3 </td>
-   <td style="text-align:right;"> 84.3 </td>
-   <td style="text-align:right;"> 86.7 </td>
-   <td style="text-align:right;"> 87.7 </td>
-   <td style="text-align:right;"> 87.6 </td>
-   <td style="text-align:right;"> 87.2 </td>
-   <td style="text-align:right;"> 89.2 </td>
-   <td style="text-align:right;"> 86.9 </td>
+   <td style="text-align:right;"> 94.5 </td>
+   <td style="text-align:right;"> 89.7 </td>
+   <td style="text-align:right;"> 83.7 </td>
+   <td style="text-align:right;"> 87.4 </td>
+   <td style="text-align:right;"> 86.4 </td>
    <td style="text-align:right;"> 86.6 </td>
-   <td style="text-align:right;"> 87.1 </td>
-   <td style="text-align:right;"> 86.3 </td>
-   <td style="text-align:right;"> 82 </td>
-   <td style="text-align:right;"> 89.1 </td>
-   <td style="text-align:right;"> 94.9 </td>
+   <td style="text-align:right;"> 88.3 </td>
+   <td style="text-align:right;"> 87.9 </td>
+   <td style="text-align:right;"> 85.6 </td>
+   <td style="text-align:right;"> 88.6 </td>
+   <td style="text-align:right;"> 87.6 </td>
+   <td style="text-align:right;"> 85.4 </td>
+   <td style="text-align:right;"> 84.3 </td>
+   <td style="text-align:right;"> 89.9 </td>
+   <td style="text-align:right;"> 95.8 </td>
   </tr>
 </tbody>
 </table>
