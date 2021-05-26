@@ -3,9 +3,8 @@ title: "Introduction to Univariate Discrete Population Synthesis"
 pkgdown:
   as_is: true
 output:
-  rmarkdown::html_document:
+  html_document:
     number_sections: true
-    code_folding: hide
     toc: true
     toc_depth: 3
     toc_float:
@@ -19,19 +18,19 @@ knitr::opts_chunk$set(
   eval = TRUE
 )
 
-quick_eval <- FALSE
+quick_eval <- TRUE
 ```
 
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
-  comp_iters_binary <- 500
-  comp_iters_mc <- 200
+  comp_iters_binary <- 100
+  comp_iters_mc <- 100
 
   cov_points <- 3
   cov_samples <- 5
   cov_iters <- 100
 } else {
-  comp_iters_binary <- 100000
+  comp_iters_binary <- 5000
   comp_iters_mc <- 5000
 
   cov_points <- 15
@@ -78,7 +77,7 @@ The first question boils down to whether we believe our observed sample came fro
 
 If the population is sufficiently large, or we know it was sampled with replacement, we may choose to use a $Binomial$ or $Multinomial$ likelihood, instead. Sampling with replacement results in independent samples; sampling without replacement yields samples that are not independent. This document will not go into detail about the difference between these two, but you should be aware that extreme samples (e.g., a sample very close to being all $1$'s or all $0$'s) are more likely when sampling with replacement. In essence, this results in our distribution over $K$ (the number of successes in the population) having fatter tails when we use the $Binomial$ likelihood versus the $Hypergeometric$ likelihood. The table below summarizes which distribution we will use for our likelihood.
 
-```{r method_table, echo = FALSE, eval = TRUE}
+```{r method_table, echo = FALSE, eval = TRUE, out.width = "100%"}
 table.df <- data.frame(
   Case = c(1, 2),
   Yes = c("Binomial", "Multinomial"),
@@ -146,7 +145,7 @@ and then marginalizing to find $\pi(K)$. Thus,
 
 For certain values of $a$ and $b$, this will simplify much further, but not in general. Lets visualize this prior for $N = 100$.
 
-```{r discrete-Jeffreys, fig.cap = "", fig.align = "center", eval = TRUE}
+```{r discrete-Jeffreys, echo = FALSE, fig.align = "center", eval = TRUE}
 piKf <- function(K, N, a, b) {choose(N, K) * beta(K + a, N - K + b) / beta(a, b)}
 N <- 100
 K <- seq(0, 100, by = 1)
@@ -187,7 +186,7 @@ Whether using the $Binomial$ or $Hypergeometric$ distribution, in both cases thi
 
 To illustrate, let $N = 10$. With such a small population, we can easily list every possible population. There are of course $2^{10}$ of them, since every subject in the population has two possible options. If we assume all possible populations are equally likely, we can visualize the probability distribution of $K$, the number of $1$'s in the population, with a simple bar plot.
 
-```{r correction-barplot, fig.cap = "", fig.align = "center", eval = TRUE}
+```{r correction-barplot, echo = FALSE, fig.align = "center", eval = TRUE}
 N <- 10
 K <- 0:10
 nCk <- choose(N, K)
@@ -210,7 +209,7 @@ For the purpose of a more fair comparison, in this document we *will not* enforc
 
 Here is a very basic function that will jitter $\mathbf{Y}$, and use the posterior in terms of $p$ to determine whether to accept or reject synthesized populations.
 
-```{r popsim_binomial, class.source = "fold-show", eval = TRUE}
+```{r popsim_binomial, eval = TRUE}
 popsim_binomial <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
   logcorrection <- function(N, p) {
     -lchoose(N, N * p)
@@ -253,14 +252,14 @@ popsim_binomial <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 
 ## Multinomial
 
-Not much has to change here. Depending how you code multiple categories, working with them can be quite difficult. The easiest set of categories to work with is $\{1, 2, \dots, c\}$. This simplifies things a lot, mainly because `x[i] == i`. The code below will fail if you pass it a sample with either of the following properties:
+Not much has to change here. Depending how you code multiple categories, working with them can be quite difficult. The easiest set of categories to work with is $\{1, 2, \dots, c\}$. This simplifies things a lot, mainly because it allows us to use `tabulate`, which speeds up the process considerably. The code below will fail if you pass it a sample with either of the following properties:
 
-  * A category denoted as $0$ (e.g. `obs = c(1, 0, 1, 0, 1, 1, 1, 0)`)
-  * Either *missing* or *non-consecutive* categories (e.g. `obs = c(1, 3, 1, 1, 3, 1, 3, 3)`)
+  * A category denoted as $0$ (e.g. `obs = c(1, 0, 1, 0, 1, 2, 1, 2)`)
+  * Either *missing* or *non-consecutive* categories (e.g. `obs = c(1, 3, 1, 1, 3, 1, 3, 3)`) -- it will assume that there is a category 2, and just not observed in the sample, which likely isn't what you want
 
 This may be confusing because in the binary cases we *need* our samples to be $\{0, 1\}$, but when working with more than two levels things can actually get quite complicated, and enforcing this simple criterion saves us a lot of headache. It is relatively simple to sandwich this method between two transformations to go from the original levels to positive integers, and then back to the original levels at the end.
 
-```{r popsim_multinomial, class.source = "fold-show", eval = TRUE}
+```{r popsim_multinomial, eval = TRUE}
 popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(unique(obs)))) {
   logcorrection <- function(N, K) {
     -lmnchoose(N, K)
@@ -308,7 +307,7 @@ popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(u
 
 Now we do the same thing, but instead use the posterior in terms of $K$ to determine whether to accept or reject synthesized populations.
 
-```{r popsim_hypergeometric, class.source = "fold-show", eval = TRUE}
+```{r popsim_hypergeometric, eval = TRUE}
 popsim_hypergeometric <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
   logcorrection <- function(N, K) {
     -lchoose(N, K)
@@ -351,7 +350,7 @@ popsim_hypergeometric <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 
 ## Multivariate Hypergeometric
 
-```{r popsim_mvhypergeometric, class.source = "fold-show", eval = TRUE}
+```{r popsim_mvhypergeometric, eval = TRUE}
 popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, length(unique(obs)))) {
   logcorrection <- function(N, K) {
     -lmnchoose(N, K)
@@ -401,9 +400,9 @@ popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, len
 
 The first thing we need is our samples. We are going to use the following:
 
-```{r sample, class.source = "fold-show"}
-obs_binary <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)
-obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)
+```{r sample, eval = TRUE}
+obs_binary <- c(1, 0, 0, 0, 0, 0, 1, 1, 0, 1)   # 60% / 40%
+obs_mc <- c(1, 2, 3, 1, 1, 2, 1, 2, 3, 1)       # 50% / 30% / 20%
 ```
 
 ```{r compile_run, echo = FALSE}
@@ -421,9 +420,9 @@ test <- popsim_mvhypergeometric(obs_mc, N = 1000, samples = 10)
 
 ## Location
 
-For the binary methods, we can compare the location of the posterior to see if the two methods give similar results.
+For the binary methods, we can compare the posterior of how many $1$'s are in the populations to see if the two methods give similar results. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_binary` synthetic populations.
 
-```{r denscomp_binary, fig.cap = "Comparison of density for N = 100 (left) and N = 1000 (right), showing Binomial (red) and Hypergeometric (blue)", out.width = "100%", fig.width = 12, fig.height = 6}
+```{r denscomp_binary, out.width = "100%", fig.width = 12, fig.height = 6, echo = FALSE}
 popsim_binom_prof_100 <- profileExpr(popsim_binom_test_100 <- popsim_binomial(obs_binary, N = 100, comp_iters_binary, 0.5, 0.5))
 popsim_hyperg_prof_100 <- profileExpr(popsim_hyperg_test_100 <- popsim_hypergeometric(obs_binary, N = 100, comp_iters_binary, 0.5, 0.5))
 
@@ -438,9 +437,9 @@ plot(density(rowSums(popsim_hyperg_test_1000)), col = "blue", main = "", xlab = 
 lines(density(rowSums(popsim_binom_test_1000)), col = "red")
 ```
 
-For the multiclass methods, we can look at the margins; here are the margins for category $1$.
+For the multiclass methods, we can instead look at a specific margin, e.g. the margin for category $1$. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_mc` synthetic populations
 
-```{r denscomp_mc, fig.cap = "Comparison of marginal density (x == 1), for N = 100 (left) and N = 1000 (right), showing Multinomial (red) and Multivariate Hypergeometric (blue)", out.width = "100%", fig.width = 12, fig.height = 6}
+```{r denscomp_mc, out.width = "100%", fig.width = 12, fig.height = 6, echo = FALSE}
 popsim_multinom_prof_100 <- profileExpr(
   popsim_multinom_test_100 <- popsim_multinomial(obs_mc, N = 100, comp_iters_mc, c(0.5, 0.5, 0.5))
 )
@@ -465,7 +464,7 @@ lines(density(apply(popsim_multinom_test_1000, 1, function(x) sum(x == 1))), col
 
 ## Time
 
-Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible.
+Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible. The total time is representative of creating `r comp_iters_binary` synthetic populations for the binary methods, and `r comp_iters_mc` synthetic populations for the multiclass methods.
 
 ```{r timecomp, echo = FALSE}
 prof_binom_100 <- slice_max(data.frame(flatProfile(popsim_binom_prof_100, byTotal = TRUE, GC = FALSE)),
@@ -535,9 +534,9 @@ kables(
 
 ## Coverage
 
-We can also consider the empirical coverage rates of credible intervals. We will only include the binary methods here, because the multiclass methods take far too long using the simple formulations above. They can be optimized further, of course; in particular, the requirement of using `table` instead of `mean` is particularly taxing. However, it is possible to update the table during the iterations instead of recalculating it. We haven't done so here because wanted the most simple formulations. For these coverage rates, we will use $N = 100,\ n = 10$
+We can also consider the empirical coverage rates of credible intervals. We will only include the binary methods here, because the multiclass methods take far too long using the simple formulations above. They can be optimized further, of course; for large $N$ it can be beneficial to update the table during the iterations instead of recalculating it. We haven't done so here because we wanted the most simple formulations. For these coverage rates, we will only use $N = 100,\ n = 10$, and we create `r cov_samples` synthetic populations for each of the `r cov_iters` samples per value of $K$.
 
-```{r coverage, class.source = "fold-show"}
+```{r coverage, echo = FALSE}
 N <- 100
 n <- 10
 
@@ -567,7 +566,7 @@ for(k in 1:cov_points) {
 cov_mat <- cov_mat / cov_iters * 100
 ```
 
-Below we see the empirical rates of capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well with K close to $0.5 * N$; however, the binomial approximation does quite poorly near the edges.
+Below we see the empirical coverage rates for equal-tailed credible intervals capturing the *true* $K$, the number of $1$'s in the population. Both methods do quite well with K close to $0.5 * N$; however, the $Binomial$ approximation does quite poorly compared to the $Hypergeometric$ method as we approach either tail.
 
 ```{r coverage_table, echo = FALSE, out.width = "100%"}
 kable(cov_mat, format = "html") %>%
