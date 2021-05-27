@@ -30,7 +30,7 @@ if(quick_eval) {
   cov_samples <- 5
   cov_iters <- 100
 } else {
-  comp_iters_binary <- 20000
+  comp_iters_binary <- 30000
   comp_iters_mc <- 5000
 
   cov_points <- 15
@@ -40,7 +40,6 @@ if(quick_eval) {
 
 set.seed(1234)
 ```
-
 
 ```{r packageload, message = FALSE, warning = FALSE, eval = TRUE}
 library(lemur.pack)
@@ -73,7 +72,7 @@ For the univariate discrete case, this is actually quite simple, however we do h
   * What is the distribution of $f(\mathbf{X} = \mathbf{x} | \theta)$?
   * What prior $\pi(\theta)$ should we use?
 
-The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the **multivariate** $Hypergeometric$, even though it is still univariate.
+The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be $Hypergeometric$ or its multivariate extension, the $Multivariate\ Hypergeometric$. You may be confused by the word multivariate here; oddly, the name of the extension of the $Hypergeometric$ distribution to more than two categories is named the $Multivariate\ Hypergeometric$, even though it is still technically univariate.
 
 If the population is sufficiently large, or we know it was sampled with replacement, we may choose to use a $Binomial$ or $Multinomial$ likelihood, instead. Sampling with replacement results in independent samples; sampling without replacement yields samples that are not independent. This document will not go into detail about the difference between these two, but you should be aware that extreme samples (e.g., a sample very close to being all $1$'s or all $0$'s) are more likely when sampling with replacement. In essence, this results in our distribution over $K$ (the number of successes in the population) having fatter tails when we use the $Binomial$ likelihood versus the $Hypergeometric$ likelihood. The table below summarizes which distribution we will use for our likelihood.
 
@@ -165,7 +164,7 @@ Whatever choice of $a$ and $b$ we make, creating the posterior from here is fair
 
 ## Multivariate Hypergeometric
 
-We will define the multivariate $Hypergeometric$ distribution in the same fashion as before, except this time $\mathbf{K}$ and $\mathbf{J}$ are vectors.
+We will define the $Multivariate\ Hypergeometric$ distribution in the same fashion as before, except this time $\mathbf{K}$ and $\mathbf{J}$ are vectors.
 
 Additionally, we need to find a prior $\pi(\mathbf{K})$. Suppose there are $c$ categories; following the same steps as the simple 1-dimensional example, we have:
 
@@ -182,7 +181,7 @@ From here, everything is fairly straightforward.
 Returning to the distribution we are trying to sample from, we had
 
 $$ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) \propto \pi(\theta | \mathbf{X} = \mathbf{x}) f(\mathbf{Y} = \mathbf{y} | \theta). $$
-Whether using the $Binomial$ or $Hypergeometric$ distribution, in both cases this term is essential and cannot be forgotten; without it, the sample ends up essentially not mattering.
+Whether using the $Binomial$ or $Hypergeometric$ distribution, in both cases this $f(\mathbf{Y} = \mathbf{y} | \theta$ term is essential and cannot be forgotten; without it, the sample ends up essentially not mattering.
 
 To illustrate, let $N = 10$. With such a small population, we can easily list every possible population. There are of course $2^{10}$ of them, since every subject in the population has two possible options. If we assume all possible populations are equally likely, we can visualize the probability distribution of $K$, the number of $1$'s in the population, with a simple bar plot.
 
@@ -195,7 +194,9 @@ par(mar = c(4, 4, 1, 2))
 barplot(nCk / sum(nCk), names.arg = K, xlab = "K", ylab = "Probability")
 ```
 
-This means that without any prior knowledge, or even an observed sample, we would expect $K = 5$ to be $252$ times more likely than $K = 0$ or $K = 10$. This is clearly incorrect; if we know nothing about $K$, then the distribution over $K$ should be flat. This term fixes that problem.
+This means that without any prior knowledge, or even an observed sample, we would expect $K = 5$ to be $252$ times more likely than $K = 0$ or $K = 10$. This is clearly incorrect; if we know nothing about $K$, then the distribution over $K$ should be flat. This term fixes that problem; in the binary case it is simply the reciprocal of the binomial coefficient ${N \choose K}$.
+
+This correction factor carries over to the multiclass method, but it now uses the multinomial coefficient.
 
 # Samplers
 
@@ -305,7 +306,7 @@ popsim_multinomial <- function(obs, N, samples = 1000, alpha = rep(0.5, length(u
 
 ## Hypergeometric
 
-Now we do the same thing, but instead use the posterior in terms of $K$ to determine whether to accept or reject synthesized populations.
+Here, we do the same thing we did for the $Binomial$ case, but instead use the posterior in terms of $K$ to determine whether to accept or reject synthesized populations.
 
 ```{r popsim_hypergeometric, eval = TRUE}
 popsim_hypergeometric <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
@@ -349,6 +350,8 @@ popsim_hypergeometric <- function(obs, N, samples = 1000, a = 0.5, b = 0.5) {
 ```
 
 ## Multivariate Hypergeometric
+
+This is also pretty straightforward; however, we do have to follow the rules we outlined for the $Multinomial$ method. The only difference between this an the $Multinomial$ method is that we use the posterior with respect to $K$ that accounts for sampling without replacement.
 
 ```{r popsim_mvhypergeometric, eval = TRUE}
 popsim_mvhypergeometric <- function(obs, N, samples = 1000, alpha = rep(0.5, length(unique(obs)))) {
@@ -420,7 +423,7 @@ test <- popsim_mvhypergeometric(obs_mc, N = 1000, samples = 10)
 
 ## Location
 
-For the binary methods, we can compare the posterior of how many $1$'s are in the populations to see if the two methods give similar results. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_binary` synthetic populations.
+For the binary methods, we can compare the posterior of how many $1$'s are in the populations to see if the two methods give similar results. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_binary` synthetic populations. The $Binomial$ method is represented in red, and the $Hypergeometric$ in blue.
 
 ```{r denscomp_binary, out.width = "100%", fig.width = 12, fig.height = 6, echo = FALSE}
 popsim_binom_prof_100 <- profileExpr(popsim_binom_test_100 <- popsim_binomial(obs_binary, N = 100, comp_iters_binary, 0.5, 0.5))
@@ -437,7 +440,7 @@ plot(density(rowSums(popsim_hyperg_test_1000)), col = "blue", main = "", xlab = 
 lines(density(rowSums(popsim_binom_test_1000)), col = "red")
 ```
 
-For the multiclass methods, we can instead look at a specific margin, e.g. the margin for category $1$. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_mc` synthetic populations
+For the multiclass methods, we can instead look at a specific margin, e.g. the margin for category $1$. Here are the densities for N = 100 (left) and N = 1000 (right), both using `r comp_iters_mc` synthetic populations. The $Multinomial$ method is represented in red, and the $Multivariate\ Hypergeometric$ in blue.
 
 ```{r denscomp_mc, out.width = "100%", fig.width = 12, fig.height = 6, echo = FALSE}
 popsim_multinom_prof_100 <- profileExpr(
