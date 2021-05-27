@@ -30,7 +30,7 @@ if(quick_eval) {
   cov_samples <- 5
   cov_iters <- 100
 } else {
-  comp_iters_binary <- 5000
+  comp_iters_binary <- 20000
   comp_iters_mc <- 5000
 
   cov_points <- 15
