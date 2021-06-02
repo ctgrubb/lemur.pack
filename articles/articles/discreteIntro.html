@@ -146,7 +146,7 @@
 <li>What is the distribution of <span class="math inline">\(f(\mathbf{X} = \mathbf{x} | \theta)\)</span>?</li>
 <li>What prior <span class="math inline">\(\pi(\theta)\)</span> should we use?</li>
 </ul>
-<p>The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be <span class="math inline">\(Hypergeometric\)</span> or its multivariate form. You may be confused by the word multivariate here; oddly, the name of the extension of the <span class="math inline">\(Hypergeometric\)</span> distribution to more than two categories is named the <strong>multivariate</strong> <span class="math inline">\(Hypergeometric\)</span>, even though it is still univariate.</p>
+<p>The first question boils down to whether we believe our observed sample came from sampling with or without replacement. Usually, populations of people are sampled without replacement, in which case the proper likelihood would be <span class="math inline">\(Hypergeometric\)</span> or its multivariate extension, the <span class="math inline">\(Multivariate\ Hypergeometric\)</span>. You may be confused by the word multivariate here; oddly, the name of the extension of the <span class="math inline">\(Hypergeometric\)</span> distribution to more than two categories is named the <span class="math inline">\(Multivariate\ Hypergeometric\)</span>, even though it is still technically univariate.</p>
 <p>If the population is sufficiently large, or we know it was sampled with replacement, we may choose to use a <span class="math inline">\(Binomial\)</span> or <span class="math inline">\(Multinomial\)</span> likelihood, instead. Sampling with replacement results in independent samples; sampling without replacement yields samples that are not independent. This document will not go into detail about the difference between these two, but you should be aware that extreme samples (e.g., a sample very close to being all <span class="math inline">\(1\)</span>’s or all <span class="math inline">\(0\)</span>’s) are more likely when sampling with replacement. In essence, this results in our distribution over <span class="math inline">\(K\)</span> (the number of successes in the population) having fatter tails when we use the <span class="math inline">\(Binomial\)</span> likelihood versus the <span class="math inline">\(Hypergeometric\)</span> likelihood. The table below summarizes which distribution we will use for our likelihood.</p>
 <table class="table table">
 <thead>
@@ -258,7 +258,7 @@ MV Hypergeometric
 <div id="multivariate-hypergeometric" class="section level2">
 <h2 class="hasAnchor">
 <a href="#multivariate-hypergeometric" class="anchor"></a><span class="header-section-number">1.4</span> Multivariate Hypergeometric</h2>
-<p>We will define the multivariate <span class="math inline">\(Hypergeometric\)</span> distribution in the same fashion as before, except this time <span class="math inline">\(\mathbf{K}\)</span> and <span class="math inline">\(\mathbf{J}\)</span> are vectors.</p>
+<p>We will define the <span class="math inline">\(Multivariate\ Hypergeometric\)</span> distribution in the same fashion as before, except this time <span class="math inline">\(\mathbf{K}\)</span> and <span class="math inline">\(\mathbf{J}\)</span> are vectors.</p>
 <p>Additionally, we need to find a prior <span class="math inline">\(\pi(\mathbf{K})\)</span>. Suppose there are <span class="math inline">\(c\)</span> categories; following the same steps as the simple 1-dimensional example, we have:</p>
 <p><span class="math display">\[\begin{align*}
   \pi(\mathbf{K}) &amp;= \int_{0}^{1} {N \choose {\mathbf{K}_1, ..., \mathbf{K}_c}} \prod_{i = 1}^c \mathbf{p}_i^{\mathbf{K}_i} \frac{1}{\beta(\mathbf{\alpha})} \prod_{i = 1}^c \mathbf{p}_i^{\mathbf{\alpha}_i - 1} d\mathbf{p} \\
@@ -271,10 +271,11 @@ MV Hypergeometric
 <h2 class="hasAnchor">
 <a href="#correction-factor" class="anchor"></a><span class="header-section-number">1.5</span> Correction Factor</h2>
 <p>Returning to the distribution we are trying to sample from, we had</p>
-<p><span class="math display">\[ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) \propto \pi(\theta | \mathbf{X} = \mathbf{x}) f(\mathbf{Y} = \mathbf{y} | \theta). \]</span> Whether using the <span class="math inline">\(Binomial\)</span> or <span class="math inline">\(Hypergeometric\)</span> distribution, in both cases this term is essential and cannot be forgotten; without it, the sample ends up essentially not mattering.</p>
+<p><span class="math display">\[ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) \propto \pi(\theta | \mathbf{X} = \mathbf{x}) f(\mathbf{Y} = \mathbf{y} | \theta). \]</span> Whether using the <span class="math inline">\(Binomial\)</span> or <span class="math inline">\(Hypergeometric\)</span> distribution, in both cases this <span class="math inline">\(f(\mathbf{Y} = \mathbf{y} | \theta\)</span> term is essential and cannot be forgotten; without it, the sample ends up essentially not mattering.</p>
 <p>To illustrate, let <span class="math inline">\(N = 10\)</span>. With such a small population, we can easily list every possible population. There are of course <span class="math inline">\(2^{10}\)</span> of them, since every subject in the population has two possible options. If we assume all possible populations are equally likely, we can visualize the probability distribution of <span class="math inline">\(K\)</span>, the number of <span class="math inline">\(1\)</span>’s in the population, with a simple bar plot.</p>
 <p><img src="figure/correction-barplot-1.png" title="plot of chunk correction-barplot" alt="plot of chunk correction-barplot" style="display: block; margin: auto;"></p>
-<p>This means that without any prior knowledge, or even an observed sample, we would expect <span class="math inline">\(K = 5\)</span> to be <span class="math inline">\(252\)</span> times more likely than <span class="math inline">\(K = 0\)</span> or <span class="math inline">\(K = 10\)</span>. This is clearly incorrect; if we know nothing about <span class="math inline">\(K\)</span>, then the distribution over <span class="math inline">\(K\)</span> should be flat. This term fixes that problem.</p>
+<p>This means that without any prior knowledge, or even an observed sample, we would expect <span class="math inline">\(K = 5\)</span> to be <span class="math inline">\(252\)</span> times more likely than <span class="math inline">\(K = 0\)</span> or <span class="math inline">\(K = 10\)</span>. This is clearly incorrect; if we know nothing about <span class="math inline">\(K\)</span>, then the distribution over <span class="math inline">\(K\)</span> should be flat. This term fixes that problem; in the binary case it is simply the reciprocal of the binomial coefficient <span class="math inline">\({N \choose K}\)</span>.</p>
+<p>This correction factor carries over to the multiclass method, but it now uses the multinomial coefficient.</p>
 </div>
 </div>
 <div id="samplers" class="section level1">
@@ -385,7 +386,7 @@ MV Hypergeometric
 <div id="hypergeometric-1" class="section level2">
 <h2 class="hasAnchor">
 <a href="#hypergeometric-1" class="anchor"></a><span class="header-section-number">2.3</span> Hypergeometric</h2>
-<p>Now we do the same thing, but instead use the posterior in terms of <span class="math inline">\(K\)</span> to determine whether to accept or reject synthesized populations.</p>
+<p>Here, we do the same thing we did for the <span class="math inline">\(Binomial\)</span> case, but instead use the posterior in terms of <span class="math inline">\(K\)</span> to determine whether to accept or reject synthesized populations.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_hypergeometric</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span>, <span class="va">a</span> <span class="op">=</span> <span class="fl">0.5</span>, <span class="va">b</span> <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">logcorrection</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">N</span>, <span class="va">K</span><span class="op">)</span> <span class="op">{</span>
@@ -429,6 +430,7 @@ MV Hypergeometric
 <div id="multivariate-hypergeometric-1" class="section level2">
 <h2 class="hasAnchor">
 <a href="#multivariate-hypergeometric-1" class="anchor"></a><span class="header-section-number">2.4</span> Multivariate Hypergeometric</h2>
+<p>This is also pretty straightforward; however, we do have to follow the rules we outlined for the <span class="math inline">\(Multinomial\)</span> method. The only difference between this an the <span class="math inline">\(Multinomial\)</span> method is that we use the posterior with respect to <span class="math inline">\(K\)</span> that accounts for sampling without replacement.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">popsim_mvhypergeometric</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">obs</span>, <span class="va">N</span>, <span class="va">samples</span> <span class="op">=</span> <span class="fl">1000</span>, <span class="va">alpha</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html">unique</a></span><span class="op">(</span><span class="va">obs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">logcorrection</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">N</span>, <span class="va">K</span><span class="op">)</span> <span class="op">{</span>
@@ -487,15 +489,15 @@ MV Hypergeometric
 <div id="location" class="section level2">
 <h2 class="hasAnchor">
 <a href="#location" class="anchor"></a><span class="header-section-number">3.2</span> Location</h2>
-<p>For the binary methods, we can compare the posterior of how many <span class="math inline">\(1\)</span>’s are in the populations to see if the two methods give similar results. Here are the densities for N = 100 (left) and N = 1000 (right), both using 5000 synthetic populations.</p>
+<p>For the binary methods, we can compare the posterior of how many <span class="math inline">\(1\)</span>’s are in the populations to see if the two methods give similar results. Here are the densities for N = 100 (left) and N = 1000 (right), both using 3 × 10<sup>4</sup> synthetic populations. The <span class="math inline">\(Binomial\)</span> method is represented in red, and the <span class="math inline">\(Hypergeometric\)</span> in blue.</p>
 <p><img src="figure/denscomp_binary-1.png" title="plot of chunk denscomp_binary" alt="plot of chunk denscomp_binary" width="100%"></p>
-<p>For the multiclass methods, we can instead look at a specific margin, e.g. the margin for category <span class="math inline">\(1\)</span>. Here are the densities for N = 100 (left) and N = 1000 (right), both using 5000 synthetic populations</p>
+<p>For the multiclass methods, we can instead look at a specific margin, e.g. the margin for category <span class="math inline">\(1\)</span>. Here are the densities for N = 100 (left) and N = 1000 (right), both using 5000 synthetic populations. The <span class="math inline">\(Multinomial\)</span> method is represented in red, and the <span class="math inline">\(Multivariate\ Hypergeometric\)</span> in blue.</p>
 <p><img src="figure/denscomp_mc-1.png" title="plot of chunk denscomp_mc" alt="plot of chunk denscomp_mc" width="100%"></p>
 </div>
 <div id="time" class="section level2">
 <h2 class="hasAnchor">
 <a href="#time" class="anchor"></a><span class="header-section-number">3.3</span> Time</h2>
-<p>Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible. The total time is representative of creating 5000 synthetic populations for the binary methods, and 5000 synthetic populations for the multiclass methods.</p>
+<p>Likewise, we can look at how long each method takes. None of these functions are optimized in any way; though they are written to be as similar as possible so the comparisons are as useful as possible. The total time is representative of creating 3 × 10<sup>4</sup> synthetic populations for the binary methods, and 5000 synthetic populations for the multiclass methods.</p>
 <table class="table kable_wrapper table">
 <caption>
 Profile for Binomial, N = 100 (left) vs. N = 1000 (right)
@@ -525,16 +527,16 @@ Self Time
 popsim_binomial
 </td>
 <td style="text-align:right;">
-79.06
+80.24
 </td>
 <td style="text-align:right;">
-11.78
+86.48
 </td>
 <td style="text-align:right;">
-25.37
+26.76
 </td>
 <td style="text-align:right;">
-3.78
+28.84
 </td>
 </tr>
 <tr>
@@ -542,16 +544,16 @@ popsim_binomial
 logpost
 </td>
 <td style="text-align:right;">
-53.69
+53.48
 </td>
 <td style="text-align:right;">
-8.00
+57.64
 </td>
 <td style="text-align:right;">
-21.34
+22.08
 </td>
 <td style="text-align:right;">
-3.18
+23.80
 </td>
 </tr>
 <tr>
@@ -559,16 +561,16 @@ logpost
 dbinom
 </td>
 <td style="text-align:right;">
-22.55
+22.43
 </td>
 <td style="text-align:right;">
-3.36
+24.18
 </td>
 <td style="text-align:right;">
-14.36
+13.55
 </td>
 <td style="text-align:right;">
-2.14
+14.60
 </td>
 </tr>
 <tr>
@@ -576,16 +578,16 @@ dbinom
 &lt;Other&gt;
 </td>
 <td style="text-align:right;">
-20.94
+19.76
 </td>
 <td style="text-align:right;">
-3.12
+21.30
 </td>
 <td style="text-align:right;">
-20.94
+19.76
 </td>
 <td style="text-align:right;">
-3.12
+21.30
 </td>
 </tr>
 <tr>
@@ -593,16 +595,16 @@ dbinom
 logprior
 </td>
 <td style="text-align:right;">
-9.80
+8.96
 </td>
 <td style="text-align:right;">
-1.46
+9.66
 </td>
 <td style="text-align:right;">
-9.80
+8.96
 </td>
 <td style="text-align:right;">
-1.46
+9.66
 </td>
 </tr>
 <tr>
@@ -610,16 +612,16 @@ logprior
 mean
 </td>
 <td style="text-align:right;">
-8.19
+8.89
 </td>
 <td style="text-align:right;">
-1.22
+9.58
 </td>
 <td style="text-align:right;">
-6.71
+7.24
 </td>
 <td style="text-align:right;">
-1.00
+7.80
 </td>
 </tr>
 <tr>
@@ -627,16 +629,16 @@ mean
 mean.default
 </td>
 <td style="text-align:right;">
-1.48
+1.65
 </td>
 <td style="text-align:right;">
-0.22
+1.78
 </td>
 <td style="text-align:right;">
-1.48
+1.65
 </td>
 <td style="text-align:right;">
-0.22
+1.78
 </td>
 </tr>
 </tbody>
@@ -666,16 +668,16 @@ Self Time
 popsim_binomial
 </td>
 <td style="text-align:right;">
-78.97
+79.57
 </td>
 <td style="text-align:right;">
-131.54
+791.66
 </td>
 <td style="text-align:right;">
-22.78
+23.24
 </td>
 <td style="text-align:right;">
-37.94
+231.18
 </td>
 </tr>
 <tr>
@@ -683,16 +685,16 @@ popsim_binomial
 logpost
 </td>
 <td style="text-align:right;">
-56.19
+56.33
 </td>
 <td style="text-align:right;">
-93.60
+560.48
 </td>
 <td style="text-align:right;">
-20.28
+20.13
 </td>
 <td style="text-align:right;">
-33.78
+200.24
 </td>
 </tr>
 <tr>
@@ -700,16 +702,16 @@ logpost
 dbinom
 </td>
 <td style="text-align:right;">
-27.87
+27.58
 </td>
 <td style="text-align:right;">
-46.42
+274.38
 </td>
 <td style="text-align:right;">
-12.68
+12.70
 </td>
 <td style="text-align:right;">
-21.12
+126.34
 </td>
 </tr>
 <tr>
@@ -717,16 +719,16 @@ dbinom
 &lt;Other&gt;
 </td>
 <td style="text-align:right;">
-21.03
+20.43
 </td>
 <td style="text-align:right;">
-35.04
+203.28
 </td>
 <td style="text-align:right;">
-21.03
+20.43
 </td>
 <td style="text-align:right;">
-35.04
+203.28
 </td>
 </tr>
 <tr>
@@ -734,16 +736,16 @@ dbinom
 mean
 </td>
 <td style="text-align:right;">
-15.19
+14.88
 </td>
 <td style="text-align:right;">
-25.30
+148.04
 </td>
 <td style="text-align:right;">
-13.36
+13.23
 </td>
 <td style="text-align:right;">
-22.26
+131.62
 </td>
 </tr>
 <tr>
@@ -751,16 +753,16 @@ mean
 logprior
 </td>
 <td style="text-align:right;">
-8.04
+8.63
 </td>
 <td style="text-align:right;">
-13.40
+85.86
 </td>
 <td style="text-align:right;">
-8.04
+8.63
 </td>
 <td style="text-align:right;">
-13.40
+85.86
 </td>
 </tr>
 <tr>
@@ -768,16 +770,16 @@ logprior
 mean.default
 </td>
 <td style="text-align:right;">
-1.82
+1.65
 </td>
 <td style="text-align:right;">
-3.04
+16.42
 </td>
 <td style="text-align:right;">
-1.82
+1.65
 </td>
 <td style="text-align:right;">
-3.04
+16.42
 </td>
 </tr>
 </tbody>
@@ -814,16 +816,16 @@ Self Time
 popsim_hypergeometric
 </td>
 <td style="text-align:right;">
-72.76
+75.72
 </td>
 <td style="text-align:right;">
-7.80
+54.44
 </td>
 <td style="text-align:right;">
-32.28
+34.52
 </td>
 <td style="text-align:right;">
-3.46
+24.82
 </td>
 </tr>
 <tr>
@@ -831,16 +833,16 @@ popsim_hypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-40.49
+41.20
 </td>
 <td style="text-align:right;">
-4.34
+29.62
 </td>
 <td style="text-align:right;">
-36.19
+37.41
 </td>
 <td style="text-align:right;">
-3.88
+26.90
 </td>
 </tr>
 <tr>
@@ -848,16 +850,16 @@ logpost
 &lt;Other&gt;
 </td>
 <td style="text-align:right;">
-27.24
+24.28
 </td>
 <td style="text-align:right;">
-2.92
+17.46
 </td>
 <td style="text-align:right;">
-27.24
+24.28
 </td>
 <td style="text-align:right;">
-2.92
+17.46
 </td>
 </tr>
 <tr>
@@ -865,16 +867,16 @@ logpost
 dhyper
 </td>
 <td style="text-align:right;">
-4.29
+3.78
 </td>
 <td style="text-align:right;">
-0.46
+2.72
 </td>
 <td style="text-align:right;">
-4.29
+3.78
 </td>
 <td style="text-align:right;">
-0.46
+2.72
 </td>
 </tr>
 </tbody>
@@ -904,16 +906,16 @@ Self Time
 popsim_hypergeometric
 </td>
 <td style="text-align:right;">
-73.91
+72.44
 </td>
 <td style="text-align:right;">
-90.26
+531.20
 </td>
 <td style="text-align:right;">
-31.79
+30.27
 </td>
 <td style="text-align:right;">
-38.82
+221.96
 </td>
 </tr>
 <tr>
@@ -921,16 +923,16 @@ popsim_hypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-42.12
+42.17
 </td>
 <td style="text-align:right;">
-51.44
+309.24
 </td>
 <td style="text-align:right;">
-34.05
+34.17
 </td>
 <td style="text-align:right;">
-41.58
+250.54
 </td>
 </tr>
 <tr>
@@ -938,16 +940,16 @@ logpost
 &lt;Other&gt;
 </td>
 <td style="text-align:right;">
-26.09
+27.56
 </td>
 <td style="text-align:right;">
-31.86
+202.10
 </td>
 <td style="text-align:right;">
-26.09
+27.56
 </td>
 <td style="text-align:right;">
-31.86
+202.10
 </td>
 </tr>
 <tr>
@@ -955,16 +957,16 @@ logpost
 dhyper
 </td>
 <td style="text-align:right;">
-8.07
+8.00
 </td>
 <td style="text-align:right;">
-9.86
+58.70
 </td>
 <td style="text-align:right;">
-8.07
+8.00
 </td>
 <td style="text-align:right;">
-9.86
+58.70
 </td>
 </tr>
 </tbody>
@@ -1001,16 +1003,16 @@ Self Time
 popsim_multinomial
 </td>
 <td style="text-align:right;">
-92.71
+99.95
 </td>
 <td style="text-align:right;">
-64.08
+10024.52
 </td>
 <td style="text-align:right;">
-13.28
+99.23
 </td>
 <td style="text-align:right;">
-9.18
+9952.64
 </td>
 </tr>
 <tr>
@@ -1018,16 +1020,16 @@ popsim_multinomial
 logpost
 </td>
 <td style="text-align:right;">
-73.99
+0.66
 </td>
 <td style="text-align:right;">
-51.14
+66.38
 </td>
 <td style="text-align:right;">
-13.74
+0.12
 </td>
 <td style="text-align:right;">
-9.50
+11.66
 </td>
 </tr>
 <tr>
@@ -1035,16 +1037,16 @@ logpost
 logcorrection
 </td>
 <td style="text-align:right;">
-40.16
+0.38
 </td>
 <td style="text-align:right;">
-27.76
+37.84
 </td>
 <td style="text-align:right;">
-6.16
+0.05
 </td>
 <td style="text-align:right;">
-4.26
+5.32
 </td>
 </tr>
 <tr>
@@ -1052,16 +1054,16 @@ logcorrection
 lmnchoose
 </td>
 <td style="text-align:right;">
-34.00
+0.32
 </td>
 <td style="text-align:right;">
-23.50
+32.52
 </td>
 <td style="text-align:right;">
-4.77
+0.04
 </td>
 <td style="text-align:right;">
-3.30
+4.02
 </td>
 </tr>
 <tr>
@@ -1069,16 +1071,16 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-29.22
+0.28
 </td>
 <td style="text-align:right;">
-20.20
+28.50
 </td>
 <td style="text-align:right;">
-10.04
+0.10
 </td>
 <td style="text-align:right;">
-6.94
+10.02
 </td>
 </tr>
 <tr>
@@ -1086,33 +1088,16 @@ sapply
 logprior
 </td>
 <td style="text-align:right;">
-15.68
+0.13
 </td>
 <td style="text-align:right;">
-10.84
+13.12
 </td>
 <td style="text-align:right;">
-4.51
+0.04
 </td>
 <td style="text-align:right;">
-3.12
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-ddirichlet
-</td>
-<td style="text-align:right;">
-11.17
-</td>
-<td style="text-align:right;">
-7.72
-</td>
-<td style="text-align:right;">
-10.97
-</td>
-<td style="text-align:right;">
-7.58
+4.08
 </td>
 </tr>
 <tr>
@@ -1120,16 +1105,33 @@ ddirichlet
 simplify2array
 </td>
 <td style="text-align:right;">
-10.65
+0.10
 </td>
 <td style="text-align:right;">
-7.36
+9.76
 </td>
 <td style="text-align:right;">
-5.96
+0.06
 </td>
 <td style="text-align:right;">
-4.12
+5.68
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ddirichlet
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+9.04
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+8.92
 </td>
 </tr>
 <tr>
@@ -1137,33 +1139,33 @@ simplify2array
 lapply
 </td>
 <td style="text-align:right;">
-8.13
+0.08
 </td>
 <td style="text-align:right;">
-5.62
+8.30
 </td>
 <td style="text-align:right;">
-6.60
+0.07
 </td>
 <td style="text-align:right;">
-4.56
+6.96
 </td>
 </tr>
 <tr>
 <td style="text-align:left;">
-&lt;Other&gt;
+sample
 </td>
 <td style="text-align:right;">
-7.29
+0.05
 </td>
 <td style="text-align:right;">
-5.04
+5.50
 </td>
 <td style="text-align:right;">
-7.29
+0.05
 </td>
 <td style="text-align:right;">
-5.04
+4.76
 </td>
 </tr>
 </tbody>
@@ -1193,16 +1195,16 @@ Self Time
 popsim_multinomial
 </td>
 <td style="text-align:right;">
-95.22
+95.16
 </td>
 <td style="text-align:right;">
-1017.72
+1081.04
 </td>
 <td style="text-align:right;">
-8.34
+8.25
 </td>
 <td style="text-align:right;">
-89.14
+93.70
 </td>
 </tr>
 <tr>
@@ -1210,16 +1212,16 @@ popsim_multinomial
 logpost
 </td>
 <td style="text-align:right;">
-82.94
+83.24
 </td>
 <td style="text-align:right;">
-886.44
+945.64
 </td>
 <td style="text-align:right;">
-9.02
+9.06
 </td>
 <td style="text-align:right;">
-96.38
+102.90
 </td>
 </tr>
 <tr>
@@ -1227,16 +1229,16 @@ logpost
 logcorrection
 </td>
 <td style="text-align:right;">
-57.74
+57.59
 </td>
 <td style="text-align:right;">
-617.14
+654.22
 </td>
 <td style="text-align:right;">
-19.22
+19.04
 </td>
 <td style="text-align:right;">
-205.46
+216.32
 </td>
 </tr>
 <tr>
@@ -1244,16 +1246,16 @@ logcorrection
 lmnchoose
 </td>
 <td style="text-align:right;">
-38.52
+38.54
 </td>
 <td style="text-align:right;">
-411.68
+437.90
 </td>
 <td style="text-align:right;">
 3.57
 </td>
 <td style="text-align:right;">
-38.20
+40.52
 </td>
 </tr>
 <tr>
@@ -1261,16 +1263,16 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-34.94
+34.98
 </td>
 <td style="text-align:right;">
-373.48
+397.38
 </td>
 <td style="text-align:right;">
-6.63
+6.47
 </td>
 <td style="text-align:right;">
-70.84
+73.52
 </td>
 </tr>
 <tr>
@@ -1278,16 +1280,16 @@ sapply
 lapply
 </td>
 <td style="text-align:right;">
-21.50
+21.62
 </td>
 <td style="text-align:right;">
-229.74
+245.58
 </td>
 <td style="text-align:right;">
-19.99
+20.10
 </td>
 <td style="text-align:right;">
-213.66
+228.36
 </td>
 </tr>
 <tr>
@@ -1295,16 +1297,16 @@ lapply
 logprior
 </td>
 <td style="text-align:right;">
-10.18
+10.45
 </td>
 <td style="text-align:right;">
-108.84
+118.68
 </td>
 <td style="text-align:right;">
-2.89
+3.09
 </td>
 <td style="text-align:right;">
-30.92
+35.08
 </td>
 </tr>
 <tr>
@@ -1312,16 +1314,16 @@ logprior
 ddirichlet
 </td>
 <td style="text-align:right;">
-7.29
+7.36
 </td>
 <td style="text-align:right;">
-77.92
+83.60
 </td>
 <td style="text-align:right;">
-7.12
+7.21
 </td>
 <td style="text-align:right;">
-76.10
+81.94
 </td>
 </tr>
 <tr>
@@ -1329,16 +1331,16 @@ ddirichlet
 simplify2array
 </td>
 <td style="text-align:right;">
-6.46
+6.50
 </td>
 <td style="text-align:right;">
-69.00
+73.84
 </td>
 <td style="text-align:right;">
-3.64
+3.82
 </td>
 <td style="text-align:right;">
-38.86
+43.44
 </td>
 </tr>
 <tr>
@@ -1346,16 +1348,16 @@ simplify2array
 &lt;Other&gt;
 </td>
 <td style="text-align:right;">
-4.78
+4.84
 </td>
 <td style="text-align:right;">
-51.06
+55.04
 </td>
 <td style="text-align:right;">
-4.78
+4.84
 </td>
 <td style="text-align:right;">
-51.06
+55.04
 </td>
 </tr>
 </tbody>
@@ -1392,16 +1394,16 @@ Self Time
 popsim_mvhypergeometric
 </td>
 <td style="text-align:right;">
-94.76
+94.58
 </td>
 <td style="text-align:right;">
-85.74
+104.62
 </td>
 <td style="text-align:right;">
-8.00
+8.35
 </td>
 <td style="text-align:right;">
-7.24
+9.24
 </td>
 </tr>
 <tr>
@@ -1409,16 +1411,16 @@ popsim_mvhypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-82.49
+81.96
 </td>
 <td style="text-align:right;">
-74.64
+90.66
 </td>
 <td style="text-align:right;">
-6.70
+6.64
 </td>
 <td style="text-align:right;">
-6.06
+7.34
 </td>
 </tr>
 <tr>
@@ -1426,16 +1428,16 @@ logpost
 lmnchoose
 </td>
 <td style="text-align:right;">
-50.66
+49.39
 </td>
 <td style="text-align:right;">
-45.84
+54.64
 </td>
 <td style="text-align:right;">
-7.45
+6.89
 </td>
 <td style="text-align:right;">
-6.74
+7.62
 </td>
 </tr>
 <tr>
@@ -1443,16 +1445,16 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-43.21
+42.51
 </td>
 <td style="text-align:right;">
-39.10
+47.02
 </td>
 <td style="text-align:right;">
-15.34
+14.97
 </td>
 <td style="text-align:right;">
-13.88
+16.56
 </td>
 </tr>
 <tr>
@@ -1460,16 +1462,16 @@ sapply
 logprior
 </td>
 <td style="text-align:right;">
-34.26
+33.70
 </td>
 <td style="text-align:right;">
-31.00
+37.28
 </td>
 <td style="text-align:right;">
 7.23
 </td>
 <td style="text-align:right;">
-6.54
+8.00
 </td>
 </tr>
 <tr>
@@ -1477,16 +1479,16 @@ logprior
 logcorrection
 </td>
 <td style="text-align:right;">
-28.63
+28.02
 </td>
 <td style="text-align:right;">
-25.90
+31.00
 </td>
 <td style="text-align:right;">
-3.80
+3.98
 </td>
 <td style="text-align:right;">
-3.44
+4.40
 </td>
 </tr>
 <tr>
@@ -1494,16 +1496,16 @@ logcorrection
 simplify2array
 </td>
 <td style="text-align:right;">
-14.79
+14.23
 </td>
 <td style="text-align:right;">
-13.38
+15.74
 </td>
 <td style="text-align:right;">
-8.02
+7.97
 </td>
 <td style="text-align:right;">
-7.26
+8.82
 </td>
 </tr>
 <tr>
@@ -1511,16 +1513,16 @@ simplify2array
 dmvhyper
 </td>
 <td style="text-align:right;">
-12.91
+13.60
 </td>
 <td style="text-align:right;">
-11.68
+15.04
 </td>
 <td style="text-align:right;">
-11.89
+12.33
 </td>
 <td style="text-align:right;">
-10.76
+13.64
 </td>
 </tr>
 <tr>
@@ -1528,16 +1530,16 @@ dmvhyper
 lapply
 </td>
 <td style="text-align:right;">
-12.20
+12.51
 </td>
 <td style="text-align:right;">
-11.04
+13.84
 </td>
 <td style="text-align:right;">
-10.17
+10.34
 </td>
 <td style="text-align:right;">
-9.20
+11.44
 </td>
 </tr>
 <tr>
@@ -1545,16 +1547,16 @@ lapply
 unique
 </td>
 <td style="text-align:right;">
-6.76
+6.26
 </td>
 <td style="text-align:right;">
-6.12
+6.92
 </td>
 <td style="text-align:right;">
-5.06
+4.99
 </td>
 <td style="text-align:right;">
-4.58
+5.52
 </td>
 </tr>
 </tbody>
@@ -1584,16 +1586,16 @@ Self Time
 popsim_mvhypergeometric
 </td>
 <td style="text-align:right;">
-96.83
+96.90
 </td>
 <td style="text-align:right;">
-1602.28
+1665.80
 </td>
 <td style="text-align:right;">
 4.48
 </td>
 <td style="text-align:right;">
-74.10
+77.02
 </td>
 </tr>
 <tr>
@@ -1601,16 +1603,16 @@ popsim_mvhypergeometric
 logpost
 </td>
 <td style="text-align:right;">
-89.86
+89.95
 </td>
 <td style="text-align:right;">
-1486.98
+1546.32
 </td>
 <td style="text-align:right;">
-3.47
+3.60
 </td>
 <td style="text-align:right;">
-57.44
+61.90
 </td>
 </tr>
 <tr>
@@ -1618,16 +1620,16 @@ logpost
 lmnchoose
 </td>
 <td style="text-align:right;">
-49.77
+49.52
 </td>
 <td style="text-align:right;">
-823.52
+851.36
 </td>
 <td style="text-align:right;">
-4.81
+4.53
 </td>
 <td style="text-align:right;">
-79.58
+77.90
 </td>
 </tr>
 <tr>
@@ -1635,16 +1637,16 @@ lmnchoose
 sapply
 </td>
 <td style="text-align:right;">
-44.96
+44.99
 </td>
 <td style="text-align:right;">
-743.94
+773.46
 </td>
 <td style="text-align:right;">
-8.30
+8.21
 </td>
 <td style="text-align:right;">
-137.32
+141.20
 </td>
 </tr>
 <tr>
@@ -1652,16 +1654,16 @@ sapply
 logprior
 </td>
 <td style="text-align:right;">
-39.73
+40.34
 </td>
 <td style="text-align:right;">
-657.46
+693.40
 </td>
 <td style="text-align:right;">
-14.16
+14.33
 </td>
 <td style="text-align:right;">
-234.32
+246.40
 </td>
 </tr>
 <tr>
@@ -1669,16 +1671,16 @@ logprior
 logcorrection
 </td>
 <td style="text-align:right;">
-37.31
+36.64
 </td>
 <td style="text-align:right;">
-617.40
+629.94
 </td>
 <td style="text-align:right;">
-12.47
+12.43
 </td>
 <td style="text-align:right;">
-206.34
+213.64
 </td>
 </tr>
 <tr>
@@ -1686,16 +1688,16 @@ logcorrection
 lapply
 </td>
 <td style="text-align:right;">
-27.94
+27.95
 </td>
 <td style="text-align:right;">
-462.36
+480.46
 </td>
 <td style="text-align:right;">
-25.98
+25.91
 </td>
 <td style="text-align:right;">
-429.96
+445.34
 </td>
 </tr>
 <tr>
@@ -1703,16 +1705,16 @@ lapply
 dmvhyper
 </td>
 <td style="text-align:right;">
-9.35
+9.37
 </td>
 <td style="text-align:right;">
-154.68
+161.08
 </td>
 <td style="text-align:right;">
-6.82
+6.91
 </td>
 <td style="text-align:right;">
-112.82
+118.72
 </td>
 </tr>
 <tr>
@@ -1720,16 +1722,16 @@ dmvhyper
 simplify2array
 </td>
 <td style="text-align:right;">
-8.20
+8.32
 </td>
 <td style="text-align:right;">
-135.74
+143.10
 </td>
 <td style="text-align:right;">
-4.65
+4.72
 </td>
 <td style="text-align:right;">
-76.94
+81.08
 </td>
 </tr>
 <tr>
@@ -1737,16 +1739,16 @@ simplify2array
 unique
 </td>
 <td style="text-align:right;">
-3.55
+3.61
 </td>
 <td style="text-align:right;">
-58.80
+62.02
 </td>
 <td style="text-align:right;">
-2.82
+2.77
 </td>
 <td style="text-align:right;">
-46.68
+47.56
 </td>
 </tr>
 </tbody>
@@ -1830,49 +1832,49 @@ K
 Binomial
 </td>
 <td style="text-align:right;">
-20.9
+21.2
 </td>
 <td style="text-align:right;">
-62.0
+61.0
 </td>
 <td style="text-align:right;">
-79.8
+80.6
 </td>
 <td style="text-align:right;">
-86.6
+88.0
 </td>
 <td style="text-align:right;">
-91.1
-</td>
-<td style="text-align:right;">
-88.6
-</td>
-<td style="text-align:right;">
-88.7
-</td>
-<td style="text-align:right;">
-88.6
+88.0
 </td>
 <td style="text-align:right;">
 90.6
 </td>
 <td style="text-align:right;">
-87.5
+89.2
 </td>
 <td style="text-align:right;">
-87.8
+89.2
 </td>
 <td style="text-align:right;">
-88.2
+88.1
 </td>
 <td style="text-align:right;">
-78.4
+88.1
 </td>
 <td style="text-align:right;">
-59.8
+86.1
 </td>
 <td style="text-align:right;">
-21.6
+84.8
+</td>
+<td style="text-align:right;">
+79.7
+</td>
+<td style="text-align:right;">
+60.2
+</td>
+<td style="text-align:right;">
+23.2
 </td>
 </tr>
 <tr>
@@ -1880,49 +1882,49 @@ Binomial
 Hypergeometric
 </td>
 <td style="text-align:right;">
-96.0
+95.9
 </td>
 <td style="text-align:right;">
-87.5
+88.9
 </td>
 <td style="text-align:right;">
-84.5
-</td>
-<td style="text-align:right;">
-86.8
-</td>
-<td style="text-align:right;">
-88.5
+83.9
 </td>
 <td style="text-align:right;">
 87.1
 </td>
 <td style="text-align:right;">
-86.5
-</td>
-<td style="text-align:right;">
-87.0
+87.5
 </td>
 <td style="text-align:right;">
 88.6
 </td>
 <td style="text-align:right;">
+88.5
+</td>
+<td style="text-align:right;">
+87.0
+</td>
+<td style="text-align:right;">
+86.3
+</td>
+<td style="text-align:right;">
+87.0
+</td>
+<td style="text-align:right;">
+83.4
+</td>
+<td style="text-align:right;">
+83.4
+</td>
+<td style="text-align:right;">
+82.6
+</td>
+<td style="text-align:right;">
 86.8
 </td>
 <td style="text-align:right;">
-86.1
-</td>
-<td style="text-align:right;">
-88.1
-</td>
-<td style="text-align:right;">
-84.8
-</td>
-<td style="text-align:right;">
-88.0
-</td>
-<td style="text-align:right;">
-95.0
+95.1
 </td>
 </tr>
 </tbody>
