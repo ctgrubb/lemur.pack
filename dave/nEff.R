@@ -22,7 +22,8 @@ rDirUnif <- function(n, nEff, nSamples = 1, alpha = 0.5, plot = TRUE) {
     dx <- dnorm(x, .5, sqrt(.5 * (1 - .5)) / sqrt(nEff))
     lines(x, dx, col = 'blue')
     mtext(paste0('Draws of Population Proportion < 0.5 (nEff = ', nEff, ')'))
+    par(mfrow = c(1, 1))
   }
 }
 
-samples_41_5 <- rDirUnif(41, 4, 1000, 0.5, plot = TRUE)
+samples_41_5 <- rDirUnif(100, 10, 10000, 0.5, plot = TRUE)
