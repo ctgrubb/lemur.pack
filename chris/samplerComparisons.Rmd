@@ -1,0 +1,221 @@
+---
+title: "Sampler Comparisons"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+header-includes:
+  - \usepackage{breqn}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- TRUE
+```
+
+```{r paramset, echo = FALSE, eval = TRUE}
+if(quick_eval) {
+  samples <- 500
+} else {
+  samples <- 20000
+}
+
+set.seed(1234)
+```
+
+```{r packageload, message = FALSE, warning = FALSE, eval = TRUE}
+library(extraDistr)
+library(knitr)
+library(kableExtra)
+library(proftools)
+```
+
+# Intro
+
+Text here.
+
+# Samplers
+
+Here we will compare three samplers:
+
+## Importance Sampling
+
+```{r importanceSampler}
+importanceSampler <- function(x, N, samples = 1000, saturation = 10, nEff = length(sample), 
+                              alpha = 0.5, cutoff = 0.5) {
+  n <- length(x)
+  nLow <- sum(x < cutoff)
+
+  priorDrawsRaw <- rdirichlet(samples * saturation, (nEff + alpha) / (N + 1) * rep(1, N + 1))
+  priorDraws <- t(apply(matrix(priorDrawsRaw, nrow = samples * saturation)
+                        [, -(N + 1), drop = FALSE], 1, cumsum))
+  NLow <- apply(priorDraws, 1, function(x) sum(x < cutoff))
+  weights <- dhyper(nLow, NLow, N - NLow, n)
+
+  draws <- sample(1:(samples * saturation), size = samples, replace = TRUE, prob = weights)
+
+  return(priorDraws[draws, ])
+}
+```
+
+## MCMC with Uniform Proposal
+
+```{r mcmcUniform}
+mcmcUniform <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
+
+  lpost <- function(nLow, pop, N, nEff, alpha) {
+    NLow <- sum(pop < cutoff)
+    diffs <- diff(c(0, sort(pop), 1))
+    lprior <- ddirichlet(diffs, (nEff + alpha) / (N + 1) * rep(1, N + 1), log = TRUE)
+    llik <- dhyper(nLow, NLow, N - NLow, n, log = TRUE)
+    return(llik + lprior)
+  }
+
+  n <- length(x)
+  nLow <- sum(x < cutoff)
+
+  out <- matrix(NA, nrow = samples, ncol = N)
+  # out[1, ] <- rep(x, length.out = N) + runif(N, 0, 0.01)
+  out[1, ] <- runif(N)
+  lp0 <- lpost(nLow, out[1, ], N, nEff, alpha)
+
+  for(i in 2:samples) {
+    current <- out[i - 1, ]
+    for(k in 1:N) {
+      proposal <- current
+      proposal[k] <- runif(1)
+      lp1 <- lpost(nLow, proposal, N, nEff, alpha)
+
+      u <- runif(1)
+      if(is.finite(lp1) && log(u) < (lp1 - lp0)) {
+        current <- proposal
+        lp0 <- lp1
+      }
+    }
+    out[i, ] <- current
+  }
+  return(out)
+}
+```
+
+
+## MCMC with Conditional Prior Proposal
+
+Let $x_1, x_2, \dots, x_N$ represent the *ordered* population of size *N*. We denote $s_1 = x_1$, $s_2 = x_2 - x_1, \dots, s_{N-1} = x_N - x_{N-1}$, $s_N = 1 - x_N$ as the spacing of the ordered population.
+
+From our formulation of the posterior, $\sum s_i = 1$ and $(s_1, \dots, s_{N+1}) \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$. We can use this to figure out the conditional prior for a set of spacings $s_{(m)}$.
+
+For example, suppose we want the distribution of $x_{(1)} | x_{(2)}$, where $x_{(1)}, x_{(2)}$ partition $x$. Fortunately, this is relatively straightforward, and we end up with
+
+$$ \frac{1}{1 - \mathbf{1}^Tx_{(2)}} X_{(1)} | X_{(2)} = x_{(2)} \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$$
+
+Essentially, nothing changes except we now know the spacings have to add up to $1 - \mathbf{1}^Tx_{(2)}$. We can use this to our advantage, using this conditional prior as our proposal. For simplicity, we let $N_E\ |\ N$, and consider proposal chunks of size $N / N_E$.
+
+```{r mcmcPrior}
+mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
+
+  lpost <- function(nLow, pop, N, nEff, alpha) {
+    NLow <- sum(pop < cutoff)
+    diffs <- diff(c(0, sort(pop), 1))
+    lprior <- ddirichlet(diffs, (nEff + alpha) / (N + 1) * rep(1, N + 1), log = TRUE)
+    llik <- dhyper(nLow, NLow, N - NLow, n, log = TRUE)
+    return(llik + lprior)
+  }
+
+  n <- length(x)
+  nLow <- sum(x < cutoff)
+
+  out <- matrix(NA, nrow = samples, ncol = N)
+  # out[1, ] <- rep(x, length.out = N) + runif(N, 0, 0.01)
+  out[1, ] <- runif(N)
+  lp0 <- lpost(nLow, out[1, ], N, nEff, alpha)
+
+  for(i in 2:samples) {
+    current <- out[i - 1, ]
+    for(k in 1:N) {
+      proposal <- current
+      proposal[k] <- runif(1)
+      lp1 <- lpost(nLow, proposal, N, nEff, alpha)
+
+      u <- runif(1)
+      if(is.finite(lp1) && log(u) < (lp1 - lp0)) {
+        current <- proposal
+        lp0 <- lp1
+      }
+    }
+    out[i, ] <- current
+  }
+  return(out)
+}
+```
+
+
+
+
+# Comparisons
+
+Text here.
+
+```{r samplesSetup}
+x1 <- c(0.11, 0.19, 0.27, 0.39, 0.42, 0.48, 0.59, 0.71, 0.84, 0.92)
+x2 <- c(0.07, 0.12, 0.19, 0.26, 0.31, 0.36, 0.41, 0.49, 0.67, 0.89)
+```
+
+```{r popSetup}
+N <- 40
+nEff <- 4
+alpha <- 0.5
+cutoff <- 0.5
+```
+
+```{r initRuns, include = FALSE}
+initRun1 <- importanceSampler(x = x1, N = N, samples = 100, nEff = 4)
+initRun2 <- mcmcUniform(x = x1, N = N, samples = 100, nEff = 4)
+
+initRun3 <- importanceSampler(x = x2, N = N, samples = 100, nEff = 4)
+initRun4 <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
+```
+
+```{r timings}
+pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4)
+pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4)
+
+pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4)
+pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4)
+```
+
+## Location (Mean)
+
+```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red) vs Markov Chain Approach (blue)"}
+plot(density(rowMeans(pops1_1)), col = "red",
+     main = "", 
+     xlab = "Mean of Population")
+lines(density(rowMeans(pops1_2)), col = "blue")
+```
+
+
+## Location (CDFs)
+
+```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (red) vs Markov Chain Approach (blue)"}
+par(mfrow = c(1, 2))
+
+pops1_1_sort = apply(pops1_1, 2, sort)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+mtext("Importance Sampling")
+
+pops1_2_sort = apply(pops1_2, 2, sort)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+mtext("Markov Chains")
+```
