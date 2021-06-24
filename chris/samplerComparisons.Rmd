@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
   eval = TRUE
 )
 
-quick_eval <- TRUE
+quick_eval <- FALSE
 ```
 
 ```{r paramset, echo = FALSE, eval = TRUE}
@@ -187,11 +187,11 @@ initRun4 <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
 ```
 
 ```{r timings}
-pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4)
-pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4)
+pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4, cutoff = 0.6)
 
-pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4)
-pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4)
+pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4, cutoff = 0.6)
 ```
 
 ## Location (Mean)
@@ -202,7 +202,6 @@ plot(density(rowMeans(pops1_1)), col = "red",
      xlab = "Mean of Population")
 lines(density(rowMeans(pops1_2)), col = "blue")
 ```
-
 
 ## Location (CDFs)
 
@@ -219,3 +218,5 @@ plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities'
 matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 mtext("Markov Chains")
 ```
+
+
