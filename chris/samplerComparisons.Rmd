@@ -25,7 +25,7 @@ quick_eval <- FALSE
 
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
-  samples <- 5000
+  samples <- 1000
 } else {
   samples <- 20000
 }
@@ -38,6 +38,7 @@ library(extraDistr)
 library(knitr)
 library(kableExtra)
 library(proftools)
+library(dplyr)
 ```
 
 # Intro
@@ -122,8 +123,6 @@ $$ \frac{1}{1 - \mathbf{1}^Tx_{(2)}} X_{(1)} | X_{(2)} = x_{(2)} \sim Dir(\frac{
 Essentially, nothing changes except we now know the spacings have to add up to $1 - \mathbf{1}^Tx_{(2)}$. We can use this to our advantage, using this conditional prior as our proposal. For simplicity, we let $N_E\ |\ N$, and consider proposal chunks of size $N / N_E$.
 
 ```{r mcmcPrior}
-x <- x1
-
 mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
 
   lpost <- function(nLow, pop, diffs, N, nEff, alpha, cutoff) {
@@ -226,45 +225,66 @@ initRun5 <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
 initRun6 <- mcmcPrior(x = x2, N = N, samples = 100, nEff = 4)
 ```
 
-```{r timings}
-pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4)
-pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4)
-pops1_3 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4)
+```{r timings, include = FALSE, cache = TRUE}
+time_1 <- profileExpr(pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4))
+time_2 <- profileExpr(pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4))
+time_3 <- profileExpr(pops1_3 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4))
 
 pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4)
 pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4)
 pops2_3 <- mcmcPrior(x = x2, N = N, samples = samples, nEff = 4)
+
+prof_1 <- slice_max(data.frame(flatProfile(time_1, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
+prof_2 <- slice_max(data.frame(flatProfile(time_2, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
+prof_3 <- slice_max(data.frame(flatProfile(time_3, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
 ```
 
 ## Location (Mean)
 
-```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red) vs Markov Chain Approach (blue)"}
-plot(density(rowMeans(pops1_1)), col = "red",
-     main = "", 
-     xlab = "Mean of Population")
+```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Uniform Proposal MCMC (blue), and Prior Proposal Block MCMC (green)", out.width = "100%"}
+plot(density(rowMeans(pops1_1)), col = "red", main = "", xlab = "Mean of Population", ylim = c(0, 7))
 lines(density(rowMeans(pops1_2)), col = "blue")
 lines(density(rowMeans(pops1_3$data)), col = "green")
 ```
 
 ## Location (CDFs)
 
-```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (red) vs Markov Chain Approach (blue)"}
-par(mfrow = c(1, 3))
+```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (left), Uniform Proposal MCMC (center), and Prior Proposal Block MCMC (right)", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 3), mar = c(3, 0, 0, 0))
 
 pops1_1_sort = apply(pops1_1, 2, sort)
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n')
 matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+axis(1, 1:9 / 10)
 mtext("Importance Sampling")
 
 pops1_2_sort = apply(pops1_2, 2, sort)
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
 matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+axis(1, 1:9 / 10)
 mtext("Markov Chains\n(Uniform Proposal)")
 
 pops1_1_sort = apply(pops1_3$data, 2, sort)
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
 matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+axis(1, 1:9 / 10)
 mtext("Block Markov Chains\n(Prior Proposal)")
 ```
 
+## Time
+
+```{r, echo = FALSE}
+kables(
+  list(
+    kable(prof_1, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
+      kable_styling(full_width = FALSE, position = "float_left"),
+    kable(prof_2, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
+      kable_styling(full_width = FALSE, position = "center"),
+    kable(prof_3, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
+      kable_styling(full_width = FALSE, position = "float_right")
+  ),
+  caption = "Profile for Importance Sampling (left), Uniform Proposal MCMC (center), and Prior Proposal Block MCMC (right)"
+) %>%
+  kable_styling(full_width = TRUE, font_size = 11)
+```
 
