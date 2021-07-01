@@ -25,7 +25,7 @@ quick_eval <- FALSE
 
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
-  samples <- 500
+  samples <- 5000
 } else {
   samples <- 20000
 }
@@ -122,39 +122,77 @@ $$ \frac{1}{1 - \mathbf{1}^Tx_{(2)}} X_{(1)} | X_{(2)} = x_{(2)} \sim Dir(\frac{
 Essentially, nothing changes except we now know the spacings have to add up to $1 - \mathbf{1}^Tx_{(2)}$. We can use this to our advantage, using this conditional prior as our proposal. For simplicity, we let $N_E\ |\ N$, and consider proposal chunks of size $N / N_E$.
 
 ```{r mcmcPrior}
+x <- x1
+
 mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
 
-  lpost <- function(nLow, pop, N, nEff, alpha) {
+  lpost <- function(nLow, pop, diffs, N, nEff, alpha, cutoff) {
     NLow <- sum(pop < cutoff)
-    diffs <- diff(c(0, sort(pop), 1))
     lprior <- ddirichlet(diffs, (nEff + alpha) / (N + 1) * rep(1, N + 1), log = TRUE)
     llik <- dhyper(nLow, NLow, N - NLow, n, log = TRUE)
     return(llik + lprior)
   }
-
+  
+  priorProposal <- function(x) {
+    as.numeric(rdirichlet(1, rep((nEff + alpha) / length(x), length(x))) * sum(x))
+  }
+  
+  priorDensity <- function(x) {
+    ddirichlet(x / sum(x), rep((nEff + alpha) / length(x), length(x)), log = TRUE)
+  }
+  
+  spacings <- matrix(NA, nrow = samples, ncol = N + 1)
+  data <- matrix(NA, nrow = samples, ncol = N)
+  
+  chunks <- split(1:(N + 1), cut(seq_along(1:(N + 1)), nEff * 2, labels = FALSE))
+  
+  chunks2 <- list()
+  for(i in 1:(length(chunks) - 1)) {
+    chunks2[[i]] <- c(chunks[[i]], chunks[[i + 1]])
+  }
+  
+  
   n <- length(x)
   nLow <- sum(x < cutoff)
-
-  out <- matrix(NA, nrow = samples, ncol = N)
-  # out[1, ] <- rep(x, length.out = N) + runif(N, 0, 0.01)
-  out[1, ] <- runif(N)
-  lp0 <- lpost(nLow, out[1, ], N, nEff, alpha)
-
+  
+  data[1, ] <- sort(c(runif(ceiling(N * nLow / n), 0, cutoff), 
+                      runif(floor(N * (n - nLow) / n), cutoff, 1)))
+  spacings[1, ] <- diff(c(0, data[1, ], 1))
+  
+  
+  lp0 <- lpost(nLow, data[1, ], spacings[1, ], N, nEff, alpha, cutoff)
+  
   for(i in 2:samples) {
-    current <- out[i - 1, ]
-    for(k in 1:N) {
-      proposal <- current
-      proposal[k] <- runif(1)
-      lp1 <- lpost(nLow, proposal, N, nEff, alpha)
-
+    currentSpacings <- spacings[i - 1,]
+    currentData <- data[i - 1, ]
+    for(k in 1:length(chunks2)) {
+      proposeSpacings <- currentSpacings
+      proposeSpacings[chunks2[[k]]] <- priorProposal(proposeSpacings[chunks2[[k]]])
+      proposeData <- cumsum(proposeSpacings)[-(N + 1)]
+      lp1 <- lpost(nLow, proposeData, proposeSpacings, N, nEff, alpha, cutoff)
+      
       u <- runif(1)
-      if(is.finite(lp1) && log(u) < (lp1 - lp0)) {
-        current <- proposal
+      if(is.finite(lp1) && log(u) < (lp1 - priorDensity(proposeSpacings)) - (lp0 - priorDensity(currentSpacings))) {
+        currentSpacings <- proposeSpacings
+        currentData <- proposeData
         lp0 <- lp1
       }
     }
-    out[i, ] <- current
+    spacings[i, ] <- currentSpacings
+    data[i, ] <- currentData
   }
+  
+  out <- list(
+    data = data,
+    spacings = spacings,
+    x = x,
+    N = n,
+    samples = samples,
+    nEff = nEff,
+    alpha = alpha,
+    cutoff = cutoff
+  )
+  
   return(out)
 }
 ```
@@ -172,7 +210,7 @@ x2 <- c(0.07, 0.12, 0.19, 0.26, 0.31, 0.36, 0.41, 0.49, 0.67, 0.89)
 ```
 
 ```{r popSetup}
-N <- 40
+N <- 39
 nEff <- 4
 alpha <- 0.5
 cutoff <- 0.5
@@ -181,17 +219,21 @@ cutoff <- 0.5
 ```{r initRuns, include = FALSE}
 initRun1 <- importanceSampler(x = x1, N = N, samples = 100, nEff = 4)
 initRun2 <- mcmcUniform(x = x1, N = N, samples = 100, nEff = 4)
+initRun3 <- mcmcPrior(x = x1, N = N, samples = 100, nEff = 4)
 
-initRun3 <- importanceSampler(x = x2, N = N, samples = 100, nEff = 4)
-initRun4 <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
+initRun4 <- importanceSampler(x = x2, N = N, samples = 100, nEff = 4)
+initRun5 <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
+initRun6 <- mcmcPrior(x = x2, N = N, samples = 100, nEff = 4)
 ```
 
 ```{r timings}
-pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4, cutoff = 0.6)
-pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4)
+pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4)
+pops1_3 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4)
 
-pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4, cutoff = 0.6)
-pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4)
+pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4)
+pops2_3 <- mcmcPrior(x = x2, N = N, samples = samples, nEff = 4)
 ```
 
 ## Location (Mean)
@@ -201,12 +243,13 @@ plot(density(rowMeans(pops1_1)), col = "red",
      main = "", 
      xlab = "Mean of Population")
 lines(density(rowMeans(pops1_2)), col = "blue")
+lines(density(rowMeans(pops1_3$data)), col = "green")
 ```
 
 ## Location (CDFs)
 
 ```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (red) vs Markov Chain Approach (blue)"}
-par(mfrow = c(1, 2))
+par(mfrow = c(1, 3))
 
 pops1_1_sort = apply(pops1_1, 2, sort)
 plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
@@ -216,7 +259,12 @@ mtext("Importance Sampling")
 pops1_2_sort = apply(pops1_2, 2, sort)
 plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
 matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
-mtext("Markov Chains")
+mtext("Markov Chains\n(Uniform Proposal)")
+
+pops1_1_sort = apply(pops1_3$data, 2, sort)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities')
+matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+mtext("Block Markov Chains\n(Prior Proposal)")
 ```
 
 
