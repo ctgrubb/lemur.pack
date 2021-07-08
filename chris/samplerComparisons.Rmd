@@ -38,9 +38,8 @@ library(extraDistr)
 library(knitr)
 library(kableExtra)
 library(proftools)
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+library(tidyverse)
+library(gridExtra)
 ```
 
 # Intro
@@ -132,7 +131,8 @@ mcmcPriorBlock <- function(x, N, samples = 1000, nEff = length(sample), alpha = 
       lp1 <- lpost(nLow, proposeData, proposeSpacings, N, nEff, alpha, cutoff)
       
       u <- runif(1)
-      if(is.finite(lp1) && log(u) < (lp1 - priorDensity(proposeSpacings)) - (lp0 - priorDensity(currentSpacings))) {
+      if(is.finite(lp1) && log(u) < (lp1 - priorDensity(proposeSpacings)) - 
+         (lp0 - priorDensity(currentSpacings))) {
         currentSpacings <- proposeSpacings
         currentData <- proposeData
         lp0 <- lp1
@@ -281,7 +281,8 @@ prof_3 <- slice_max(data.frame(flatProfile(time_3, byTotal = TRUE, GC = FALSE)),
 ```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
 par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
-plot(density(rowMeans(pops1_1)), col = "red", main = "", xlab = "Mean of Population", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(rowMeans(pops1_1)), col = "red", main = "", xlab = "Mean of Population", 
+     ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
 lines(density(rowMeans(pops1_2$data)), col = "blue")
@@ -289,7 +290,8 @@ lines(density(rowMeans(pops1_3$data)), col = "green")
 
 par(mar = c(3, 0.5, 0, 3))
 
-plot(density(rowMeans(pops2_1)), col = "red", main = "", xlab = "Mean of Population", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(rowMeans(pops2_1)), col = "red", main = "", xlab = "Mean of Population", 
+     ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
 lines(density(rowMeans(pops2_2$data)), col = "blue")
@@ -301,7 +303,8 @@ lines(density(rowMeans(pops2_3$data)), col = "green")
 ```{r medians, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
 par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
-plot(density(apply(pops1_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops1_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", 
+     yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
 lines(density(apply(pops1_2$data, 1, median)), col = "blue")
@@ -309,7 +312,8 @@ lines(density(apply(pops1_3$data, 1, median)), col = "green")
 
 par(mar = c(3, 0.5, 0, 3))
 
-plot(density(apply(pops2_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops2_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", 
+     yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
 lines(density(apply(pops2_2$data, 1, median)), col = "blue")
@@ -322,19 +326,22 @@ lines(density(apply(pops2_3$data, 1, median)), col = "green")
 par(mfrow = c(1, 3), mar = c(3, 0.5, 0, 0.5))
 
 pops1_1_sort = t(apply(pops1_1, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n')
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', 
+     yaxt = 'n')
 matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Importance Sampling")
 
 pops1_2_sort = t(apply(pops1_2$data, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', 
+     yaxt = 'n', ann = FALSE)
 matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("MCMC\n(Prior Proposal)")
 
 pops1_3_sort = t(apply(pops1_3$data, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', 
+     yaxt = 'n', ann = FALSE)
 matlines(t(pops1_3_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Block MCMC\n(Prior Proposal)")
@@ -344,19 +351,22 @@ mtext("Block MCMC\n(Prior Proposal)")
 par(mfrow = c(1, 3), mar = c(3, 0.5, 0, 0.5))
 
 pops2_1_sort = t(apply(pops2_1, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n')
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', 
+     yaxt = 'n')
 matlines(t(pops2_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Importance Sampling")
 
 pops2_2_sort = t(apply(pops2_2$data, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n',
+     yaxt = 'n', ann = FALSE)
 matlines(t(pops2_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("MCMC\n(Prior Proposal)")
 
 pops2_3_sort = t(apply(pops2_3$data, 1, sort))
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n',
+     yaxt = 'n', ann = FALSE)
 matlines(t(pops2_3_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Block MCMC\n(Prior Proposal)")
@@ -367,7 +377,8 @@ mtext("Block MCMC\n(Prior Proposal)")
 ```{r cdf0.5, echo = FALSE, fig.cap = "F(0.5) Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
 par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
-plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red", 
+     main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
 lines(density(apply(pops1_2$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
@@ -375,7 +386,8 @@ lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), c
 
 par(mar = c(3, 0.5, 0, 3))
 
-plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red",
+     main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
 lines(density(apply(pops2_2$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
@@ -387,7 +399,8 @@ lines(density(apply(pops2_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), c
 ```{r cdfs0.25, echo = FALSE, fig.cap = "F(0.25) Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
 par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
-plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red",
+     main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
 lines(density(apply(pops1_2$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
@@ -395,7 +408,8 @@ lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.25) / length(x)})), 
 
 par(mar = c(3, 0.5, 0, 3))
 
-plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
+plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red",
+     main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
 lines(density(apply(pops2_2$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
@@ -423,16 +437,121 @@ kables(
 
 ## CDF
 
-```{r fancycdfs, eval = FALSE}
+```{r fancycdfs, echo = FALSE, warning = FALSE, message = FALSE}
 data.frame(pops1_1_sort) %>%
   mutate_all(sort) %>%
   slice(round(seq(1, samples, length.out = 100))) %>%
-  pivot_longer(1:N, names_to = "Q", values_to = "X") %>%
+  pivot_longer(everything(), names_to = "Q", values_to = "X") %>%
   mutate(Q = as.numeric(substring(Q, 2)) / N) %>%
   ggplot(mapping = aes(x = X, y = Q)) + 
-  geom_point()
+  geom_point() + 
+  labs(y = "F(x)")
 ```
 
+## Medians
+
+```{r fancymedians, echo = FALSE, warning = FALSE, message = FALSE}
+g1 <- data.frame(X = apply(pops1_1_sort, 1, median)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+g2 <- data.frame(X = apply(pops2_1_sort, 1, median)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+grid.arrange(g1, g2, nrow = 1, ncol = 2)
+```
+
+## F(0.5)
+
+```{r fancyF, echo = FALSE, warning = FALSE, message = FALSE}
+g1 <- data.frame(X = apply(pops1_1_sort, 1, function(x) {sum(x < 0.5) / length(x)})) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 1/39) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+g2 <- data.frame(X = apply(pops2_1_sort, 1, function(x) {sum(x < 0.5) / length(x)})) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 1/39) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+grid.arrange(g1, g2, nrow = 1, ncol = 2)
+```
+
+# Changing the Cutoff
+
+```{r cutoff, include = FALSE, cache = TRUE}
+pops1_1_2 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+pops2_1_2 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4, cutoff = 0.6)
+```
+
+```{r meanMedian}
+g1 <- data.frame(X = apply(pops1_1_2, 1, mean)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+g2 <- data.frame(X = apply(pops2_1_2, 1, mean)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+g3 <- data.frame(X = apply(pops1_1_2, 1, median)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+g3 <- data.frame(X = apply(pops2_1_2, 1, median)) %>%
+  ggplot(mapping = aes(x = X)) + 
+  geom_histogram(binwidth = 0.01) + 
+  lims(x = c(0, 1)) + 
+  labs(y = "Count")
+
+grid.arrange(g1, g2, g3, g4, nrow = 2, ncol = 2)
+```
+
+# Diagnostics
+
+## Trace Plots (Mean)
+
+```{r traceMean, echo = FALSE, fig.cap = "Trace Plots for the Mean, from Prior Proposal MCMC (red), and Prior Proposal Block MCMC (blue) on a 60%/40% sample (top) and 80%/20% sample (bottom)", out.width = "100%", fig.height = 6}
+par(mfrow = c(2, 1), mar = c(3, 3, 0.5, 0.5))
+
+plot(1:samples, rowMeans(pops1_2$data), type = "l", col = "red", main = "", 
+     xlab = "Mean of Population", ylim = c(0, 1), ylab = "", yaxt = "n")
+axis(2, 0:5/5)
+lines(1:samples, rowMeans(pops1_3$data), col = "blue")
+
+plot(1:samples, rowMeans(pops2_2$data), type = "l", col = "red", main = "", 
+     xlab = "Mean of Population", ylim = c(0, 1), ylab = "", yaxt = "n")
+axis(2, 0:5/5)
+lines(1:samples, rowMeans(pops2_3$data), col = "blue")
+```
+
+## Trace Plots (Median)
+
+```{r traceMedian, echo = FALSE, fig.cap = "Trace Plots for the Median, from Prior Proposal MCMC (red), and Prior Proposal Block MCMC (blue) on a 60%/40% sample (top) and 80%/20% sample (bottom)", out.width = "100%", fig.height = 6}
+par(mfrow = c(2, 1), mar = c(3, 3, 0.5, 0.5))
+
+plot(1:samples, apply(pops1_2$data, 1, median), type = "l", col = "red", main = "", 
+     xlab = "Mean of Population", ylim = c(0, 1), ylab = "", yaxt = "n")
+axis(2, 0:5/5)
+lines(1:samples, apply(pops1_3$data, 1, median), col = "blue")
+
+plot(1:samples, apply(pops2_2$data, 1, median), type = "l", col = "red", main = "", 
+     xlab = "Mean of Population", ylim = c(0, 1), ylab = "", yaxt = "n")
+axis(2, 0:5/5)
+lines(1:samples, apply(pops2_3$data, 1, median), col = "blue")
+```
 
 # Converting to Normal
 
