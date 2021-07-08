@@ -27,7 +27,7 @@ quick_eval <- TRUE
 if(quick_eval) {
   samples <- 1000
 } else {
-  samples <- 20000
+  samples <- 100000
 }
 
 set.seed(1234)
@@ -39,6 +39,8 @@ library(knitr)
 library(kableExtra)
 library(proftools)
 library(dplyr)
+library(tidyr)
+library(ggplot2)
 ```
 
 # Intro
@@ -69,48 +71,93 @@ importanceSampler <- function(x, N, samples = 1000, saturation = 10, nEff = leng
 }
 ```
 
-## Uniform Proposal MCMC
+## Block Sampling MCMC
 
-```{r mcmcUniform}
-mcmcUniform <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
+Let $x_1, x_2, \dots, x_N$ represent the *ordered* population of size *N*. We denote $s_1 = x_1$, $s_2 = x_2 - x_1, \dots, s_{N-1} = x_N - x_{N-1}$, $s_N = 1 - x_N$ as the spacing of the ordered population.
 
-  lpost <- function(nLow, pop, N, nEff, alpha) {
+From our formulation of the posterior, $\sum s_i = 1$ and $(s_1, \dots, s_{N+1}) \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$. We can use this to figure out the conditional prior for a set of spacings $s_{(m)}$.
+
+For example, suppose we want the distribution of $x_{(1)} | x_{(2)}$, where $x_{(1)}, x_{(2)}$ partition $x$. Fortunately, this is relatively straightforward, and we end up with
+
+$$ \frac{1}{1 - \mathbf{1}^Tx_{(2)}} X_{(1)} | X_{(2)} = x_{(2)} \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$$
+
+Essentially, nothing changes except we now know the spacings have to add up to $1 - \mathbf{1}^Tx_{(2)}$. We can use this to our advantage, using this conditional prior as our proposal. For simplicity, we let $N_E\ |\ N$, and consider proposal chunks of size $N / N_E$.
+
+```{r mcmcPriorBlock}
+mcmcPriorBlock <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
+
+  lpost <- function(nLow, pop, diffs, N, nEff, alpha, cutoff) {
     NLow <- sum(pop < cutoff)
-    diffs <- diff(c(0, sort(pop), 1))
     lprior <- ddirichlet(diffs, (nEff + alpha) / (N + 1) * rep(1, N + 1), log = TRUE)
     llik <- dhyper(nLow, NLow, N - NLow, n, log = TRUE)
     return(llik + lprior)
   }
-
+  
+  priorProposal <- function(x) {
+    as.numeric(rdirichlet(1, rep((nEff + alpha) / (N + 1), length(x))) * sum(x))
+  }
+  
+  priorDensity <- function(x) {
+    ddirichlet(x / sum(x), rep((nEff + alpha) / (N + 1), length(x)), log = TRUE)
+  }
+  
+  spacings <- matrix(NA, nrow = samples, ncol = N + 1)
+  data <- matrix(NA, nrow = samples, ncol = N)
+  
+  chunks <- split(1:(N + 1), cut(seq_along(1:(N + 1)), nEff * 2, labels = FALSE))
+  
+  chunks2 <- list()
+  for(i in 1:(length(chunks) - 1)) {
+    chunks2[[i]] <- c(chunks[[i]], chunks[[i + 1]])
+  }
+  
+  
   n <- length(x)
   nLow <- sum(x < cutoff)
-
-  out <- matrix(NA, nrow = samples, ncol = N)
-  out[1, ] <- sort(c(runif(ceiling(N * nLow / n), 0, cutoff), 
-                      runif(floor(N * (n - nLow) / n), cutoff, 1)))
   
-  lp0 <- lpost(nLow, out[1, ], N, nEff, alpha)
-
+  data[1, ] <- sort(c(runif(ceiling(N * nLow / n), 0, cutoff), 
+                      runif(floor(N * (n - nLow) / n), cutoff, 1)))
+  spacings[1, ] <- diff(c(0, data[1, ], 1))
+  
+  
+  lp0 <- lpost(nLow, data[1, ], spacings[1, ], N, nEff, alpha, cutoff)
+  
   for(i in 2:samples) {
-    current <- out[i - 1, ]
-    for(k in 1:N) {
-      proposal <- current
-      proposal[k] <- runif(1)
-      lp1 <- lpost(nLow, proposal, N, nEff, alpha)
-
+    currentSpacings <- spacings[i - 1,]
+    currentData <- data[i - 1, ]
+    for(k in 1:length(chunks2)) {
+      proposeSpacings <- currentSpacings
+      proposeSpacings[chunks2[[k]]] <- priorProposal(proposeSpacings[chunks2[[k]]])
+      proposeData <- cumsum(proposeSpacings)[-(N + 1)]
+      lp1 <- lpost(nLow, proposeData, proposeSpacings, N, nEff, alpha, cutoff)
+      
       u <- runif(1)
-      if(is.finite(lp1) && log(u) < (lp1 - lp0)) {
-        current <- proposal
+      if(is.finite(lp1) && log(u) < (lp1 - priorDensity(proposeSpacings)) - (lp0 - priorDensity(currentSpacings))) {
+        currentSpacings <- proposeSpacings
+        currentData <- proposeData
         lp0 <- lp1
       }
     }
-    out[i, ] <- current
+    spacings[i, ] <- currentSpacings
+    data[i, ] <- currentData
   }
+  
+  out <- list(
+    data = data,
+    spacings = spacings,
+    x = x,
+    N = n,
+    samples = samples,
+    nEff = nEff,
+    alpha = alpha,
+    cutoff = cutoff
+  )
+  
   return(out)
 }
 ```
 
-## Prior Proposal MCMC
+## MCMC
 
 ```{r mcmcPrior}
 mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
@@ -123,11 +170,11 @@ mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, 
   }
   
   priorProposal <- function(x) {
-    as.numeric(rdirichlet(1, rep((nEff + alpha) / length(x), length(x))) * sum(x))
+    as.numeric(rdirichlet(1, rep((nEff + alpha) / (N + 1), length(x))) * sum(x))
   }
   
   priorDensity <- function(x) {
-    ddirichlet(x / sum(x), rep((nEff + alpha) / length(x), length(x)), log = TRUE)
+    ddirichlet(x / sum(x), rep((nEff + alpha) / (N + 1), length(x)), log = TRUE)
   }
   
   spacings <- matrix(NA, nrow = samples, ncol = N + 1)
@@ -187,93 +234,6 @@ mcmcPrior <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, 
 }
 ```
 
-
-## Prior Proposal Blocked MCMC
-
-Let $x_1, x_2, \dots, x_N$ represent the *ordered* population of size *N*. We denote $s_1 = x_1$, $s_2 = x_2 - x_1, \dots, s_{N-1} = x_N - x_{N-1}$, $s_N = 1 - x_N$ as the spacing of the ordered population.
-
-From our formulation of the posterior, $\sum s_i = 1$ and $(s_1, \dots, s_{N+1}) \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$. We can use this to figure out the conditional prior for a set of spacings $s_{(m)}$.
-
-For example, suppose we want the distribution of $x_{(1)} | x_{(2)}$, where $x_{(1)}, x_{(2)}$ partition $x$. Fortunately, this is relatively straightforward, and we end up with
-
-$$ \frac{1}{1 - \mathbf{1}^Tx_{(2)}} X_{(1)} | X_{(2)} = x_{(2)} \sim Dir(\frac{N_E + \alpha}{N+1}, \dots, \frac{N_E + \alpha}{N+1})$$
-
-Essentially, nothing changes except we now know the spacings have to add up to $1 - \mathbf{1}^Tx_{(2)}$. We can use this to our advantage, using this conditional prior as our proposal. For simplicity, we let $N_E\ |\ N$, and consider proposal chunks of size $N / N_E$.
-
-```{r mcmcPriorBlock}
-mcmcPriorBlock <- function(x, N, samples = 1000, nEff = length(sample), alpha = 0.5, cutoff = 0.5) {
-
-  lpost <- function(nLow, pop, diffs, N, nEff, alpha, cutoff) {
-    NLow <- sum(pop < cutoff)
-    lprior <- ddirichlet(diffs, (nEff + alpha) / (N + 1) * rep(1, N + 1), log = TRUE)
-    llik <- dhyper(nLow, NLow, N - NLow, n, log = TRUE)
-    return(llik + lprior)
-  }
-  
-  priorProposal <- function(x) {
-    as.numeric(rdirichlet(1, rep((nEff + alpha) / length(x), length(x))) * sum(x))
-  }
-  
-  priorDensity <- function(x) {
-    ddirichlet(x / sum(x), rep((nEff + alpha) / length(x), length(x)), log = TRUE)
-  }
-  
-  spacings <- matrix(NA, nrow = samples, ncol = N + 1)
-  data <- matrix(NA, nrow = samples, ncol = N)
-  
-  chunks <- split(1:(N + 1), cut(seq_along(1:(N + 1)), nEff * 2, labels = FALSE))
-  
-  chunks2 <- list()
-  for(i in 1:(length(chunks) - 1)) {
-    chunks2[[i]] <- c(chunks[[i]], chunks[[i + 1]])
-  }
-  
-  
-  n <- length(x)
-  nLow <- sum(x < cutoff)
-  
-  data[1, ] <- sort(c(runif(ceiling(N * nLow / n), 0, cutoff), 
-                      runif(floor(N * (n - nLow) / n), cutoff, 1)))
-  spacings[1, ] <- diff(c(0, data[1, ], 1))
-  
-  
-  lp0 <- lpost(nLow, data[1, ], spacings[1, ], N, nEff, alpha, cutoff)
-  
-  for(i in 2:samples) {
-    currentSpacings <- spacings[i - 1,]
-    currentData <- data[i - 1, ]
-    for(k in 1:length(chunks2)) {
-      proposeSpacings <- currentSpacings
-      proposeSpacings[chunks2[[k]]] <- priorProposal(proposeSpacings[chunks2[[k]]])
-      proposeData <- cumsum(proposeSpacings)[-(N + 1)]
-      lp1 <- lpost(nLow, proposeData, proposeSpacings, N, nEff, alpha, cutoff)
-      
-      u <- runif(1)
-      if(is.finite(lp1) && log(u) < (lp1 - priorDensity(proposeSpacings)) - (lp0 - priorDensity(currentSpacings))) {
-        currentSpacings <- proposeSpacings
-        currentData <- proposeData
-        lp0 <- lp1
-      }
-    }
-    spacings[i, ] <- currentSpacings
-    data[i, ] <- currentData
-  }
-  
-  out <- list(
-    data = data,
-    spacings = spacings,
-    x = x,
-    N = n,
-    samples = samples,
-    nEff = nEff,
-    alpha = alpha,
-    cutoff = cutoff
-  )
-  
-  return(out)
-}
-```
-
 # Comparisons
 
 Text here.
@@ -292,151 +252,154 @@ cutoff <- 0.5
 
 ```{r initRuns, include = FALSE}
 initRun <- importanceSampler(x = x1, N = N, samples = 100, nEff = 4)
-initRun <- mcmcUniform(x = x1, N = N, samples = 100, nEff = 4)
 initRun <- mcmcPrior(x = x1, N = N, samples = 100, nEff = 4)
 initRun <- mcmcPriorBlock(x = x1, N = N, samples = 100, nEff = 4)
 
 initRun <- importanceSampler(x = x2, N = N, samples = 100, nEff = 4)
-initRun <- mcmcUniform(x = x2, N = N, samples = 100, nEff = 4)
 initRun <- mcmcPrior(x = x2, N = N, samples = 100, nEff = 4)
 initRun <- mcmcPriorBlock(x = x2, N = N, samples = 100, nEff = 4)
 ```
 
 ```{r timings, include = FALSE, cache = FALSE}
 time_1 <- profileExpr(pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4))
-time_2 <- profileExpr(pops1_2 <- mcmcUniform(x = x1, N = N, samples = samples, nEff = 4))
-time_3 <- profileExpr(pops1_3 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4))
-time_4 <- profileExpr(pops1_4 <- mcmcPriorBlock(x = x1, N = N, samples = samples, nEff = 4))
+time_2 <- profileExpr(pops1_2 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4))
+time_3 <- profileExpr(pops1_3 <- mcmcPriorBlock(x = x1, N = N, samples = samples, nEff = 4))
 
 pops2_1 <- importanceSampler(x = x2, N = N, samples = samples, nEff = 4)
-pops2_2 <- mcmcUniform(x = x2, N = N, samples = samples, nEff = 4)
-pops2_3 <- mcmcPrior(x = x2, N = N, samples = samples, nEff = 4)
-pops2_4 <- mcmcPriorBlock(x = x2, N = N, samples = samples, nEff = 4)
+pops2_2 <- mcmcPrior(x = x2, N = N, samples = samples, nEff = 4)
+pops2_3 <- mcmcPriorBlock(x = x2, N = N, samples = samples, nEff = 4)
 
 prof_1 <- slice_max(data.frame(flatProfile(time_1, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
 prof_2 <- slice_max(data.frame(flatProfile(time_2, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
 prof_3 <- slice_max(data.frame(flatProfile(time_3, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
-prof_4 <- slice_max(data.frame(flatProfile(time_4, byTotal = TRUE, GC = FALSE)), total.time, n = 10, with_ties = FALSE)
 ```
 
 ## Location
 
 ### Means
 
-```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Uniform Proposal MCMC (blue), Prior Proposal MCMC (orange), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
-par(mfrow = c(1, 2), mar = c(3, 3, 0, 0))
+```{r means, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
 plot(density(rowMeans(pops1_1)), col = "red", main = "", xlab = "Mean of Population", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
-lines(density(rowMeans(pops1_2)), col = "blue")
-lines(density(rowMeans(pops1_3$data)), col = "orange")
-lines(density(rowMeans(pops1_4$data)), col = "green")
+lines(density(rowMeans(pops1_2$data)), col = "blue")
+lines(density(rowMeans(pops1_3$data)), col = "green")
 
-par(mar = c(3, 0, 0, 3))
+par(mar = c(3, 0.5, 0, 3))
 
 plot(density(rowMeans(pops2_1)), col = "red", main = "", xlab = "Mean of Population", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
-lines(density(rowMeans(pops2_2)), col = "blue")
-lines(density(rowMeans(pops2_3$data)), col = "orange")
-lines(density(rowMeans(pops2_4$data)), col = "green")
+lines(density(rowMeans(pops2_2$data)), col = "blue")
+lines(density(rowMeans(pops2_3$data)), col = "green")
 ```
 
 ### Medians
 
-```{r medians, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Uniform Proposal MCMC (blue), Prior Proposal MCMC (orange), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
-par(mfrow = c(1, 2), mar = c(3, 3, 0, 0))
+```{r medians, echo = FALSE, fig.cap = "Density Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
 plot(density(apply(pops1_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
-lines(density(apply(pops1_2, 1, median)), col = "blue")
-lines(density(apply(pops1_3$data, 1, median)), col = "orange")
-lines(density(apply(pops1_4$data, 1, median)), col = "green")
+lines(density(apply(pops1_2$data, 1, median)), col = "blue")
+lines(density(apply(pops1_3$data, 1, median)), col = "green")
 
-par(mar = c(3, 0, 0, 3))
+par(mar = c(3, 0.5, 0, 3))
 
 plot(density(apply(pops2_1, 1, median)), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
-lines(density(apply(pops2_2, 1, median)), col = "blue")
-lines(density(apply(pops2_3$data, 1, median)), col = "orange")
-lines(density(apply(pops2_4$data, 1, median)), col = "green")
+lines(density(apply(pops2_2$data, 1, median)), col = "blue")
+lines(density(apply(pops2_3$data, 1, median)), col = "green")
 ```
 
 ### Empirical CDFs
 
-```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (left), Uniform Proposal MCMC (left center), Proposal MCMC (right center), and Prior Proposal Block MCMC (right)", out.width = "100%", fig.height = 3}
-par(mfrow = c(1, 4), mar = c(3, 0, 0, 0))
+```{r cdfs, echo = FALSE, fig.cap = "CDFs of Importance Sampling (left), Proposal MCMC (center), and Prior Proposal Block MCMC (right) for 60%/40% sample", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 3), mar = c(3, 0.5, 0, 0.5))
 
-pops1_1_sort = apply(pops1_1, 2, sort)
-plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n')
+pops1_1_sort = t(apply(pops1_1, 1, sort))
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n')
 matlines(t(pops1_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Importance Sampling")
 
-pops1_2_sort = apply(pops1_2, 2, sort)
+pops1_2_sort = t(apply(pops1_2$data, 1, sort))
 plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
 matlines(t(pops1_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
-mtext("MCMC\n(Uniform Proposal)")
+mtext("MCMC\n(Prior Proposal)")
 
-pops1_3_sort = apply(pops1_3$data, 2, sort)
+pops1_3_sort = t(apply(pops1_3$data, 1, sort))
 plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
 matlines(t(pops1_3_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
+mtext("Block MCMC\n(Prior Proposal)")
+```
+
+```{r cdfs2, echo = FALSE, fig.cap = "CDFs of Importance Sampling (left), Proposal MCMC (center), and Prior Proposal Block MCMC (right) for 80%/20% sample", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 3), mar = c(3, 0.5, 0, 0.5))
+
+pops2_1_sort = t(apply(pops2_1, 1, sort))
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n')
+matlines(t(pops2_1_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+axis(1, 1:9 / 10)
+mtext("Importance Sampling")
+
+pops2_2_sort = t(apply(pops2_2$data, 1, sort))
+plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
+matlines(t(pops2_2_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+axis(1, 1:9 / 10)
 mtext("MCMC\n(Prior Proposal)")
 
-pops1_4_sort = apply(pops1_4$data, 2, sort)
+pops2_3_sort = t(apply(pops2_3$data, 1, sort))
 plot(c(0, 1), c(0, 1), type = 'l', xlab = 'U', ylab = 'Cumulative Probabilities', xaxt = 'n', yaxt = 'n', ann = FALSE)
-matlines(t(pops1_4_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
+matlines(t(pops2_3_sort), cumsum(rep(1/N, N)), lty = 1, type = 's')
 axis(1, 1:9 / 10)
 mtext("Block MCMC\n(Prior Proposal)")
 ```
 
 ### F(0.5)
 
-```{r cdfs2, echo = FALSE, fig.cap = "F(0.5) Comparison of Importance Sampling (red), Uniform Proposal MCMC (blue), Prior Proposal MCMC (orange), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
-par(mfrow = c(1, 2), mar = c(3, 3, 0, 0))
+```{r cdf0.5, echo = FALSE, fig.cap = "F(0.5) Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
 plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
-lines(density(apply(pops1_2, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
-lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "orange")
-lines(density(apply(pops1_4$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "green")
+lines(density(apply(pops1_2$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
+lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "green")
 
-par(mar = c(3, 0, 0, 3))
+par(mar = c(3, 0.5, 0, 3))
 
 plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.5) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
-lines(density(apply(pops2_2, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
-lines(density(apply(pops2_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "orange")
-lines(density(apply(pops2_4$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "green")
+lines(density(apply(pops2_2$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "blue")
+lines(density(apply(pops2_3$data, 1, function(x) {sum(x < 0.5) / length(x)})), col = "green")
 ```
 
 ### F(0.25)
 
-```{r cdfs3, echo = FALSE, fig.cap = "F(0.25) Comparison of Importance Sampling (red), Uniform Proposal MCMC (blue), Prior Proposal MCMC (orange), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
-par(mfrow = c(1, 2), mar = c(3, 3, 0, 0))
+```{r cdfs0.25, echo = FALSE, fig.cap = "F(0.25) Comparison of Importance Sampling (red), Prior Proposal MCMC (blue), and Prior Proposal Block MCMC (green) on a 60%/40% sample (left) and 80%/20% sample (right)", out.width = "100%", fig.height = 3}
+par(mfrow = c(1, 2), mar = c(3, 3, 0, 0.5))
 
 plot(density(apply(pops1_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(2, 0:7)
-lines(density(apply(pops1_2, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
-lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "orange")
-lines(density(apply(pops1_4$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "green")
+lines(density(apply(pops1_2$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
+lines(density(apply(pops1_3$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "green")
 
-par(mar = c(3, 0, 0, 3))
+par(mar = c(3, 0.5, 0, 3))
 
 plot(density(apply(pops2_1, 1, function(x) {sum(x < 0.25) / length(x)})), col = "red", main = "", ylim = c(0, 7), xaxt = "n", yaxt = "n", ylab = "")
 axis(1, 2:8 / 10)
 axis(4, 0:7)
-lines(density(apply(pops2_2, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
-lines(density(apply(pops2_3$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "orange")
-lines(density(apply(pops2_4$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "green")
+lines(density(apply(pops2_2$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "blue")
+lines(density(apply(pops2_3$data, 1, function(x) {sum(x < 0.25) / length(x)})), col = "green")
 ```
 
 ## Time
@@ -447,26 +410,29 @@ kables(
     kable(prof_1, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
       kable_styling(full_width = FALSE, position = "float_left"),
     kable(prof_2, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
-      kable_styling(full_width = FALSE, position = "float_right")
-  ),
-  caption = "Profile for Importance Sampling (left), and Uniform Proposal MCMC (right)"
-) %>%
-  kable_styling(full_width = TRUE, font_size = 12)
-```
-
-
-```{r, echo = FALSE}
-kables(
-  list(
+      kable_styling(full_width = FALSE, position = "center"),
     kable(prof_3, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
-      kable_styling(full_width = FALSE, position = "float_left"),
-    kable(prof_4, col.names = c("Total %", "Total Time", "Self %", "Self Time")) %>%
-      kable_styling(full_width = FALSE, position = "float_right")
+      kable_styling(full_width = FALSE, position = "float_left")
   ),
-  caption = "Profile for Prior Proposal MCMC (left), and Prior Proposal Blocked MCMC (right)"
+  caption = "Profile for Importance Sampling (left), Prior Proposal MCMC (center), and Prior Proposal Blocked MCMC (right)"
 ) %>%
   kable_styling(full_width = TRUE, font_size = 12)
 ```
+
+# Characteristics
+
+## CDF
+
+```{r fancycdfs, eval = FALSE}
+data.frame(pops1_1_sort) %>%
+  mutate_all(sort) %>%
+  slice(round(seq(1, samples, length.out = 100))) %>%
+  pivot_longer(1:N, names_to = "Q", values_to = "X") %>%
+  mutate(Q = as.numeric(substring(Q, 2)) / N) %>%
+  ggplot(mapping = aes(x = X, y = Q)) + 
+  geom_point()
+```
+
 
 # Converting to Normal
 
