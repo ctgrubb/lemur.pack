@@ -20,14 +20,14 @@ knitr::opts_chunk$set(
   eval = TRUE
 )
 
-quick_eval <- TRUE
+quick_eval <- FALSE
 ```
 
 ```{r paramset, echo = FALSE, eval = TRUE}
 if(quick_eval) {
   samples <- 1000
 } else {
-  samples <- 100000
+  samples <- 75000
 }
 
 set.seed(1234)
@@ -260,7 +260,7 @@ initRun <- mcmcPrior(x = x2, N = N, samples = 100, nEff = 4)
 initRun <- mcmcPriorBlock(x = x2, N = N, samples = 100, nEff = 4)
 ```
 
-```{r timings, include = FALSE, cache = FALSE}
+```{r timings, include = FALSE, cache = TRUE}
 time_1 <- profileExpr(pops1_1 <- importanceSampler(x = x1, N = N, samples = samples, nEff = 4))
 time_2 <- profileExpr(pops1_2 <- mcmcPrior(x = x1, N = N, samples = samples, nEff = 4))
 time_3 <- profileExpr(pops1_3 <- mcmcPriorBlock(x = x1, N = N, samples = samples, nEff = 4))
@@ -510,7 +510,7 @@ g3 <- data.frame(X = apply(pops1_1_2, 1, median)) %>%
   lims(x = c(0, 1)) + 
   labs(y = "Count")
 
-g3 <- data.frame(X = apply(pops2_1_2, 1, median)) %>%
+g4 <- data.frame(X = apply(pops2_1_2, 1, median)) %>%
   ggplot(mapping = aes(x = X)) + 
   geom_histogram(binwidth = 0.01) + 
   lims(x = c(0, 1)) + 

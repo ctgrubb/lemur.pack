@@ -12,8 +12,10 @@
 ^docs$
 ^Meta$
 ^tests$
+^presentations$
 ^dave$
 ^chris$
 ^vignettes/precompile\.R$
 ^vignettes/figure$
 ^vignettes/articles$
+
