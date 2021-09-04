@@ -8,13 +8,14 @@
 ^_pkgdown\.yml$
 ^codecov\.yml$
 ^pkgdown$
+^chris$
+^data-raw$
+^dave$
 ^doc$
 ^docs$
 ^Meta$
-^tests$
 ^presentations$
-^dave$
-^chris$
+^tests$
 ^vignettes/precompile\.R$
 ^vignettes/figure$
 ^vignettes/articles$

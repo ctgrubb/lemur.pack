@@ -1,0 +1,247 @@
+---
+title: "JSM2021 Presentation"
+output: 
+  beamer_presentation:
+    theme: "Hokie"
+    slide_level: 2
+    toc: false
+fontsize: 8pt
+header-includes:
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+  - \institute[Virginia Tech]{Statistics Department\\ Virginia Tech}
+  - \AtBeginDocument{\title[JSM 2021]{Probabilistic Population Synthesis for Decision-Making}}
+  - \AtBeginDocument{\date[`r format(Sys.Date()+1, '%m/%d/%Y')`]{`r format(Sys.Date()+1, '%d %B, %Y')`}}
+  - \AtBeginDocument{\author[Christopher Grubb]{Christopher Grubb \and Dr. David Higdon \and Dr. Leanna House}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(extraDistr)
+library(tidyverse)
+```
+
+## Outline
+
+\tableofcontents[ 
+sectionstyle=show, 
+subsectionstyle=show,
+subsubsectionstyle=show
+] 
+
+
+# Introduction
+
+
+## Introduction
+
+What do we mean by population synthesis?
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Create a posterior over finite (but potentially large) populations, and sample from it
+  \item Propagate uncertainty from sample(s) into populations
+\end{itemize}
+
+Why would we want to do this?
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Decision makers are typically not statisticians
+  \item With complex data, it is very difficult to create a population that satisfies certain criteria
+\end{itemize}
+
+# Simple Example
+
+
+## Simple Example (Introduction)
+
+Suppose our variable of interest is categorical with only 2 categories. We observe a sample of size $n = 100$, with category tallies of 34 and 66, respectively.
+
+Without any population synthesis, what would we do? 
+
+\begin{itemize}[topsep=8pt, itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Choice of distribution
+  \begin{itemize}
+    \item Binomial
+    \item Hypergeometric
+  \end{itemize}
+  \item Approach
+  \begin{itemize}
+    \item Classical -- Exact confidence interval or Normal approximation
+    \item Bayesian -- Construct a posterior
+  \end{itemize}
+\end{itemize}
+
+
+## Simple Example (Comparison)
+
+If we compare a synthetic population approach to a traditional Bayesian approach -- using the same distributional assumptions and priors -- inference on parameters should be identical.
+
+```{r, fig.height = 4, out.width = "80%", fig.align = "center", fig.cap = "Comparison of Analytic Prior/Posterior to Synthetic Populations for First Category", warning = FALSE, message = FALSE}
+N = 1000
+n = 100
+a0 <- b0 <- .5
+x <- 34
+
+df <- data.frame(
+  MCMC = rbbinom(10000, N-n, a0+x, b0+n-x) + 34
+)
+df2 <- data.frame(
+  m = 0:N
+) %>% 
+  mutate(
+    Prior = dbbinom(m, size = N, alpha = a0, beta = b0),
+    Posterior = dbbinom(m-x, size = N-n, a0+x, b0+n-x),
+  ) %>% 
+  gather(Distribution, dens, -m) 
+
+ggplot(data = df, mapping = aes(x = MCMC, y = ..density..)) + 
+  geom_histogram(binwidth = 10) + 
+  geom_line(data = df2, mapping = aes(x = m, y = dens, col = Distribution), size = 2) +
+  lims(x = c(200, 500)) + 
+  labs(y = "Density") + 
+  theme_bw() + 
+  theme(plot.background = element_rect(fill = "#FBF9EE")) + 
+  theme(text = element_text(size = 18))
+```
+
+
+## Simple Example (Process)
+
+How do we actually create the populations? For simple examples like this, importance sampling works very well; however, as data complexity increases, the effectiveness decreases rapidly. Our approach is to jitter populations and accept or reject using the posterior.
+
+\begin{itemize}[topsep=8pt, itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Basically any variant of MCMC will work
+  \item Need to be careful -- depending on how you jitter, a correction factor may be needed
+\end{itemize}
+
+
+# Theory
+
+
+## Posterior Form
+
+Treating the population $\mathbf{Y}$ as a random variable, we can use Bayes' theorem to derive the posterior distribution for populations, in order to sample many possible populations.
+
+\begin{columns}
+
+\column{0.43\textwidth}
+\begin{itemize}[topsep=8pt, itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item \textcolor{darkblue}{Sample distribution} -- How likely is our sample given a specific population?
+  \item \textcolor{darkgreen}{Population distribution} -- How likely is a specific population given the parameters that control the distribution of populations?
+  \item \textcolor{darkred}{Prior distribution} -- What do we think are reasonable values for said parameters?
+\end{itemize}
+
+\column{0.6\textwidth}
+\begin{align*}
+  f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) &= \frac{ f(\mathbf{X} = \mathbf{x} | \theta, \mathbf{Y} = \mathbf{y}) f(\theta, \mathbf{Y} = \mathbf{y}) }{ f(\mathbf{X} = \mathbf{x}) } \notag \\
+    &\propto \textcolor{darkblue}{f(\mathbf{X} = \mathbf{x} | \mathbf{Y} = \mathbf{y}, \theta)} \textcolor{darkgreen}{f(\mathbf{Y} = \mathbf{y} | \theta)} \textcolor{darkred}{\pi(\theta)}
+\end{align*}
+
+\end{columns}
+
+Depending on the form of $\mathbf{X}$, the choices we make for these three distributions can have a very large impact on what the resulting populations look like.
+
+
+## Choosing a sample distribution
+
+This may *seem* like the easiest choice out of the three, but some unintended complications can occur depending what choice we make. 
+
+For example, suppose the variable of interest is numeric and we observe $\mathbf{x} = \{0.2, 0.5, 0.9\}$. Consider the following populations,
+
+$$
+\mathbf{y}_1 = \{0.2, 0.4, 0.5, 0.7, 0.9\} \hspace{1cm} \mathbf{y}_2 = \{0.2, 0.3, 0.5, 0.8, 0.9\}
+$$
+For these two populations, $f(\mathbf{x} | \mathbf{y}_1) = f(\mathbf{x} | \mathbf{y}_2) = {5\choose3}^{-1}$, if we use a discrete sample distribution that assigns equal probability to all values in the population. In fact, this will always be the case if our resolution on $\mathbf{x}$ is high enough to prevent the possibility of duplicates.
+
+Luckily, we typically don't have high resolution data. Many variables that are continuous (e.g., age, salary) are often observed on discrete scales (e.g., years, thousands of dollars), and are sometimes even binned into categories.
+
+
+## Choosing a sample distribution (cont'd)
+
+For categorical data, this is a much easier choice. In theory, we would like to use a (potentially multivariate) Hypergeometric distribution, as this correctly explains the process of sampling that was used, assuming $\mathbf{x}$ came from sampling without replacement. 
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item $\mathbf{x}$ sampled with replacement $\rightarrow$ use Binomial or Multinomial distribution instead
+  \item Might have to use Binomial or Multinomial anyway, because of computational difficulties
+\end{itemize}
+
+## Choosing a population distribution
+
+Likely the most difficult and potentially most influential choice, it is critical that whatever distribution is picked can actually create populations similar to the one being examined. 
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item This is not as easy as it sounds 
+  \item Similar can mean many things
+  \item May need to be rather complex
+\end{itemize}
+
+## Choosing a prior distribution
+
+Depending on the type of variable being created, as well as the previous two choices, this can range from relatively straightforward to very confusing.
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Probably a good idea to use a range of values via a hyperprior
+  \item Imagine $\mathbf{x}$ is categorical and we use a Hypergeometric distribution. What is our parameter?
+\end{itemize}
+
+# Less Simple Example
+
+
+## Less Simple Example (Introduction)
+
+This time, suppose the variable of interest is numeric with a range of $(0, 1)$, however we only observe counts within bins of $(0, 0.5)$ and $(0.5, 1)$, totaling 34 and 66 respectively.
+
+We want to create populations with numeric values, while respecting the likelihood of sampling our observed binned data.
+
+A few caveats:
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item We want to choose a population distribution that make sense (probably requires expert knowledge or historical data)
+  \item Have to make sure our sample is actually plausible, given whatever population distribution we pick, or samplers will get stuck
+\end{itemize}
+
+
+## Less Simple Example (Choosing Population Distribution)
+
+Since our data is in the region $(0, 1)$, we can exploit the fact that the *spacings* of $\{0, x, 1\}$, where $x$ is a sorted vector (i.e., a sorted population), sum to 1. 
+
+Thus, we can use a *Dirichlet* distribution, which lets us control how clustered our population is.
+
+```{r, fig.height = 4, out.width = "80%", fig.align = "center", fig.cap = "Sample draws with alpha of 0.1 (left), 1 (center), and 10 (right)"}
+x1 <- cumsum(drop(rdirichlet(1, rep(10, 100))))
+x2 <- cumsum(drop(rdirichlet(1, rep(1, 100))))
+x3 <- cumsum(drop(rdirichlet(1, rep(0.1, 100))))
+
+data.frame(Alpha = rep(c(10, 1, 0.1), each = 100), X = c(x1, x2, x3)) %>%
+  ggplot(mapping = aes(x = X, group = Alpha)) + 
+  facet_grid(~ Alpha) + 
+  geom_histogram(binwidth = 0.05) + 
+  labs(y = "Count") + 
+  theme_bw() + 
+  theme(plot.background = element_rect(fill = "#FBF9EE"))
+```
+
+
+# Future Work
+
+
+## Future Work and Goals
+
+Much work still needs to be done before we can tackle our initial chosen application.
+
+\begin{itemize}[topsep=8pt, itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Extending to other types of data sources
+  \item Combining information across various data sources
+  \begin{itemize}
+    \item Different types of data; simple random samples, marginal tables, histograms, etc.
+    \item Different resolutions and scales
+  \end{itemize}
+\end{itemize}
+
+Once finished, the goal is for synthetic populations to aid decision-making for public policy.
+
+\begin{itemize}[itemsep=4pt, partopsep=4pt, parsep=4pt]
+  \item Potential infrastructure changes
+  \item Public policy
+\end{itemize}
