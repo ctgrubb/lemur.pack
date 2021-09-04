@@ -21,4 +21,4 @@ This section will be written at a later date.
 
 ## Usage
 
-For a basic example, see ```r vignette("articles/binary-1d-example")```.
+For a basic example, see `vignette("articles/binary-1d-example")`.
