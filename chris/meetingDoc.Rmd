@@ -84,34 +84,97 @@ I &\sim Norm(\mu, \sigma^2)
 
 The following is a relatively straight-froward MCMC algorithm which will sample from the posterior representing this scenario.
 
+```{r}
+sample <- samp
+population <- pop
+iterations <- 30
+```
+
+
 ```{r indNormal}
 indNormalMCMC <- function(sample, population, iterations = 1000) {
+  
+  toLLik <- function(df) {
+    dfCat <- df %>%
+      mutate(
+        IncomeCat = case_when(
+          Income < 40000 ~ "<40000",
+          Income < 65000 ~ "40000-64999",
+          Income < 110000 ~ "65000-109999",
+          TRUE ~ ">=110000"
+        ),
+        HousePriceCat = case_when(
+          HousePrice < 80000 ~ "<80000",
+          HousePrice < 140000 ~ "80000-139999",
+          HousePrice < 220000 ~ "140000-219999",
+          HousePrice < 360000 ~ "220000-359999",
+          TRUE ~ ">=360000"
+        )
+      ) %>%
+      mutate(
+        IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000")),
+        HousePriceCat = factor(HousePriceCat, levels = c("<80000", "80000-139999", "140000-219999", "220000-359999", ">=360000"))
+      )
+    
+    dfTable <- table(dfCat$IncomeCat, dfCat$HousePriceCat, exclude = FALSE)
+    out <- 0
+    for(i in 1:nCatsH) {
+      out <- out + dmvhyper(tab[, i], dfTable[, i], tal[i], log = TRUE)
+    }
+    return(out)
+  }
+  
+  l1 <- levels(sample$IncomeCat)
+  l2 <- levels(sample$HousePriceCat)
   
   tab <- table(sample[, -1], exclude = FALSE)
   mar <- as.numeric(table(population$HousePriceCat, exclude = FALSE))
   tal <- as.numeric(table(sample$HousePriceCat, exclude = FALSE))
 
-  nCatsI <- length(table(sample$IncomeCat, exclude = FALSE))
-  nCatsH <- length(table(sample$HousePriceCat, exclude = FALSE))
+  nCatsI <- length(l1)
+  nCatsH <- length(l2)
   
   N <- nrow(population)
   mu <- mean(sample$Income)
   sig <- sd(sample$Income)
+  step <- 30000
   
   current <- data.frame(
-    HousePrice = sample(pop$HousePrice),
-    Income = rnorm(N, mu, sig)
+    Income = rnorm(N, mu, sig),
+    HousePrice = sample(pop$HousePrice)
   )
   
+  while(!is.finite(toLLik(current))) {
+    current$Income <- rnorm(N, mu, sig)
+  }
+  
+  out <- list()
+  
   for(i in 1:iterations) {
-    proposal <- current
+    propDf <- current
     for(k in 1:N) {
-      proposal[k, 2] <- rnorm(1, mu, sig)
+      proposal <- rtnorm(1, current[k, 1], step, 0, Inf)
+      propDf[k, 1] <- proposal
     
       # compare
-      
+      alpha <- toLLik(propDf) + dnorm(current[k, 1], mu, sig, log = TRUE) - 
+        toLLik(current) - dnorm(proposal, mu, sig, log = TRUE) + 
+        dtnorm(current[k, 1], proposal, step, 0, Inf, log = TRUE) - dtnorm(proposal, current[k, 1], step, 0, Inf, log = TRUE)
+      if(is.finite(alpha) & log(runif(1)) < alpha) {
+        # Acceptance
+        current <- propDf
+      } else {
+        # Rejection
+        propDf <- current
+      }
     }
+    out[[i]] <- current
   }
+  return(out)
 }
+```
+
+```{r}
+test <- indNormalMCMC(samp, pop, 20)
 ```
 
