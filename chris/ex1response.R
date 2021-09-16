@@ -1,12 +1,102 @@
+library(dplyr)
+library(lemur.pack)
 library(extraDistr)
 
-table(ex1_df1[, -c(1, 2, 4)])
+pop <- ex1pop
+samp <- ex1samp
 
-hist(pop[, 1])
-table(pop[, -1])
+table(pop[, -c(1, 2, 4)])
+hist(pop[, 2])
 
-hist(samp[, 1])
-table(samp[, -1])
+table(samp[, -c(1, 2, 4)])
+hist(samp[, 2])
+
+sample <- samp[, -c(1, 4)]
+population <- pop[, -c(1, 2, 3)]
+
+iterations <- 1000
+
+mcmcSampler <- function(sample, population, iterations) {
+
+  tab <- table(sample[, -1], exclude = FALSE)
+  mar <- as.numeric(table(population$HousePriceCat, exclude = FALSE))
+  tal <- as.numeric(table(sample$HousePriceCat, exclude = FALSE))
+
+  nCatsI <- length(table(sample$IncomeCat, exclude = FALSE))
+  nCatsH <- length(table(sample$HousePriceCat, exclude = FALSE))
+
+  weights <- rep(0, iterations)
+
+  out <- list()
+
+  fulldata <- list()
+  incomes <- matrix(NA, nrow = iterations, ncol = nrow(population))
+  hprices <- matrix(NA, nrow = iterations, ncol = nrow(population))
+  cats <- array(NA, dim = c(iterations, nCatsI, nCatsH))
+
+  for(i in 1:iterations) {
+    # Get sample
+    unique <- 0
+    while(unique != 100) {
+      init <- left_join(population, sample, by = "HousePriceCat") %>%
+        group_by(Income) %>%
+        sample_n(1)
+
+      unique <- length(unique(init$HousePrice))
+    }
+
+    init2 <- anti_join(population, init, by = "HousePrice")
+
+    init2$Income <- rnorm(nrow(init2), mean(sample$Income) + sd(sample$Income) / sd(population$HousePrice) *
+                            cor(init$Income, init$HousePrice) * (init2$HousePrice - mean(population$HousePrice)),
+                          sqrt((1 - cor(init$Income, init$HousePrice)) ** 2) * sd(sample$Income))
+    init2 <- init2 %>%
+      mutate(
+        IncomeCat = case_when(
+          Income < 40000 ~ "<40000",
+          Income < 65000 ~ "40000-64999",
+          Income < 110000 ~ "65000-109999",
+          TRUE ~ ">=110000"
+        )
+      ) %>%
+      mutate(IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000")))
+
+    init <- bind_rows(init, init2)
+    rm(init2)
+
+    fulldata[[i]] <- init
+    incomes[i, ] <- init$Income
+    hprices[i, ] <- init$HousePrice
+    cats[i, , ] <- table(init$IncomeCat, init$HousePriceCat)
+
+    for(k in 1:nCatsH) {
+      weights[i] <- weights[i] + dmvhyper(tab[, k], cats[i, , k], tal[k], log = TRUE)
+    }
+
+  }
+
+  weights <- exp(weights)
+  samps <- sample(1:iterations, replace = TRUE, prob = weights)
+
+  out <- list(
+    fulldata = fulldata[samps],
+    incomes = incomes[samps, ],
+    hprices = hprices[samps, ],
+    cats = cats[samps, , ]
+  )
+
+}
+
+apply(out$cats, c(2, 3), sum) / 100
+
+table(samp[, -c(1, 2, 4)])
+table(pop$HousePriceCat)
+
+apply(out$cats, c(2, 3), min)
+apply(out$cats, c(2, 3), max)
+
+table(pop[, -c(1, 2, 4)])
+
 
 # We basically just have to fill out the table, satisfying the margins, and select pops with higher likelihood of getting our sample
 

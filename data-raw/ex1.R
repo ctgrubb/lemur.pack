@@ -11,8 +11,8 @@ ex1_df1 <- data.frame(
 
 centers <- ifelse(ex1_df1$Group == "A", 120000, ifelse(ex1_df1$Group == "B", 240000, 400000))
 
-ex1_df1$HousePrice <- rnorm(N, 0, 40000) + centers
-ex1_df1$Income <- rnorm(N, mean = 0.2 * ex1_df1$HousePrice + 30000, sd = 20000)
+ex1_df1$HousePrice <- rnorm(N, 0, 40000) + centers + 20000
+ex1_df1$Income <- rnorm(N, mean = 0.2 * ex1_df1$HousePrice + 30000, sd = 20000) + 15000
 
 # plot(ex1_df1$Income, ex1_df1$HousePrice)
 
@@ -43,16 +43,10 @@ ex1_df1 <- ex1_df1 %>%
 # table(ex1_df2)
 
 pop <- ex1_df1 %>%
-  arrange(HousePrice) %>%
-  select(HousePrice, HousePriceCat)
+  arrange(HousePrice)
 
 samp <- ex1_df1 %>%
-  sample_n(n) %>%
-  select(
-    Income,
-    IncomeCat,
-    HousePriceCat
-  )
+  sample_n(n)
 
 ex1samp <- samp
 ex1pop <- pop

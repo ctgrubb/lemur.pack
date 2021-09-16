@@ -1,0 +1,117 @@
+---
+title: "Meeting Doc"
+author: "Christopher Grubb"
+date: "9/13/2021"
+output: 
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+options(scipen = 999)
+
+library(lemur.pack)
+library(extraDistr)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+```
+
+# Introduction
+
+## Data
+
+We will use built-in data from our package.
+
+```{r dataload}
+data("ex1pop")
+data("ex1samp")
+
+pop <- ex1pop %>%
+  select(HousePrice, HousePriceCat)
+
+samp <- ex1samp %>%
+  select(Income, IncomeCat, HousePriceCat)
+```
+
+We observe the housing prices from the full population, but we only get raw incomes from a simple random sample. The SRS also contains binned housing price data.
+
+```{r datadesc, echo = FALSE, out.width = "100%", fig.height = 7, fig.cap = ""}
+countDf <- pop %>% 
+  group_by(HousePriceCat) %>%
+  summarize(Count = n(), .groups = "drop") %>%
+  mutate(Location = c(40000, 110000, 180000, 290000, 420000))
+
+g1 <- ggplot(data = pop, mapping = aes(x = HousePrice)) + 
+  geom_histogram(breaks = seq(0, 560000, by = 20000), fill = "darkgreen", alpha = 0.5) + 
+  labs(x = "Housing Price", y = "Count") + 
+  geom_vline(xintercept = c(80000, 140000, 220000, 360000), linetype = "dashed") + 
+  geom_label(data = countDf, mapping = aes(x = Location, label = Count), y = 100)
+
+countDf <- samp %>%
+  group_by(IncomeCat, HousePriceCat, .drop = FALSE) %>%
+  summarize(Count = n(), .groups = "drop")
+
+g2 <- ggplot(data = countDf, mapping = aes(x = HousePriceCat, y = IncomeCat, fill = Count)) + 
+  geom_tile() + 
+  geom_label(data = countDf[countDf$Count > 0, ], mapping = aes(label = Count), fill = "white") + 
+  scale_fill_gradient(low = "white", high = "black") + 
+  labs(x = "Housing Price", y = "Income")
+
+grid.arrange(g1, g2, nrow = 2, ncol = 1)
+```
+
+## Goal
+
+Our goal is to create synthetic populations using the observed raw data, in a way that respects the observed sample. Since we know the housing prices for the entire population, we will use those. 
+
+# Methods
+
+## Basic (Independent Normal, Binomial)
+
+First, we will use a Normal distribution assumption for the incomes, and we will assume they are *independent* of housing prices.
+
+\begin{align*}
+X_c &= (I_c, H_c) \\
+X &= (I, H) \\
+H &\sim F(h) \\
+I &\sim Norm(\mu, \sigma^2)
+\end{align*}
+
+The following is a relatively straight-froward MCMC algorithm which will sample from the posterior representing this scenario.
+
+```{r indNormal}
+indNormalMCMC <- function(sample, population, iterations = 1000) {
+  
+  tab <- table(sample[, -1], exclude = FALSE)
+  mar <- as.numeric(table(population$HousePriceCat, exclude = FALSE))
+  tal <- as.numeric(table(sample$HousePriceCat, exclude = FALSE))
+
+  nCatsI <- length(table(sample$IncomeCat, exclude = FALSE))
+  nCatsH <- length(table(sample$HousePriceCat, exclude = FALSE))
+  
+  N <- nrow(population)
+  mu <- mean(sample$Income)
+  sig <- sd(sample$Income)
+  
+  current <- data.frame(
+    HousePrice = sample(pop$HousePrice),
+    Income = rnorm(N, mu, sig)
+  )
+  
+  for(i in 1:iterations) {
+    proposal <- current
+    for(k in 1:N) {
+      proposal[k, 2] <- rnorm(1, mu, sig)
+    
+      # compare
+      
+    }
+  }
+}
+```
+
