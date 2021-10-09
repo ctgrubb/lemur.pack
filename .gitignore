@@ -9,4 +9,4 @@ Meta
 inst/doc
 **/*_cache
 **/*_files
-
+chris/*.rda

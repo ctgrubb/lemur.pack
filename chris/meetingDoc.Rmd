@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 options(scipen = 999)
 
+library(proftools)
 library(lemur.pack)
 library(extraDistr)
 library(dplyr)
@@ -60,6 +61,7 @@ g2 <- ggplot(data = countDf, mapping = aes(x = HousePriceCat, y = IncomeCat, fil
   geom_tile() + 
   geom_label(data = countDf[countDf$Count > 0, ], mapping = aes(label = Count), fill = "white") + 
   scale_fill_gradient(low = "white", high = "black") + 
+  scale_y_discrete(limits = rev(levels(countDf$IncomeCat))) + 
   labs(x = "Housing Price", y = "Income")
 
 grid.arrange(g1, g2, nrow = 2, ncol = 1)
@@ -71,7 +73,7 @@ Our goal is to create synthetic populations using the observed raw data, in a wa
 
 # Methods
 
-## Basic (Independent Normal, Binomial)
+## Basic (Independent Normal, Hypergeometric)
 
 First, we will use a Normal distribution assumption for the incomes, and we will assume they are *independent* of housing prices.
 
@@ -84,17 +86,8 @@ I &\sim Norm(\mu, \sigma^2)
 
 The following is a relatively straight-froward MCMC algorithm which will sample from the posterior representing this scenario.
 
-```{r}
-sample <- samp
-population <- pop
-iterations <- 30
-
-rm(list = setdiff(ls(), c("sample", "population", "iterations")))
-```
-
-
 ```{r indNormal}
-indNormalMCMC <- function(sample, population, ranges, iterations = 1000) {
+indNormalMCMC <- function(sample, population, iterations = 1000) {
   
   ranges <- list(
     mins = list(
@@ -209,35 +202,122 @@ indNormalMCMC <- function(sample, population, ranges, iterations = 1000) {
 }
 ```
 
-```{r}
-test <- indNormalMCMC(sample, population, 200)
+```{r, echo = FALSE}
+prof <- profileExpr({
+  test <- indNormalMCMC(samp, pop, 10)
+})
 
-test[[length(test)]] %>%
-  mutate(
-      IncomeCat = case_when(
-        Income < 40000 ~ "<40000",
-        Income < 65000 ~ "40000-64999",
-        Income < 110000 ~ "65000-109999",
-        TRUE ~ ">=110000"
-      ),
-      HousePriceCat = case_when(
-        HousePrice < 80000 ~ "<80000",
-        HousePrice < 140000 ~ "80000-139999",
-        HousePrice < 220000 ~ "140000-219999",
-        HousePrice < 360000 ~ "220000-359999",
-        TRUE ~ ">=360000"
-      )
-    ) %>%
-    transmute(
-      IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000")),
-      HousePriceCat = factor(HousePriceCat, levels = c("<80000", "80000-139999", "140000-219999", "220000-359999", ">=360000"))
-    ) %>%
-    table(., exclude = FALSE)
-
-
+# test <- indNormalMCMC(sample, population, 60000)
+# 
+# synthPops <- test[50001:60000]
+# 
+# save(synthPops, file = paste0(getwd(), "/synthPops.rda"))
+# 
+# funSummary(prof)
+# 
+# test[[length(test) - 1]] %>%
+#   mutate(
+#       IncomeCat = case_when(
+#         Income < 40000 ~ "<40000",
+#         Income < 65000 ~ "40000-64999",
+#         Income < 110000 ~ "65000-109999",
+#         TRUE ~ ">=110000"
+#       ),
+#       HousePriceCat = case_when(
+#         HousePrice < 80000 ~ "<80000",
+#         HousePrice < 140000 ~ "80000-139999",
+#         HousePrice < 220000 ~ "140000-219999",
+#         HousePrice < 360000 ~ "220000-359999",
+#         TRUE ~ ">=360000"
+#       )
+#     ) %>%
+#     transmute(
+#       IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000")),
+#       HousePriceCat = factor(HousePriceCat, levels = c("<80000", "80000-139999", "140000-219999", "220000-359999", ">=360000"))
+#     ) %>%
+#     table(., exclude = FALSE)
   
 ```
-```{r}
-table(sample[, -1])
+
+# Results
+
+```{r tableSums, echo = FALSE, out.width = "100%", fig.height = 3.5, fig.cap = ""}
+load(file = "synthPops.rda")
+dfPops <- bind_rows(synthPops)
+
+avgPop <- dfPops %>%
+  mutate(
+    IncomeCat = case_when(
+      Income < 40000 ~ "<40000",
+      Income < 65000 ~ "40000-64999",
+      Income < 110000 ~ "65000-109999",
+      TRUE ~ ">=110000"
+    ),
+    HousePriceCat = case_when(
+      HousePrice < 80000 ~ "<80000",
+      HousePrice < 140000 ~ "80000-139999",
+      HousePrice < 220000 ~ "140000-219999",
+      HousePrice < 360000 ~ "220000-359999",
+      TRUE ~ ">=360000"
+    )
+  ) %>%
+  transmute(
+    IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000")),
+    HousePriceCat = factor(HousePriceCat, levels = c("<80000", "80000-139999", "140000-219999", "220000-359999", ">=360000"))
+  ) %>%
+  group_by(IncomeCat, HousePriceCat, .drop = FALSE) %>%
+  summarize(Count = n() / 10000, .groups = "drop")
+
+g2 <- ggplot(data = avgPop, mapping = aes(x = HousePriceCat, y = IncomeCat, fill = Count)) + 
+  geom_tile() + 
+  geom_label(data = avgPop[avgPop$Count > 0, ], mapping = aes(label = Count), fill = "white") + 
+  scale_fill_gradient(low = "white", high = "black") + 
+  scale_y_discrete(limits = rev(levels(avgPop$IncomeCat))) + 
+  labs(x = "Housing Price", y = "Income")
+
+g2
+```
+
+
+
+# Remarks
+
+We are using a proper Normal prior for the incomes; in this case, we chose a mean of 100000 and standard deviation of 30000. If we look at our incomes by themselves, and compare this to random draws from our prior, we can see that 
+
+
+```{r incomePlot, echo = FALSE, out.width = "100%", fig.height = 3.5, fig.cap = ""}
+randDf <- data.frame(Income = rnorm(100000000, 100000, 30000)) %>%
+  mutate(
+    IncomeCat = case_when(
+      Income < 40000 ~ "<40000",
+      Income < 65000 ~ "40000-64999",
+      Income < 110000 ~ "65000-109999",
+      TRUE ~ ">=110000"
+    )
+  ) %>%
+  transmute(
+    IncomeCat = factor(IncomeCat, levels = c("<40000", "40000-64999", "65000-109999", ">=110000"))
+  ) %>%
+  group_by(IncomeCat, .drop = FALSE) %>%
+  summarize(Count = n() / 100000, .groups = "drop")
+  
+ggplot(data = avgPop, mapping = aes(y = IncomeCat, x = Count, fill = "Posterior")) + 
+  geom_bar(stat = "identity", alpha = 0.5) + 
+  geom_bar(data = randDf, inherit.aes = FALSE, mapping = aes(y = IncomeCat, x = Count, fill = "Prior"), 
+           stat = "identity", alpha = 0.5) + 
+  scale_fill_manual(values = c("Prior" = "green", "Posterior" = "Blue")) + 
+  labs(fill = "Distribution")
+```
+
+Means...
+
+```{r meanPlot, echo = FALSE, out.width = "100%", fig.height = 3.5, fig.cap = ""}
+plot(density(sapply(synthPops, function(x) mean(x[, 1]))), main = "Density of Synthetic Population Mean Incomes",
+     xlab = "Mean Income")
+```
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3.5, fig.cap = ""}
+plot(1:length(synthPops), sapply(synthPops, function(x) mean(x[, 1])), main = "Trace Plot of Populations Means",
+     xlab = "Mean Income", type = "l")
 ```
 
