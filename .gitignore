@@ -10,4 +10,5 @@ inst/doc
 **/*_cache
 **/*_files
 chris/*.html
+chris/*.pdf
 chris/*.rda

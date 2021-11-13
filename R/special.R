@@ -66,5 +66,6 @@ mnchoose <- function(n, k) {
 #' @rdname Special
 #' @export
 lmnchoose <- function(n, k) {
+  k[k == 0] <- 1
   sum(log(1:n)) - sum(sapply(k, function(x) sum(log(1:x))))
 }

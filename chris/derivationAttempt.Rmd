@@ -1,0 +1,63 @@
+---
+title: "Attempt to Derive"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+header-includes:
+  - \usepackage{breqn}
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- FALSE
+```
+
+# Goal
+
+Let
+
+\begin{align*}
+&\ \mathbf{Y}_i \ \text{be the population $N$-vector of numeric incomes,} \\
+&\ \mathbf{Y}_i^{(b)} \ \text{be the population $N$-vector of binned incomes,} \\
+&\ \mathbf{Y}_h \ \text{be the population $N$-vector of numeric housing prices,} \\
+&\ \mathbf{Y}_h^{(b)} \ \text{be the population $N$-vector of binned housing prices.} 
+\end{align*}
+
+We observe $\mathbf{Y}_h$, as well as $(x_i, x_i^{(b)}, x_h, x_h^{(b)})$ where
+
+\begin{align*}
+&\ \mathbf{X}_i \ \text{be the sample $n$-vector of numeric incomes,} \\
+&\ \mathbf{X}_i^{(b)} \ \text{be the sample $n$-vector of binned incomes,} \\
+&\ \mathbf{X}_h \ \text{be the sample $n$-vector of numeric housing prices,} \\
+&\ \mathbf{X}_h^{(b)} \ \text{be the sample $n$-vector of binned housing prices.} 
+\end{align*}
+
+We want the conditional distribution, $f(\mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)} | \mathbf{X}_i, \mathbf{X}_i^{(b)}, \mathbf{X}_h, \mathbf{X}_h^{(b)})$.
+
+\begin{align*}
+f(\mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)} | \mathbf{X}_i, \mathbf{X}_i^{(b)}, \mathbf{X}_h, \mathbf{X}_h^{(b)}) &\propto    f(\mathbf{X}_i, \mathbf{X}_i^{(b)}, \mathbf{X}_h, \mathbf{X}_h^{(b)} | \mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) f(\mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) \\
+&\propto f(\mathbf{X}_i, \mathbf{X}_i^{(b)} | \mathbf{X}_h, \mathbf{X}_h^{(b)}, \mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) f(\mathbf{X}_h, \mathbf{X}_h^{(b)} | \mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) f(\mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) \\
+&\propto f(\mathbf{X}_i | \mathbf{X}_i^{(b)}, \mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) f(\mathbf{X}_i^{(b)} | \mathbf{X}_h^{(b)}, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h^{(b)}) f(\mathbf{X}_h, \mathbf{X}_h^{(b)} | \mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)}) f(\mathbf{Y}_i, \mathbf{Y}_i^{(b)}, \mathbf{Y}_h, \mathbf{Y}_h^{(b)})
+\end{align*}
+
+
+
+# Leanna's notes
+
+\begin{align*}
+f(\mathbf{Y}_i, \mathbf{Y}_h | \mathbf{X}_i, \mathbf{Y}_h) &\propto f(\mathbf{X}_i, \mathbf{X}_h | \mathbf{Y}_i, \mathbf{Y}_h) f(\mathbf{Y}_i, \mathbf{Y}_h) \\
+&\propto f(\mathbf{X}_i | \mathbf{X}_h, \mathbf{Y}_i, \mathbf{Y}_h) f(\mathbf{X}_h | \mathbf{Y}_i, \mathbf{Y}_h) f(\mathbf{Y}_i, \mathbf{Y}_h)
+\end{align*}
