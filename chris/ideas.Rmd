@@ -1,0 +1,133 @@
+---
+title: "Ideas"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+header-includes:
+  - \usepackage{breqn}
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include = FALSE}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+knitr::opts_chunk$set(
+  cache = TRUE,
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- FALSE
+```
+
+# Assumptions
+
+## Membership in windows is uniform
+
+If $X_n$ is an ordered sample from a population $Y_N$ with $n < N$, then the *average* behavior of $Y_N \setminus X_n$ can be described by $Pr[y_{k} \in (z_i, z_{i+1})]\ = \frac{1}{n+1} \forall\ k \in n+1, \dots, N\ \wedge\ i \in 1,\dots,n+1$ where $Z = \{-\infty, x_1, \dots, x_n, \infty\}$.
+
+### Simulation
+
+```{r}
+iters <- 50000
+N <- 500
+n <- 20
+
+pop <- runif(N)
+
+storage <- matrix(NA, nrow = iters, ncol = n + 1)
+
+for(i in 1:iters) {
+  ind <- sample(1:N, n)
+  samp <- sort(pop[ind])
+  others <- pop[-ind]
+  
+  tabs <- table(findInterval(pop, c(-Inf, samp, Inf), left.open = TRUE))
+  add1 <- as.numeric(tabs)
+  names(add1) <- names(tabs)
+  add2 <- rep(0, n + 1)
+  names(add2) <- 1:(n + 1)
+  add <- list(add1, add2)
+
+  tab <- tapply(unlist(add), names(unlist(add)), sum)
+  storage[i, ] <- tab[order(factor(names(tab), levels = 1:(length(samp) + 1)))]
+}
+```
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Membership of $Y_N \\setminus X_n$ for a single sample (left), and average behavior over many samples (right), with error bars defined using 10th and 90th percentiles"}
+g1 <- data.frame(
+  "Window" = 1:(n + 1),
+  "Membership" = storage[1, ]
+) %>%
+  ggplot(mapping = aes(y = as.factor(Window), x = Membership)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Membership", y = "Window")
+
+g2 <- data.frame(
+  "Window" = 1:(n + 1),
+  "Mean" = colMeans(storage),
+  "Q10" = apply(storage, 2, quantile, probs = 0.1),
+  "Q90" = apply(storage, 2, quantile, probs = 0.9)
+) %>%
+  ggplot(mapping = aes(y = as.factor(Window), x = Mean)) + 
+  geom_bar(stat = "identity") + 
+  geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90), color = "red") + 
+  labs(x = "Mean Membership", y = "Window")
+
+grid.arrange(g1, g2, nrow = 1)
+```
+
+### Reversibility
+
+If we instead fix our sample, and create synthetic populations using the same distribution that generated our original population, does this property apply to the synthetic populations?
+
+```{r}
+iters <- 50000
+N <- 500
+n <- 20
+
+orig.pop <- runif(N)
+samp <- sort(sample(orig.pop, n))
+
+storage2 <- matrix(NA, nrow = iters, ncol = n + 1)
+
+for(i in 1:iters) {
+  pop <- runif(N - n)
+  
+  tabs <- table(findInterval(pop, c(-Inf, samp, Inf), left.open = TRUE))
+  add1 <- as.numeric(tabs)
+  names(add1) <- names(tabs)
+  add2 <- rep(0, n + 1)
+  names(add2) <- 1:(n + 1)
+  add <- list(add1, add2)
+
+  tab <- tapply(unlist(add), names(unlist(add)), sum)
+  storage2[i, ] <- tab[order(factor(names(tab), levels = 1:(length(samp) + 1)))]
+}
+```
+
+```{r}
+g1 <- data.frame(
+  "Window" = 1:(n + 1),
+  "Mean" = colMeans(storage2),
+  "Q10" = apply(storage2, 2, quantile, probs = 0.1),
+  "Q90" = apply(storage2, 2, quantile, probs = 0.9)
+) %>%
+  ggplot(mapping = aes(y = as.factor(Window), x = Mean)) + 
+  geom_bar(stat = "identity") + 
+  geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90), color = "red") + 
+  labs(x = "Mean Membership", y = "Window")
+
+grid.arrange(g1, nrow = 1)
+```
+
