@@ -97,9 +97,10 @@ N <- 500
 n <- 20
 
 orig.pop <- runif(N)
-samp <- sort(sample(orig.pop, n))
+ind <- sample(1:N, n)
+samp <- sort(orig.pop[ind])
 
-storage2 <- matrix(NA, nrow = iters, ncol = n + 1)
+storage2 <- matrix(NA, nrow = iters + 1, ncol = n + 1)
 
 for(i in 1:iters) {
   pop <- runif(N - n)
@@ -114,19 +115,31 @@ for(i in 1:iters) {
   tab <- tapply(unlist(add), names(unlist(add)), sum)
   storage2[i, ] <- tab[order(factor(names(tab), levels = 1:(length(samp) + 1)))]
 }
+
+pop <- orig.pop[-ind]
+  
+tabs <- table(findInterval(pop, c(-Inf, samp, Inf), left.open = TRUE))
+add1 <- as.numeric(tabs)
+names(add1) <- names(tabs)
+add2 <- rep(0, n + 1)
+names(add2) <- 1:(n + 1)
+add <- list(add1, add2)
+
+tab <- tapply(unlist(add), names(unlist(add)), sum)
+storage2[iters + 1, ] <- tab[order(factor(names(tab), levels = 1:(length(samp) + 1)))]
 ```
 
-```{r}
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Membership of $Y_N \\setminus X_n$ for a single sample across various synthetic populations (red) and true population (black)"}
 g1 <- data.frame(
   "Window" = 1:(n + 1),
-  "Mean" = colMeans(storage2),
+  "Truth" = storage2[iters + 1, ],
   "Q10" = apply(storage2, 2, quantile, probs = 0.1),
   "Q90" = apply(storage2, 2, quantile, probs = 0.9)
 ) %>%
-  ggplot(mapping = aes(y = as.factor(Window), x = Mean)) + 
-  geom_bar(stat = "identity") + 
+  ggplot(mapping = aes(y = as.factor(Window), x = Truth)) + 
+  geom_point(stat = "identity") + 
   geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90), color = "red") + 
-  labs(x = "Mean Membership", y = "Window")
+  labs(x = "Membership", y = "Window")
 
 grid.arrange(g1, nrow = 1)
 ```
