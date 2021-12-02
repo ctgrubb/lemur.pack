@@ -17,6 +17,7 @@ header-includes:
 
 ```{r setup, include = FALSE}
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(gridExtra)
 
@@ -43,16 +44,16 @@ iters <- 50000
 N <- 500
 n <- 20
 
-pop <- runif(N)
+orig.pop <- runif(N)
 
 storage <- matrix(NA, nrow = iters, ncol = n + 1)
 
 for(i in 1:iters) {
   ind <- sample(1:N, n)
-  samp <- sort(pop[ind])
-  others <- pop[-ind]
+  samp <- sort(orig.pop[ind])
+  others <- orig.pop[-ind]
   
-  tabs <- table(findInterval(pop, c(-Inf, samp, Inf), left.open = TRUE))
+  tabs <- table(findInterval(orig.pop, c(-Inf, samp, Inf), left.open = TRUE))
   add1 <- as.numeric(tabs)
   names(add1) <- names(tabs)
   add2 <- rep(0, n + 1)
@@ -71,7 +72,8 @@ g1 <- data.frame(
 ) %>%
   ggplot(mapping = aes(y = as.factor(Window), x = Membership)) + 
   geom_bar(stat = "identity") + 
-  labs(x = "Membership", y = "Window")
+  labs(x = "Membership", y = "Window") + 
+  theme_bw()
 
 g2 <- data.frame(
   "Window" = 1:(n + 1),
@@ -82,7 +84,8 @@ g2 <- data.frame(
   ggplot(mapping = aes(y = as.factor(Window), x = Mean)) + 
   geom_bar(stat = "identity") + 
   geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90), color = "red") + 
-  labs(x = "Mean Membership", y = "Window")
+  labs(x = "Mean Membership", y = "Window") + 
+  theme_bw()
 
 grid.arrange(g1, g2, nrow = 1)
 ```
@@ -96,7 +99,6 @@ iters <- 50000
 N <- 500
 n <- 20
 
-orig.pop <- runif(N)
 ind <- sample(1:N, n)
 samp <- sort(orig.pop[ind])
 
@@ -129,18 +131,111 @@ tab <- tapply(unlist(add), names(unlist(add)), sum)
 storage2[iters + 1, ] <- tab[order(factor(names(tab), levels = 1:(length(samp) + 1)))]
 ```
 
-```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Membership of $Y_N \\setminus X_n$ for a single sample across various synthetic populations (red) and true population (black)"}
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Membership of $Y_N \\setminus X_n$ for a single sample across various synthetic populations and true population"}
 g1 <- data.frame(
   "Window" = 1:(n + 1),
   "Truth" = storage2[iters + 1, ],
   "Q10" = apply(storage2, 2, quantile, probs = 0.1),
-  "Q90" = apply(storage2, 2, quantile, probs = 0.9)
+  "Q90" = apply(storage2, 2, quantile, probs = 0.9),
+  "Min" = apply(storage2, 2, min),
+  "Max" = apply(storage2, 2, max)
 ) %>%
   ggplot(mapping = aes(y = as.factor(Window), x = Truth)) + 
-  geom_point(stat = "identity") + 
-  geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90), color = "red") + 
-  labs(x = "Membership", y = "Window")
+  geom_point(stat = "identity", mapping = aes(color = "Truth")) + 
+  geom_errorbar(mapping = aes(xmin = Min, xmax = Max, color = "Min, Max")) + 
+  geom_errorbar(mapping = aes(xmin = Q10, xmax = Q90, color = "Q10, Q90")) + 
+  scale_color_manual(name = NULL, values = c("grey", "red", "black")) + 
+  labs(x = "Membership", y = "Window") + 
+  theme_bw()
 
 grid.arrange(g1, nrow = 1)
 ```
 
+## Emperical CDFs of synthetic populations should be *close* to the true population
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Empirical CDF $Y_N$"}
+data.frame(
+  Y = sort(orig.pop),
+  E = seq(1, N) / N
+) %>%
+  ggplot(mapping = aes(x = Y)) + 
+  stat_ecdf(pad = FALSE) + 
+  labs(y = "Cumulative Probability") + 
+  theme_bw()
+```
+
+Instead of synthesizing $Y_N \setminus X_n$, if we instead just use the true population distribution to create fully synthetic populations, how far do our empirical CDFs deviate from the *truth*?
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Quantiles of empirical CDFs for many continuous uniform synthetic $Y_N$s"}
+nSynth <- 10000
+
+storage3 <- matrix(runif(nSynth * N), nrow = nSynth, ncol = N)
+storage3 <- t(apply(storage3, 1, sort))
+
+data.frame(
+  "Min" = apply(storage3, 2, min),
+  "Q10" = apply(storage3, 2, quantile, probs = 0.1),
+  "Q20" = apply(storage3, 2, quantile, probs = 0.2),
+  "Q30" = apply(storage3, 2, quantile, probs = 0.3),
+  "Q40" = apply(storage3, 2, quantile, probs = 0.4),
+  "Q50" = apply(storage3, 2, quantile, probs = 0.5),
+  "Q60" = apply(storage3, 2, quantile, probs = 0.6),
+  "Q70" = apply(storage3, 2, quantile, probs = 0.7),
+  "Q80" = apply(storage3, 2, quantile, probs = 0.8),
+  "Q90" = apply(storage3, 2, quantile, probs = 0.9),
+  "Max" = apply(storage3, 2, max)
+) %>%
+  pivot_longer(Min:Max, names_to = "Quantile", values_to = "Value") %>%
+  mutate(Quantile = factor(Quantile, levels = c("Min", paste0("Q", 1:9, "0"), "Max"))) %>%
+  ggplot(mapping = aes(group = Quantile, x = Value, color = Quantile)) + 
+  stat_ecdf(pad = FALSE) + 
+  scale_color_discrete(name = NULL) + 
+  labs(x = "Y", y = "Cumulative Probability") + 
+  theme_bw()
+```
+
+For a different distribution (Normal),
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "Quantiles of empirical CDFs for many normally distributed synthetic $Y_N$s"}
+nSynth <- 10000
+
+storage4 <- matrix(rnorm(nSynth * N), nrow = nSynth, ncol = N)
+storage4 <- t(apply(storage3, 1, sort))
+
+data.frame(
+  "Min" = apply(storage4, 2, min),
+  "Q10" = apply(storage4, 2, quantile, probs = 0.1),
+  "Q20" = apply(storage4, 2, quantile, probs = 0.2),
+  "Q30" = apply(storage4, 2, quantile, probs = 0.3),
+  "Q40" = apply(storage4, 2, quantile, probs = 0.4),
+  "Q50" = apply(storage4, 2, quantile, probs = 0.5),
+  "Q60" = apply(storage4, 2, quantile, probs = 0.6),
+  "Q70" = apply(storage4, 2, quantile, probs = 0.7),
+  "Q80" = apply(storage4, 2, quantile, probs = 0.8),
+  "Q90" = apply(storage4, 2, quantile, probs = 0.9),
+  "Max" = apply(storage4, 2, max)
+) %>%
+  pivot_longer(Min:Max, names_to = "Quantile", values_to = "Value") %>%
+  mutate(Quantile = factor(Quantile, levels = c("Min", paste0("Q", 1:9, "0"), "Max"))) %>%
+  ggplot(mapping = aes(group = Quantile, x = Value, color = Quantile)) + 
+  stat_ecdf(pad = FALSE) + 
+  scale_color_discrete(name = NULL) + 
+  labs(x = "Y", y = "Cumulative Probability") + 
+  theme_bw()
+```
+
+We want to see similar spread, but we only have a sample to work with.
+
+```{r, echo = FALSE, out.width = "100%", fig.height = 3, fig.cap = "$Y_N$"}
+bounds <- data.frame(
+  "Min" = apply(storage3, 2, min),
+  "Max" = apply(storage3, 2, max)
+) %>%
+  pivot_longer(Min:Max, names_to = "Quantile", values_to = "Value") %>%
+  mutate(Quantile = factor(Quantile, levels = c("Min", "Max")))
+
+data.frame(Sample = samp) %>%
+  ggplot(mapping = aes(x = Sample)) + 
+  stat_ecdf(pad = FALSE) + 
+  stat_ecdf(data = bounds, mapping = aes(group = Quantile, x = Value), color = "red", pad = FALSE)
+```
