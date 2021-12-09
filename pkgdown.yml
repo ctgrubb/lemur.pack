@@ -1,12 +1,12 @@
 pandoc: 2.7.3
-pkgdown: 1.6.1
+pkgdown: 2.0.1
 pkgdown_sha: ~
 articles:
-  articles/continuousIntro: continuousIntro.html
-  articles/discreteIntro: discreteIntro.html
+  continuousIntro: continuousIntro.html
+  discreteIntro: discreteIntro.html
   lemur-pack: lemur-pack.html
-last_built: 2021-12-02T18:40Z
+last_built: 2021-12-09T04:28Z
 urls:
-  reference: https://ctgrubb.github.io/lemur.pack//reference
-  article: https://ctgrubb.github.io/lemur.pack//articles
+  reference: https://ctgrubb.github.io/lemur.pack/reference
+  article: https://ctgrubb.github.io/lemur.pack/articles
 
