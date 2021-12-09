@@ -239,3 +239,17 @@ data.frame(Sample = samp) %>%
   stat_ecdf(pad = FALSE) + 
   stat_ecdf(data = bounds, mapping = aes(group = Quantile, x = Value), color = "red", pad = FALSE)
 ```
+
+## Dave's Idea (December 2, 2021)
+
+Let $Y_N$ represent the population and $X_n$ represent a sample. 
+
+One option to gauge how *representative* a sample is to look at the membership within the population between each observed sample. Specifically, we will look at the quantity $P(X_{(n)} \le x_{(n)}, X_{(n-1)} \le x_{(n-1)}, \dots, X_{(1)} \le x_{(1)})$.
+
+From the laws of conditional probability, we know that
+
+\begin{align*}
+P(X_{(n)} \le x_{(n)}, \dots, X_{(1)} \le x_{(1)}) &= P(X_{(n)} \le x_{(n)}, \dots, X_{(2)} \le x_{(2)} | X_{(1)} \le x_{(1)}) P(X_{(1)} \le x_{(1)}) \\
+&= P(X_{(n)} \le x_{(n)} | X_{(n-1)} \le x_{(n-1)}, \dots, X_{(1)} \le x_{(1)}) \cdots \\
+&\hspace{1cm} P(X_{(2)} \le x_{(2)} | X_{(1)} \le x_{(1)}) P(X_{(1)} \le x_{(1)})
+\end{align*}
