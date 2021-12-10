@@ -63,18 +63,41 @@ dave.func <- function(pop, samp) {
   gt.tallies <- sapply(samp, function(x) sum(pop > x))
   lte.tallies <- N - gt.tallies
 
+  step_2 <- 1 - choose(sum(pop > samp[2]), 9) * choose(sum(pop <= samp[1]), 1) / choose(100, 10) / step_1
+
   probs <- sapply(1:n, function(x) choose(gt.tallies[x], n - (x - 1)))
   for(i in 1:(n-1)) {
     probs <- probs * c(rep(1, i), rep(choose(lte.tallies[i], 1), n - i))
   }
   probs <- probs / choose(N, n)
-  probs <- probs / c(1, probs[-n])
-  probs <- 1 - probs
+  probs[1] <- 1 - probs[1]
+  for(i in 2:n) {
+    probs[i] <- 1 - probs[i] / probs[i - 1]
+  }
 
-  1 - choose(gt.tallies[1], n) / choose(N, n)
-  1 - choose(gt.tallies[2], n - 1) * choose(lte.tallies[1], 1) / choose(N, n)
-  1 - choose(gt.tallies[3], n - 2) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n)
-  # ...
-  1 - choose(gt.tallies[10], n - 9)
+
+  test <- rep(0, 10)
+  test[1] <- 1 - choose(gt.tallies[1], n) / choose(N, n)
+  test[2] <- 1 - choose(gt.tallies[2], n - 1) * choose(lte.tallies[1], 1) / choose(N, n) / test[1]
+  test[3] <- 1 - choose(gt.tallies[3], n - 2) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n) /
+    test[2]
+  test[4] <- 1 - choose(gt.tallies[4], n - 3) * choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) *
+    choose(lte.tallies[1], 1) / choose(N, n) / test[3]
+  test[5] <- 1 - choose(gt.tallies[5], n - 4) * choose(lte.tallies[4], 1) * choose(lte.tallies[3], 1) *
+    choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n) / test[4]
+  test[6] <- 1 - choose(gt.tallies[6], n - 5) * choose(lte.tallies[5], 1) * choose(lte.tallies[4], 1) *
+    choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n) / test[5]
+  test[7] <- 1 - choose(gt.tallies[7], n - 6) * choose(lte.tallies[6], 1) * choose(lte.tallies[5], 1) *
+    choose(lte.tallies[4], 1) * choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) /
+    choose(N, n) / test[6]
+  test[8] <- 1 - choose(gt.tallies[8], n - 7) * choose(lte.tallies[7], 1) * choose(lte.tallies[6], 1) *
+    choose(lte.tallies[5], 1) * choose(lte.tallies[4], 1) * choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) *
+    choose(lte.tallies[1], 1) / choose(N, n) / test[7]
+  test[9] <- 1 - choose(gt.tallies[9], n - 8) * choose(lte.tallies[8], 1) * choose(lte.tallies[7], 1) *
+    choose(lte.tallies[6], 1) * choose(lte.tallies[5], 1) * choose(lte.tallies[4], 1) *
+    choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n) / test[8]
+  test[10] <- 1 - choose(gt.tallies[10], n - 9) * choose(lte.tallies[9], 1) * choose(lte.tallies[8], 1) *
+    choose(lte.tallies[7], 1) * choose(lte.tallies[6], 1) * choose(lte.tallies[5], 1) * choose(lte.tallies[4], 1) *
+    choose(lte.tallies[3], 1) * choose(lte.tallies[2], 1) * choose(lte.tallies[1], 1) / choose(N, n) / test[10]
 }
 
