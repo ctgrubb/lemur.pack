@@ -253,3 +253,5 @@ P(X_{(n)} \le x_{(n)}, \dots, X_{(1)} \le x_{(1)}) &= P(X_{(n)} \le x_{(n)}, \do
 &= P(X_{(n)} \le x_{(n)} | X_{(n-1)} \le x_{(n-1)}, \dots, X_{(1)} \le x_{(1)}) \cdots \\
 &\hspace{1cm} P(X_{(2)} \le x_{(2)} | X_{(1)} \le x_{(1)}) P(X_{(1)} \le x_{(1)})
 \end{align*}
+
+**Problem**. This is maximized with a *high* sample (i.e., $x_{(1)} = , X_{(N-n+1)}\dots, x_{(n)} = X_{(N)}$).
