@@ -111,9 +111,9 @@
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">proftools</span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span>
 <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://magrittr.tidyverse.org" class="external-link">magrittr</a></span><span class="op">)</span></code></pre></div>
-<div class="section level1">
-<h1 id="theory">Theory<a class="anchor" aria-label="anchor" href="#theory"></a>
-</h1>
+<div class="section level2">
+<h2 id="theory">Theory<a class="anchor" aria-label="anchor" href="#theory"></a>
+</h2>
 <p>Recall from the discrete introduction:</p>
 <blockquote>
 <p>For a population <span class="math inline">\(\mathbf{Y}\)</span>, sample <span class="math inline">\(\mathbf{X}\)</span>, and parameter set <span class="math inline">\(\theta\)</span>, we can use Bayes’ theorem to get the distribution for <span class="math inline">\(\mathbf{Y}\)</span>, conditioned on our observed sample, <span class="math inline">\(\mathbf{x}\)</span>.</p>
@@ -124,9 +124,9 @@ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) &amp;= \frac{ f(\mat
 </blockquote>
 <p><strong>What needs to change for continuous data?</strong> Of course, the distribution <span class="math inline">\(f(\mathbf{X} = \mathbf{x} | \theta)\)</span> now needs to be a continuous distribution. Also, <span class="math inline">\(f(\mathbf{Y} = \mathbf{y} | \theta)\)</span> will change. Actually, it is not immediately clear what this term should be; we will assume it is what it appears it should be, the product of the height of the <span class="math inline">\(Normal\)</span> density at the population values, or summed in log space. In practice, that term ends up being reasonably close to constant, so it could probably be ignored without affecting the resulting populations terribly much.</p>
 </div>
-<div class="section level1">
-<h1 id="normal">Normal<a class="anchor" aria-label="anchor" href="#normal"></a>
-</h1>
+<div class="section level2">
+<h2 id="normal">Normal<a class="anchor" aria-label="anchor" href="#normal"></a>
+</h2>
 <p>Let us first explore using a <span class="math inline">\(Normal\)</span> likelihood; we will set a joint prior on <span class="math inline">\((\mu, \sigma)\)</span> to be the product of <span class="math inline">\(Normal(\mu|m, s^2)\)</span> and <span class="math inline">\(Inv\text{-}Gamma(\sigma|a, b)\)</span>. For this document, we will use <span class="math inline">\(m = 0,\ s = 10000,\ a = .0001,\ b = .0001\)</span></p>
 <p>Also, since we are working in a continuous space now, we need to change how we propose. We will now jitter around <span class="math inline">\(y_k\)</span> using a normal distribution with a constant step size. This will ensure symmetry, so we can drop the proposal distribution ratio term from our accept or reject step.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -171,9 +171,9 @@ f(\theta, \mathbf{Y} = \mathbf{y}| \mathbf{X} = \mathbf{x}) &amp;= \frac{ f(\mat
   <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 </div>
-<div class="section level1">
-<h1 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
-</h1>
+<div class="section level2">
+<h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
+</h2>
 <p>Lets make a sample; suppose we observe these values.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100.4</span>, <span class="fl">87.2</span>, <span class="fl">109.6</span>, <span class="fl">90.1</span>, <span class="fl">98.4</span>, <span class="fl">103.2</span>, <span class="fl">112.1</span>, <span class="fl">104.2</span>, <span class="fl">99.6</span>, <span class="fl">96.4</span><span class="op">)</span></code></pre></div>
@@ -458,7 +458,7 @@ logprior
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
