@@ -1,0 +1,164 @@
+---
+title: "Donsker's Thoerem Ideas"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+  number_sections: true
+toc: true
+toc_depth: 3
+toc_float:
+  collapsed: false
+header-includes:
+  - \usepackage{breqn}
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- FALSE
+```
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(MASS)
+library(mvtnorm)
+```
+
+
+# Donsker's Theorem
+
+Let $F_n$ be the empirical distribution function of i.i.d. random variables $X_1, X_2, X_3,...$ with distribution function $F$. Define the centered and scaled version of $F_n$ by
+
+\[
+G_n(x) = \sqrt{n}(F_n(x) - F(x))
+(\#eq:donskerseq)
+\]
+
+indexed by $x \in \mathbb{R}$. From the classical central limit theorem for fixed $x$, we know the random variable $G_n(x)$ converges in distribution to a Gaussian random variable with mean zero and variance $F(x)(1 - F(x))$ as the sample size $n$ grows. Donsker's theorem adds to this, and shows that $G_n(x)$ converges in distribution to a Gaussian Process with mean zero and covariance $K(G(s), G(t))$ given by 
+
+\[
+K(G(s), G(t)) = E[G(s)G(t)] = min\{F(s), F(t)\} - F(s)F(t)
+(\#eq:donskerkernel)
+\]
+
+# Idea
+
+We should be able to use Donsker's theorem to help us reject/accept populations; if a synthetic $F$ is very different from our sample $F_n$, then we should reject $F$.
+
+## Behavior as $n \rightarrow \infty$
+
+Let $F(Y)$ be discrete uniform with support of $1, 2, \dots, 100$.
+
+```{r npattern, echo = FALSE, out.width = "100%", fig.cap = "Plot of $\\sqrt{n}(F_n(y) - F(y))$ for n = 10, 25, 50 (top) and 100, 500, and 1000 (bottom)"}
+ns <- c(10, 25, 50, 100, 500, 1000)
+Y <- 1:100
+FY <- Y / length(Y)
+
+par(mfrow = c(2, 3), mar = c(2.5, 2.5, 1, 1))
+
+for(n in ns) {
+  X <- sort(sample(Y, size = n, replace = TRUE))
+  FX <- sapply(1:100, function(x) sum(X <= x)) / length(X)
+  
+  plot(Y, sqrt(n) * (FX - FY), type = "l", ylim = c(-2, 2), xlab = "", ylab = "")
+}
+```
+
+As $n \rightarrow \infty$, obviously the curves become more smooth, and look more plausible for draws from a Gaussian Process.
+
+## Comparing two populations
+
+First we need a sample $X$, and $Y_1, Y_2$, two plausible populations. We will create $X$ from the true $Y$ above, so neither $Y_1$ or $Y_2$ are **correct**.
+
+```{r popcompare}
+X <- sort(sample(Y, size = 100, replace = TRUE))
+
+Y1 <- sample(X, size = 100, replace = TRUE)
+Y2 <- sample(X, size = 100, replace = TRUE)
+```
+
+```{r popcdfcompare, echo = FALSE, out.width = "100%", fig.cap = "Empirical CDFs for $X$ (black), $Y_1$ (cyan), and $Y_2$ (red)"}
+F_X <- sapply(1:100, function(x) sum(X <= x)) / length(X)
+F_Y1 <- sapply(1:100, function(x) sum(Y1 <= x)) / length(Y1)
+F_Y2 <- sapply(1:100, function(x) sum(Y2 <= x)) / length(Y2)
+
+par(mar = c(2.5, 2.5, 1, 1))
+
+plot(1:100, F_X, type = 's', ylab = "F", xlab = "")
+lines(1:100, F_Y1, type = 's', col = 'cyan')
+lines(1:100, F_Y2, type = 's', col = 'red')
+```
+
+```{r popgausscompare, echo = FALSE, out.width = "100%", fig.cap = "Plot of $\\sqrt{n}(F_n(y) - F(y))$ for $Y_1$ (left) and $Y_2$ (right)"}
+par(mfrow = c(1, 2), mar = c(2.5, 2.5, 1, 1))
+
+plot(1:100, sqrt(n) * (F_X - F_Y1), type = "l", ylim = c(-2, 2), xlab = "", ylab = "")
+plot(1:100, sqrt(n) * (F_X - F_Y2), type = "l", ylim = c(-2, 2), xlab = "", ylab = "")
+
+```
+
+Now, we can use the Gaussian density to calculate the "likelihood" of these two populations.
+
+```{r poplikelihoods}
+cov_matrix <- function(x) {
+    outer(x, x, "pmin") - outer(x, x)
+}
+
+dmvnorm(sqrt(100) * (F_X - F_Y1)[-100], rep(0, 99), cov_matrix(F_Y1)[-100, -100])
+dmvnorm(sqrt(100) * (F_X - F_Y2)[-100], rep(0, 99), cov_matrix(F_Y2)[-100, -100])
+
+```
+
+## Implementation
+
+For now, we will use **true** $F$ of discrete uniform with support of $1, 2, \dots, 100$.
+
+Some basic pieces of the puzzle:
+
+```{r gpsetup}
+cov_matrix <- function(x) {
+    outer(x, x, "pmin") / length(x) - outer(x, x) / (length(x) ** 2)
+}
+
+draw_samples <- function(x, N, seed = 1) {
+    Y <- matrix(NA, nrow = length(x), ncol = N)
+    set.seed(seed)
+    for (n in 1:N) {
+        K <- cov_matrix(x)
+        Y[, n] <- rmvnorm(1, mean = rep(0, times = length(x)), sigma = K)
+    }
+    Y
+}
+```
+
+```{r}
+Y <- 1:40
+N <- 100
+
+X <- sort(sample(Y, size = length(Y), replace = TRUE))
+
+FY <- Y / length(Y)
+FX <- sapply(Y, function(x) sum(X <= x)) / length(Y)
+
+plot(Y, sqrt(N) * (FY - FX), type = "l", ylim = c(-1.3, 1.3))
+
+# cov_matrix(Y)
+image(cov_matrix(Y))
+# draw_samples(Y, N)
+
+# plot(range(x), range(Y), xlab = "x", ylab = "y", type = "n",
+#      main = "Donsker Kernel")
+# for (n in 1:N) {
+#     lines(x, Y[, n], col = "black", lwd = 1.5)
+# }
+```
+```{r}
+# dmvnorm(FY[-N], FxY[-N], (1/n)*CYbb, log=TRUE)
+```
+

@@ -6,7 +6,7 @@
 
 # use N = 20 for now
 n = 10
-n=3
+n = 3
 N = 20
 Y = 1:N
 
