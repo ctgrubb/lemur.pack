@@ -1,0 +1,168 @@
+---
+title: "Donsker's Thoerem Ideas"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+  number_sections: true
+toc: true
+toc_depth: 3
+toc_float:
+  collapsed: false
+header-includes:
+  - \usepackage{breqn}
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- FALSE
+```
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(MASS)
+library(mvtnorm)
+library(latex2exp)
+```
+
+
+# Donsker's Theorem
+
+Let $F_n$ be the empirical distribution function of i.i.d. random variables $X_1, X_2, X_3,...$ with distribution function $F$. Define the centered and scaled version of $F_n$ by
+
+\[
+G_n(x) = \sqrt{n}(F_n(x) - F(x))
+(\#eq:donskerseq)
+\]
+
+indexed by $x \in \mathbb{R}$. From the classical central limit theorem for fixed $x$, we know the random variable $G_n(x)$ converges in distribution to a Gaussian random variable with mean zero and variance $F(x)(1 - F(x))$ as the sample size $n$ grows. Donsker's theorem adds to this, and shows that $G_n(x)$ converges in distribution to a Gaussian Process with mean zero and covariance $K(G(s), G(t))$ given by 
+
+\[
+K(G(s), G(t)) = E[G(s)G(t)] = min\{F(s), F(t)\} - F(s)F(t)
+(\#eq:donskerkernel)
+\]
+
+## Continuous Example
+
+Let $x \sim N(0, 1)$. 
+
+First, lets look at some potential CDFs from sampling $X_n$ with $n = 1000$.
+
+```{r normexample, echo = FALSE, out.width = "100%", fig.cap = "Empirical sample CDFs for $X$"}
+N <- 10
+n <- 1000
+storage <- matrix(rnorm(N * n), nrow = N, ncol = n)
+
+colors <- sample(colors()[-1], N)
+plot(NA, NA, xlim = c(-3, 3), ylim = c(-0.05, 1.05), xlab = "x", ylab = "F(x)")
+for(i in 1:N) {
+  lines(sort(storage[i, ]), (1:n) / n, type = "s", col = colors[i])
+}
+```
+
+Next, lets transform these $F_n(x)$, using Donsker's theorem.
+
+```{r donskerize}
+storage2 <- matrix(NA, nrow = N, ncol = n)
+
+for(i in 1:N) {
+  storage2[i, ] <- sqrt(n) * (sapply(storage[i, ], function(x) sum(storage[i, ] <= x)) / n - 
+                                pnorm(storage[i, ]))
+}
+```
+
+And now we can visualize them.
+
+```{r donskervisual, echo = FALSE, out.width = "100%", fig.cap = "Transformed CDF values"}
+plot(NA, NA, xlim = c(-3, 3), ylim = c(-1.5, 1.5), xlab = "x", ylab = TeX("$\\sqrt{n}(F_n(x) - F(x))$"))
+for(i in 1:N) {
+  ord <- order(storage[i, ])
+  lines(storage[i, ord], storage2[i, ord], type = "l", col = colors[i])
+}
+```
+
+Extracting densities.
+
+```{r donskerdensities}
+covMat <- function(p){
+  outer(p, p, FUN = "pmin") - outer(p, p)
+}
+
+denStore <- rep(NA, N)
+
+for(i in 1:N) {
+  ord <- order(storage[i, ])
+  K <- covMat(pnorm(storage[i, ord]))[-n, -n]
+  
+  test <- rmvnorm(1, sigma = K)
+  dmvnorm(test, sigma = K)
+  
+  denStore[i] <- dmvnorm(sqrt(n) * (sapply(storage[i, ord], function(x) sum(storage[i, ] <= x)) / n - pnorm(storage[i, ord]))[-n], sigma = K)
+}
+
+denStore
+```
+
+## Discrete Example
+
+Let $x \sim Unif(\{1, 2, 3, \dots, 100\})$. 
+
+First, lets look at some potential CDFs from sampling $X_n$ with $n = 1000$.
+
+```{r discexample, echo = FALSE, out.width = "100%", fig.cap = "Empirical sample CDFs for $X$"}
+N <- 10
+n <- 1000
+storage <- matrix(sample(1:100, N * n, replace = TRUE), nrow = N, ncol = n)
+
+plot(NA, NA, xlim = c(0, 101), ylim = c(-0.05, 1.05), xlab = "x", ylab = "F(x)")
+for(i in 1:N) {
+  FX <- sapply(1:100, function(x) sum(storage[i, ] <= x)) / n
+  lines(1:100, FX, type = "s", col = colors[i])
+}
+```
+
+Next, lets transform these $F_n(x)$, using Donsker's theorem.
+
+```{r donskerize2}
+storage2 <- matrix(NA, nrow = N, ncol = 100)
+
+for(i in 1:N) {
+  storage2[i, ] <- sqrt(n) * (sapply(1:100, function(x) sum(storage[i, ] <= x) / n - x / 100))
+}
+```
+
+And now we can visualize them.
+
+```{r donskervisual2, echo = FALSE, out.width = "100%", fig.cap = "Transformed CDF values"}
+plot(NA, NA, xlim = c(0, 101), ylim = c(-1.5, 1.5), xlab = "x", ylab = TeX("$\\sqrt{n}(F_n(x) - F(x))$"))
+for(i in 1:N) {
+  lines(1:100, storage2[i, ], type = "l", col = colors[i])
+}
+```
+
+Extracting densities.
+
+```{r donskerdensities2}
+covMat <- function(p){
+  outer(p, p, FUN = "pmin") - outer(p, p)
+}
+
+denStore <- rep(NA, N)
+
+for(i in 1:N) {
+  K <- covMat(1:100 / 100)[-100, -100]
+  
+  # test <- rmvnorm(1, mean = rep(0, 99), sigma = K[-100, -100])
+  # dmvnorm(test, sigma = K[-100, -100])
+  
+  denStore[i] <- dmvnorm(storage2[i, -100], sigma = K)
+}
+
+denStore
+```
