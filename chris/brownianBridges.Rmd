@@ -1,0 +1,338 @@
+---
+title: "Brownian Bridges Stuff"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+  number_sections: true
+toc: true
+toc_depth: 3
+toc_float:
+  collapsed: false
+header-includes:
+  - \usepackage{breqn}
+  - \usepackage{palatino}
+  - \usepackage{xcolor}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE
+)
+
+quick_eval <- FALSE
+options(scipen = 6)
+set.seed(318937291)
+```
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(mvtnorm)
+library(latex2exp)
+library(microbenchmark)
+```
+
+# Random Walks
+
+Let $X_1, X_2, X_3, \dots$ be a sequence of i.i.d. random variables with mean 0 and variance 1. Let $S_n := \sum_{i=1}^n X_i$. The stochastic process $S := (S_n)_{n \in \mathbb{N}}$ is known as a **random walk**. 
+
+```{r randomwalk}
+n <- 100
+X <- rnorm(n)
+S <- cumsum(X)
+```
+
+```{r randomwalk-fig, echo = FALSE, out.width = "100%", fig.cap = "Example of a random walk showing the first hundred thousand steps"}
+par(mar = c(2.5, 2.5, 1, 1))
+plot(1:n, S, type = "l", xlab = "n")
+```
+
+Now, let 
+
+\[
+  W^{(n)}(t) := \frac{S_{\lfloor nt \rfloor}}{\sqrt{n}}, \qquad t \in [0, 1].
+\]
+
+The central limit theorem tells us this rescaled $W^{(n)}(1)$ converges in distribution to a standard Gaussian random variable as $n \to \infty$. 
+
+```{r}
+t <- seq(0, 1, length = n + 1)[-1]
+W <- S[floor(n * t)] / sqrt(n)
+```
+
+```{r rescaled-randomwalk-fig, echo = FALSE, out.width = "100%", fig.cap = "The same random walk, but rescaled"}
+par(mar = c(2.5, 2.5, 1, 1))
+plot(t, W, type = "l", xlab = "t")
+```
+
+If we rerun this entire process $k$ times, we can create a QQ plot of $W^{(n)}(1)$.
+
+```{r rescaled-randomwalk-endpoints-fig, echo = FALSE, out.width = "100%", fig.cap = "QQ Plot of 1000 iterations of $W^{(n)}(1)$"}
+k <- 1000
+Wn <- rep(0, k)
+
+for(i in 1:k) {
+  X <- rnorm(n)
+  S <- cumsum(X)
+
+  Wn[i] <- S[n] / sqrt(n)
+}
+
+par(mar = c(2.5, 2.5, 1, 1))
+qqnorm(Wn, main = "")
+```
+
+It should come as no surprise that $W^{(n)}(1)$ is in fact distributed standard normal, as 
+
+\[
+  W^{(n)}(1) := \frac{1}{\sqrt{n}} \sum_{i=1}^{n} X_i.
+\]
+
+# Brownian Bridges
+
+A Brownian bridge is the stochastic process $B(t)$ whose probability distribution is the conditional distribution of a standard Wiener process $W(t)$ (also known as Brownian motion) subject to $W(T) = 0$. 
+
+Mathematically, there are a number of ways to arrive at this process. One way is to consider a Wiener process $W_n$ as defined above. Then,
+
+\[
+  B(t) := W(t) - \frac{t}{T}W(T)
+\]
+
+It is relatively simple to consider a generalized Brownian bridge, where $B(t_1) = a$ and $B(t_2) = b$. We can simulate Brownian bridges using the above method.
+
+```{r bridges}
+n <- 5
+k <- 100
+storage <- matrix(NA, nrow = k, ncol = n)
+
+times <- seq(0, 1, length.out = n + 2)[2:(n + 1)]
+target <- 0
+
+for(i in 1:k) {
+  dW <- rnorm(n + 1) / sqrt(n)
+  W <- cumsum(dW)
+  storage[i, ] <- W[1:n] + times * (target - W[n + 1])
+}
+```
+
+```{r bridge-plot, echo = FALSE, out.width = "100%", fig.cap = "Sample brownian bridges created using rescaling method"}
+par(mar = c(2.5, 2.5, 1, 1))
+plot(NA, NA, xlim = c(0, 1), ylim = c(-2, 2), xlab = "t (discrete)", ylab = "B(t)")
+for(i in 1:k) {
+  lines(0:6 / 6, c(0, storage[i, ], 0), type = "l")
+}
+```
+
+Alternatively, we can return to $S$, as defined above. We can write $S = AX$ where
+
+\[
+  A = 
+  \begin{bmatrix} 
+    1 & 0 & 0 & 0 & \cdots & 0 \\
+    1 & 1 & 0 & 0 & \cdots & 0 \\
+    1 & 1 & 1 & 0 & \cdots & 0 \\
+    1 & 1 & 1 & 1 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & 1 & 1 & 1 & \cdots & 1
+  \end{bmatrix}
+\]
+
+Thus, $Var(S) = A \Sigma A^T$. In our case, $\Sigma = I$, so $Var(S) = AA^T$, which has the form
+
+\[
+  Var(S) = 
+  \begin{bmatrix} 
+    1 & 1 & 1 & 1 & \cdots & 1 \\
+    1 & 2 & 2 & 2 & \cdots & 2 \\
+    1 & 2 & 3 & 3 & \cdots & 3 \\
+    1 & 2 & 3 & 4 & \cdots & 4 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & 2 & 3 & 4 & \cdots & n
+  \end{bmatrix}
+\]
+
+The inverse of $AA^T$ is the precision matrix $\Omega$, which also has a distinct form.
+
+\[
+  \Omega = 
+  \begin{bmatrix} 
+    2 & -1 & 0 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & 0 & \cdots & 0 \\
+    0 & -1 & 2 & -1 & \cdots & 0 \\
+    0 & 0 & -1 & 2 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & \cdots & 1
+  \end{bmatrix}
+\]
+
+If we pass this $\Omega$ into the kernel of a Gaussian distribution, the resulting quantity $\exp\{-\frac{1}{2}S^T \Omega S\}$ simplifies.
+
+\begin{align*}
+  S^T \Omega S &= 
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix}^T
+  \begin{bmatrix} 
+    2 & -1 & 0 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & 0 & \cdots & 0 \\
+    0 & -1 & 2 & -1 & \cdots & 0 \\
+    0 & 0 & -1 & 2 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & \cdots & 1
+  \end{bmatrix}
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix} \\
+  &= 
+  \begin{bmatrix} 
+    2 S_1 - S_2 \\
+    -S_1 + 2 S_2 - S_3 \\
+    -S_2 + 2 S_3 -S_4 \\
+    -S_3 + 2 S_4 - S_5 \\
+    \vdots \\
+    -S_{n-1} + S_n
+  \end{bmatrix}^T
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix} \\
+  &=
+  2 {S_1}^2 - 2 S_1 S_2 + 2 {S_2}^2 - 2 S_2 S_3 + 2 {S_3}^2 - 2 S_3 S_4 + \dots - 2 S_{n-1} S_n + {S_n}^2 \\
+  &= (S_1 - 0)^2 + (S_2 - S_1)^2 + (S_3 - S_2)^2 + (S_4 - S_3)^2 + \dots + (S_n - S_{n-1})^2 (\#eq:omega-simplification)
+\end{align*}
+
+If we want to tie $S_n$ to 0, is it as simple as adding a $(0 - S_n)^2$ term? This is equivalent to changing the $\Omega_{n,n}$ element to 2 from 1. Also, we can't forget our constant multiplier; we have been working with $S$ but we actually need to work with $W$, so there is an extra $\frac{1}{\sqrt{n}}$ term inside our $A$ matrix.
+b
+Lets look at an example with $n = 5$. First, we construct $\Omega$.
+
+```{r bridgetest-omega}
+omega <- diag(2, n)
+omega[abs(row(omega) - col(omega)) == 1] <- -1
+```
+
+Now we can construct samples, and plot them. 
+
+```{r bridgetest-samples}
+sigma <- 1 / n * chol2inv(chol(omega))
+storage <- rmvnorm(k, sigma = sigma)
+```
+
+```{r bridgetest-plot, echo = FALSE, out.width = "100%", fig.cap = "Sample brownian bridges created using $\\Omega$ method"}
+par(mar = c(2.5, 2.5, 1, 1))
+plot(NA, NA, xlim = c(0, 1), ylim = c(-2, 2), xlab = "t (discrete)", ylab = "B(t)")
+for(i in 1:k) {
+  lines(0:6 / 6, c(0, storage[i, ], 0), type = "l")
+}
+```
+
+To confirm that these two methods are identical, we can compare the empirical variances at each discrete $t$ value.
+
+```{r bridge-comparison}
+n <- 5
+k <- 100000
+storage <- matrix(NA, nrow = k, ncol = n)
+
+times <- seq(0, 1, length.out = n + 2)[2:(n + 1)]
+target <- 0
+
+for(i in 1:k) {
+  dW <- rnorm(n + 1) / sqrt(n)
+  W <- cumsum(dW)
+  storage[i, ] <- W[1:n] + times * (target - W[n + 1])
+}
+
+omega <- diag(2, n)
+omega[abs(row(omega) - col(omega)) == 1] <- -1
+
+sigma <- 1 / n * chol2inv(chol(omega))
+storage2 <- rmvnorm(k, sigma = sigma)
+
+apply(storage, 2, var)
+apply(storage2, 2, var)
+```
+
+These are very close to each other, so it is not unreasonable to conclude the variances are identical. Since the means are clearly zero, and both methods are normally distributed (first method is linear combination of normals, which is normal), we can conclude they are identically distributed.
+
+## Likelihood Evaluations
+
+Let $b$ be a potential Brownian bridge. If we want to evaluate the log density $f(B = b)$, the most basic way would be to calculate $\Sigma = \Omega^{-1}$ and feed $b$ and $\Sigma$ into a multivariate normal function such as **dmvnorm**. 
+
+```{r denseval-sigma}
+denseval.sigma <- function(b) {
+  n <- length(b)
+  
+  omega <- diag(2, n)
+  omega[abs(row(omega) - col(omega)) == 1] <- -1
+  sigma <- 1 / n * chol2inv(chol(omega))
+  
+  dmvnorm(b, sigma = sigma, log = TRUE)
+}
+```
+
+If we are computing the density for many potential bridges, we could calculate $\Sigma$ once, so we should exclude this computation from any comparisons.
+
+```{r denseval-slow}
+denseval.slow <- function(b, sigma) {
+  dmvnorm(b, sigma = sigma, log = TRUE)
+}
+```
+
+We can make the calculation faster by exploiting \@ref(eq:omega-simplification). Also, we can make use of the fact that $det(\Omega_{nxn}) = n + 1$. Thus,
+
+\[
+  log(f(\mathbf{b}|\mathbf{0}, \mathbf{\Omega})) = \frac{1}{2}\bigg[log(n + 1) + n log(n)- nlog(2\pi) - \mathbf{b}^T\mathbf{\Omega}\mathbf{b}\bigg]
+\]
+
+```{r denseval-fast}
+denseval.fast <- function(b) {
+  d2 <- diff(c(0, b, 0)) ** 2
+  1 / 2 * (log(n + 1) + n * log(n) - n * log(2 * pi) - n * sum(d2))
+}
+```
+
+We can confirm that all versions give the same result.
+
+```{r denseval-check}
+n <- 23
+omega <- diag(2, n)
+omega[abs(row(omega) - col(omega)) == 1] <- -1
+sigma <- 1 / n * chol2inv(chol(omega))
+b <- rmvnorm(1, sigma = sigma)
+
+denseval.slow(b, sigma)
+denseval.fast(b)
+```
+
+And we can compare the time it takes for each method.
+
+```{r denseval-times, echo = FALSE, out.width = "100%", fig.cap = "Time comparison for methods"}
+par(mar = c(2.5, 2.5, 1, 1))
+
+boxplot(microbenchmark(denseval.slow(b, sigma), denseval.fast(b), times = 1000, setup = replicate(3, c(denseval.fast(b), denseval.slow(b, sigma)))), log = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+

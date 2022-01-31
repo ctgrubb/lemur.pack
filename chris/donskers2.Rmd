@@ -55,7 +55,7 @@ Let $x \sim N(0, 1)$.
 First, lets look at some potential CDFs from sampling $X_n$ with $n = 1000$.
 
 ```{r normexample, echo = FALSE, out.width = "100%", fig.cap = "Empirical sample CDFs for $X$"}
-N <- 10
+N <- 50
 n <- 1000
 storage <- matrix(rnorm(N * n), nrow = N, ncol = n)
 
@@ -81,7 +81,7 @@ And now we can visualize them.
 
 ```{r donskervisual, echo = FALSE, out.width = "100%", fig.cap = "Transformed CDF values"}
 plot(NA, NA, xlim = c(-3, 3), ylim = c(-1.5, 1.5), xlab = "x", ylab = TeX("$\\sqrt{n}(F_n(x) - F(x))$"))
-for(i in 1:N) {
+for(i in 42:42) {
   ord <- order(storage[i, ])
   lines(storage[i, ord], storage2[i, ord], type = "l", col = colors[i])
 }
@@ -101,9 +101,9 @@ for(i in 1:N) {
   K <- covMat(pnorm(storage[i, ord]))[-n, -n]
   
   test <- rmvnorm(1, sigma = K)
-  dmvnorm(test, sigma = K)
+  dmvnorm(test, sigma = K, log = TRUE)
   
-  denStore[i] <- dmvnorm(sqrt(n) * (sapply(storage[i, ord], function(x) sum(storage[i, ] <= x)) / n - pnorm(storage[i, ord]))[-n], sigma = K)
+  denStore[i] <- dmvnorm(sqrt(n) * (sapply(storage[i, ord], function(x) sum(storage[i, ] <= x)) / n - pnorm(storage[i, ord]))[-n], sigma = K, log = TRUE)
 }
 
 denStore
