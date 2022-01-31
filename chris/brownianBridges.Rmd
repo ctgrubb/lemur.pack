@@ -268,6 +268,46 @@ apply(storage2, 2, var)
 
 These are very close to each other, so it is not unreasonable to conclude the variances are identical. Since the means are clearly zero, and both methods are normally distributed (first method is linear combination of normals, which is normal), we can conclude they are identically distributed.
 
+## Marginal Distribution
+
+Let $B(t)$ denote a brownian bridge with $t = 1, 2, \dots, T$ discrete steps. If we want the marginal distribution of $B(v)$ for $v \subset t$.
+
+For example, lets look at $k = 100000$ bridges with $5$ intermediate points, and focus on $B(v)$ with $v = 2, 4$. We know the expected value will always be zero, so we focus on the covariance matrix. Empirically, we get
+
+```{r marginal-empirical}
+n <- 5
+k <- 100000
+
+times <- seq(0, 1, length.out = n + 2)[2:(n + 1)]
+target <- 0
+
+omega <- diag(2, n)
+omega[abs(row(omega) - col(omega)) == 1] <- -1
+
+sigma <- 1 / n * chol2inv(chol(omega))
+storage <- rmvnorm(k, sigma = sigma)
+
+var(storage[, c(2, 4)])
+```
+
+And theoretically, we should get
+
+```{r marginal-theoretical}
+sigma[c(2, 4), c(2, 4)]
+```
+
+If we look at the precision matrix instead of covariance, we get 
+
+```{r marginal-theoretical-precision}
+solve(sigma[c(2, 4), c(2, 4)])
+```
+
+which can be turned into
+
+\[
+  x^T \Omega x = 5 {x_1}^2 - 5 x_1 x_2 + 5 {x_2}^2
+\]
+
 ## Likelihood Evaluations
 
 Let $b$ be a potential Brownian bridge. If we want to evaluate the log density $f(B = b)$, the most basic way would be to calculate $\Sigma = \Omega^{-1}$ and feed $b$ and $\Sigma$ into a multivariate normal function such as **dmvnorm**. 
@@ -318,12 +358,12 @@ denseval.slow(b, sigma)
 denseval.fast(b)
 ```
 
-And we can compare the time it takes for each method.
+And we can compare the time it takes for each method. Ignoring the outliers (the way R works often causes the first several evaluations of a function to be much slower), we see that the fast version runs much faster, as expected.
 
 ```{r denseval-times, echo = FALSE, out.width = "100%", fig.cap = "Time comparison for methods"}
-par(mar = c(2.5, 2.5, 1, 1))
+par(mar = c(2.5, 4.5, 1, 1))
 
-boxplot(microbenchmark(denseval.slow(b, sigma), denseval.fast(b), times = 1000, setup = replicate(3, c(denseval.fast(b), denseval.slow(b, sigma)))), log = FALSE)
+boxplot(microbenchmark(denseval.slow(b, sigma), denseval.fast(b), times = 1000), log = TRUE)
 ```
 
 
