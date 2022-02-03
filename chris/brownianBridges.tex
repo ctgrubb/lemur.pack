@@ -1,0 +1,494 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\title{Brownian Bridges Stuff}
+\author{}
+\date{\vspace{-2.5em}}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Brownian Bridges Stuff},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\hypertarget{random-walks}{%
+\section{Random Walks}\label{random-walks}}
+
+Let \(X_1, X_2, X_3, \dots\) be a sequence of i.i.d. random variables with mean 0 and variance 1. Let \(S_n := \sum_{i=1}^n X_i\). The stochastic process \(S := (S_n)_{n \in \mathbb{N}}\) is known as a \textbf{random walk}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{100}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(n)}
+\NormalTok{S }\OtherTok{\textless{}{-}} \FunctionTok{cumsum}\NormalTok{(X)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/randomwalk-fig-1} \caption{Example of a random walk showing the first hundred thousand steps}\label{fig:randomwalk-fig}
+\end{figure}
+
+Now, let
+
+\[
+  W^{(n)}(t) := \frac{S_{\lfloor nt \rfloor}}{\sqrt{n}}, \qquad t \in [0, 1].
+\]
+
+The central limit theorem tells us this rescaled \(W^{(n)}(1)\) converges in distribution to a standard Gaussian random variable as \(n \to \infty\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{t }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\AttributeTok{length =}\NormalTok{ n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{)[}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{]}
+\NormalTok{W }\OtherTok{\textless{}{-}}\NormalTok{ S[}\FunctionTok{floor}\NormalTok{(n }\SpecialCharTok{*}\NormalTok{ t)] }\SpecialCharTok{/} \FunctionTok{sqrt}\NormalTok{(n)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/rescaled-randomwalk-fig-1} \caption{The same random walk, but rescaled}\label{fig:rescaled-randomwalk-fig}
+\end{figure}
+
+If we rerun this entire process \(k\) times, we can create a QQ plot of \(W^{(n)}(1)\).
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/rescaled-randomwalk-endpoints-fig-1} \caption{QQ Plot of 1000 iterations of $W^{(n)}(1)$}\label{fig:rescaled-randomwalk-endpoints-fig}
+\end{figure}
+
+It should come as no surprise that \(W^{(n)}(1)\) is in fact distributed standard normal, as
+
+\[
+  W^{(n)}(1) := \frac{1}{\sqrt{n}} \sum_{i=1}^{n} X_i.
+\]
+
+\hypertarget{brownian-bridges}{%
+\section{Brownian Bridges}\label{brownian-bridges}}
+
+A Brownian bridge is the stochastic process \(B(t)\) whose probability distribution is the conditional distribution of a standard Wiener process \(W(t)\) (also known as Brownian motion) subject to \(W(T) = 0\).
+
+Mathematically, there are a number of ways to arrive at this process. One way is to consider a Wiener process \(W_n\) as defined above. Then,
+
+\[
+  B(t) := W(t) - \frac{t}{T}W(T)
+\]
+
+It is relatively simple to consider a generalized Brownian bridge, where \(B(t_1) = a\) and \(B(t_2) = b\). We can simulate Brownian bridges using the above method.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{5}
+\NormalTok{k }\OtherTok{\textless{}{-}} \DecValTok{100}
+\NormalTok{storage }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\AttributeTok{nrow =}\NormalTok{ k, }\AttributeTok{ncol =}\NormalTok{ n)}
+
+\NormalTok{times }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\AttributeTok{length.out =}\NormalTok{ n }\SpecialCharTok{+} \DecValTok{2}\NormalTok{)[}\DecValTok{2}\SpecialCharTok{:}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{)]}
+\NormalTok{target }\OtherTok{\textless{}{-}} \DecValTok{0}
+
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{k) \{}
+\NormalTok{  dW }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{sqrt}\NormalTok{(n)}
+\NormalTok{  W }\OtherTok{\textless{}{-}} \FunctionTok{cumsum}\NormalTok{(dW)}
+\NormalTok{  storage[i, ] }\OtherTok{\textless{}{-}}\NormalTok{ W[}\DecValTok{1}\SpecialCharTok{:}\NormalTok{n] }\SpecialCharTok{+}\NormalTok{ times }\SpecialCharTok{*}\NormalTok{ (target }\SpecialCharTok{{-}}\NormalTok{ W[n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{])}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/bridge-plot-1} \caption{Sample brownian bridges created using rescaling method}\label{fig:bridge-plot}
+\end{figure}
+
+Alternatively, we can return to \(S\), as defined above. We can write \(S = AX\) where
+
+\[
+  A = 
+  \begin{bmatrix} 
+    1 & 0 & 0 & 0 & \cdots & 0 \\
+    1 & 1 & 0 & 0 & \cdots & 0 \\
+    1 & 1 & 1 & 0 & \cdots & 0 \\
+    1 & 1 & 1 & 1 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & 1 & 1 & 1 & \cdots & 1
+  \end{bmatrix}
+\]
+
+Thus, \(Var(S) = A \Sigma A^T\). In our case, \(\Sigma = I\), so \(Var(S) = AA^T\), which has the form
+
+\[
+  Var(S) = 
+  \begin{bmatrix} 
+    1 & 1 & 1 & 1 & \cdots & 1 \\
+    1 & 2 & 2 & 2 & \cdots & 2 \\
+    1 & 2 & 3 & 3 & \cdots & 3 \\
+    1 & 2 & 3 & 4 & \cdots & 4 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    1 & 2 & 3 & 4 & \cdots & n
+  \end{bmatrix}
+\]
+
+The inverse of \(AA^T\) is the precision matrix \(\Omega\), which also has a distinct form.
+
+\[
+  \Omega = 
+  \begin{bmatrix} 
+    2 & -1 & 0 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & 0 & \cdots & 0 \\
+    0 & -1 & 2 & -1 & \cdots & 0 \\
+    0 & 0 & -1 & 2 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & \cdots & 1
+  \end{bmatrix}
+\]
+
+If we pass this \(\Omega\) into the kernel of a Gaussian distribution, the resulting quantity \(\exp\{-\frac{1}{2}S^T \Omega S\}\) simplifies.
+
+\begin{align*}
+  S^T \Omega S &= 
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix}^T
+  \begin{bmatrix} 
+    2 & -1 & 0 & 0 & \cdots & 0 \\
+    -1 & 2 & -1 & 0 & \cdots & 0 \\
+    0 & -1 & 2 & -1 & \cdots & 0 \\
+    0 & 0 & -1 & 2 & \cdots & 0 \\
+    \vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & 0 & \cdots & 1
+  \end{bmatrix}
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix} \\
+  &= 
+  \begin{bmatrix} 
+    2 S_1 - S_2 \\
+    -S_1 + 2 S_2 - S_3 \\
+    -S_2 + 2 S_3 -S_4 \\
+    -S_3 + 2 S_4 - S_5 \\
+    \vdots \\
+    -S_{n-1} + S_n
+  \end{bmatrix}^T
+  \begin{bmatrix} 
+    S_1 \\
+    S_2 \\
+    S_3 \\
+    S_4 \\
+    \vdots \\
+    S_n
+  \end{bmatrix} \\
+  &=
+  2 {S_1}^2 - 2 S_1 S_2 + 2 {S_2}^2 - 2 S_2 S_3 + 2 {S_3}^2 - 2 S_3 S_4 + \dots - 2 S_{n-1} S_n + {S_n}^2 \\
+  &= (S_1 - 0)^2 + (S_2 - S_1)^2 + (S_3 - S_2)^2 + (S_4 - S_3)^2 + \dots + (S_n - S_{n-1})^2 \label{eq:omega-simplification}
+\end{align*}
+
+If we want to tie \(S_n\) to 0, is it as simple as adding a \((0 - S_n)^2\) term? This is equivalent to changing the \(\Omega_{n,n}\) element to 2 from 1. Also, we can't forget our constant multiplier; we have been working with \(S\) but we actually need to work with \(W\), so there is an extra \(\frac{1}{\sqrt{n}}\) term inside our \(A\) matrix.
+b
+Lets look at an example with \(n = 5\). First, we construct \(\Omega\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{omega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\DecValTok{2}\NormalTok{, n)}
+\NormalTok{omega[}\FunctionTok{abs}\NormalTok{(}\FunctionTok{row}\NormalTok{(omega) }\SpecialCharTok{{-}} \FunctionTok{col}\NormalTok{(omega)) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\DecValTok{1}
+\end{Highlighting}
+\end{Shaded}
+
+Now we can construct samples, and plot them.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sigma }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{/}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{chol2inv}\NormalTok{(}\FunctionTok{chol}\NormalTok{(omega))}
+\NormalTok{storage }\OtherTok{\textless{}{-}} \FunctionTok{rmvnorm}\NormalTok{(k, }\AttributeTok{sigma =}\NormalTok{ sigma)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/bridgetest-plot-1} \caption{Sample brownian bridges created using $\Omega$ method}\label{fig:bridgetest-plot}
+\end{figure}
+
+To confirm that these two methods are identical, we can compare the empirical variances at each discrete \(t\) value.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{5}
+\NormalTok{k }\OtherTok{\textless{}{-}} \DecValTok{100000}
+\NormalTok{storage }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\ConstantTok{NA}\NormalTok{, }\AttributeTok{nrow =}\NormalTok{ k, }\AttributeTok{ncol =}\NormalTok{ n)}
+
+\NormalTok{times }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\AttributeTok{length.out =}\NormalTok{ n }\SpecialCharTok{+} \DecValTok{2}\NormalTok{)[}\DecValTok{2}\SpecialCharTok{:}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{)]}
+\NormalTok{target }\OtherTok{\textless{}{-}} \DecValTok{0}
+
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\SpecialCharTok{:}\NormalTok{k) \{}
+\NormalTok{  dW }\OtherTok{\textless{}{-}} \FunctionTok{rnorm}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{) }\SpecialCharTok{/} \FunctionTok{sqrt}\NormalTok{(n)}
+\NormalTok{  W }\OtherTok{\textless{}{-}} \FunctionTok{cumsum}\NormalTok{(dW)}
+\NormalTok{  storage[i, ] }\OtherTok{\textless{}{-}}\NormalTok{ W[}\DecValTok{1}\SpecialCharTok{:}\NormalTok{n] }\SpecialCharTok{+}\NormalTok{ times }\SpecialCharTok{*}\NormalTok{ (target }\SpecialCharTok{{-}}\NormalTok{ W[n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{])}
+\NormalTok{\}}
+
+\NormalTok{omega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\DecValTok{2}\NormalTok{, n)}
+\NormalTok{omega[}\FunctionTok{abs}\NormalTok{(}\FunctionTok{row}\NormalTok{(omega) }\SpecialCharTok{{-}} \FunctionTok{col}\NormalTok{(omega)) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\DecValTok{1}
+
+\NormalTok{sigma }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{/}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{chol2inv}\NormalTok{(}\FunctionTok{chol}\NormalTok{(omega))}
+\NormalTok{storage2 }\OtherTok{\textless{}{-}} \FunctionTok{rmvnorm}\NormalTok{(k, }\AttributeTok{sigma =}\NormalTok{ sigma)}
+
+\FunctionTok{apply}\NormalTok{(storage, }\DecValTok{2}\NormalTok{, var)}
+\CommentTok{\#\textgreater{} [1] 0.1674188 0.2696986 0.3025965 0.2663604 0.1664075}
+\FunctionTok{apply}\NormalTok{(storage2, }\DecValTok{2}\NormalTok{, var)}
+\CommentTok{\#\textgreater{} [1] 0.1660234 0.2662963 0.2989821 0.2657252 0.1668577}
+\end{Highlighting}
+\end{Shaded}
+
+These are very close to each other, so it is not unreasonable to conclude the variances are identical. Since the means are clearly zero, and both methods are normally distributed (first method is linear combination of normals, which is normal), we can conclude they are identically distributed.
+
+\hypertarget{marginal-distribution}{%
+\subsection{Marginal Distribution}\label{marginal-distribution}}
+
+Let \(B(t)\) denote a brownian bridge with \(t = 1, 2, \dots, T\) discrete steps. If we want the marginal distribution of \(B(v)\) for \(v \subset t\).
+
+For example, lets look at \(k = 100000\) bridges with \(4\) intermediate points, and focus on \(B(v)\) with \(v = 1, 3, 4\). We know the expected value will always be zero, so we focus on the covariance matrix. Empirically, we get
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{4}
+\NormalTok{k }\OtherTok{\textless{}{-}} \DecValTok{100000}
+
+\NormalTok{times }\OtherTok{\textless{}{-}} \FunctionTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\AttributeTok{length.out =}\NormalTok{ n }\SpecialCharTok{+} \DecValTok{2}\NormalTok{)[}\DecValTok{2}\SpecialCharTok{:}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{)]}
+\NormalTok{target }\OtherTok{\textless{}{-}} \DecValTok{0}
+
+\NormalTok{omega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\DecValTok{2}\NormalTok{, n)}
+\NormalTok{omega[}\FunctionTok{abs}\NormalTok{(}\FunctionTok{row}\NormalTok{(omega) }\SpecialCharTok{{-}} \FunctionTok{col}\NormalTok{(omega)) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\DecValTok{1}
+
+\NormalTok{sigma }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{/}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{chol2inv}\NormalTok{(}\FunctionTok{chol}\NormalTok{(omega))}
+\NormalTok{storage }\OtherTok{\textless{}{-}} \FunctionTok{rmvnorm}\NormalTok{(k, }\AttributeTok{sigma =}\NormalTok{ sigma)}
+
+\FunctionTok{var}\NormalTok{(storage[, }\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{)])}
+\CommentTok{\#\textgreater{}            [,1]      [,2]       [,3]}
+\CommentTok{\#\textgreater{} [1,] 0.20018566 0.1001661 0.04970229}
+\CommentTok{\#\textgreater{} [2,] 0.10016608 0.2996613 0.14976036}
+\CommentTok{\#\textgreater{} [3,] 0.04970229 0.1497604 0.19995472}
+\end{Highlighting}
+\end{Shaded}
+
+And theoretically, we should get
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sigma[}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{), }\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{)]}
+\CommentTok{\#\textgreater{}      [,1] [,2] [,3]}
+\CommentTok{\#\textgreater{} [1,] 0.20 0.10 0.05}
+\CommentTok{\#\textgreater{} [2,] 0.10 0.30 0.15}
+\CommentTok{\#\textgreater{} [3,] 0.05 0.15 0.20}
+\end{Highlighting}
+\end{Shaded}
+
+If we look at the precision matrix instead of covariance, we get
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fractions}\NormalTok{(}\FunctionTok{solve}\NormalTok{(n }\SpecialCharTok{*}\NormalTok{ sigma[}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{), }\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{)]))}
+\CommentTok{\#\textgreater{}      [,1] [,2] [,3]}
+\CommentTok{\#\textgreater{} [1,]  3/2 {-}1/2    0}
+\CommentTok{\#\textgreater{} [2,] {-}1/2  3/2   {-}1}
+\CommentTok{\#\textgreater{} [3,]    0   {-}1    2}
+\end{Highlighting}
+\end{Shaded}
+
+which can be turned into
+
+\begin{align}
+x^T \Omega x &= {x_1}^2 + \frac{1}{2} {x_1}^2 - x_1 x_3 + \frac{3}{2} {x_3}^2 - 2 x_3 x_4 + {x_4}^2 + {x_4}^2 \\
+x^T \Omega x &= 45
+\end{align}
+
+If we instead look at \(v = 1, 4\), we get
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fractions}\NormalTok{(}\FunctionTok{solve}\NormalTok{(n }\SpecialCharTok{*}\NormalTok{ sigma[}\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{4}\NormalTok{), }\FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{4}\NormalTok{)]))}
+\CommentTok{\#\textgreater{}      [,1] [,2]}
+\CommentTok{\#\textgreater{} [1,]  4/3 {-}1/3}
+\CommentTok{\#\textgreater{} [2,] {-}1/3  4/3}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{likelihood-evaluations}{%
+\subsection{Likelihood Evaluations}\label{likelihood-evaluations}}
+
+Let \(b\) be a potential Brownian bridge. If we want to evaluate the log density \(f(B = b)\), the most basic way would be to calculate \(\Sigma = \Omega^{-1}\) and feed \(b\) and \(\Sigma\) into a multivariate normal function such as \textbf{dmvnorm}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{denseval.sigma }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  n }\OtherTok{\textless{}{-}} \FunctionTok{length}\NormalTok{(b)}
+  
+\NormalTok{  omega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\DecValTok{2}\NormalTok{, n)}
+\NormalTok{  omega[}\FunctionTok{abs}\NormalTok{(}\FunctionTok{row}\NormalTok{(omega) }\SpecialCharTok{{-}} \FunctionTok{col}\NormalTok{(omega)) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\DecValTok{1}
+\NormalTok{  sigma }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{/}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{chol2inv}\NormalTok{(}\FunctionTok{chol}\NormalTok{(omega))}
+  
+  \FunctionTok{dmvnorm}\NormalTok{(b, }\AttributeTok{sigma =}\NormalTok{ sigma, }\AttributeTok{log =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+If we are computing the density for many potential bridges, we could calculate \(\Sigma\) once, so we should exclude this computation from any comparisons.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{denseval.slow }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(b, sigma) \{}
+  \FunctionTok{dmvnorm}\NormalTok{(b, }\AttributeTok{sigma =}\NormalTok{ sigma, }\AttributeTok{log =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+We can make the calculation faster by exploiting \eqref{eq:omega-simplification}. Also, we can make use of the fact that \(det(\Omega_{nxn}) = n + 1\). Thus,
+
+\[
+  log(f(\mathbf{b}|\mathbf{0}, \mathbf{\Omega})) = \frac{1}{2}\bigg[log(n + 1) + n log(n)- nlog(2\pi) - \mathbf{b}^T\mathbf{\Omega}\mathbf{b}\bigg]
+\]
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{denseval.fast }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(b) \{}
+\NormalTok{  d2 }\OtherTok{\textless{}{-}} \FunctionTok{diff}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, b, }\DecValTok{0}\NormalTok{)) }\SpecialCharTok{**} \DecValTok{2}
+  \DecValTok{1} \SpecialCharTok{/} \DecValTok{2} \SpecialCharTok{*}\NormalTok{ (}\FunctionTok{log}\NormalTok{(n }\SpecialCharTok{+} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{log}\NormalTok{(n) }\SpecialCharTok{{-}}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{log}\NormalTok{(}\DecValTok{2} \SpecialCharTok{*}\NormalTok{ pi) }\SpecialCharTok{{-}}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{sum}\NormalTok{(d2))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+We can confirm that all versions give the same result.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n }\OtherTok{\textless{}{-}} \DecValTok{23}
+\NormalTok{omega }\OtherTok{\textless{}{-}} \FunctionTok{diag}\NormalTok{(}\DecValTok{2}\NormalTok{, n)}
+\NormalTok{omega[}\FunctionTok{abs}\NormalTok{(}\FunctionTok{row}\NormalTok{(omega) }\SpecialCharTok{{-}} \FunctionTok{col}\NormalTok{(omega)) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{] }\OtherTok{\textless{}{-}} \SpecialCharTok{{-}}\DecValTok{1}
+\NormalTok{sigma }\OtherTok{\textless{}{-}} \DecValTok{1} \SpecialCharTok{/}\NormalTok{ n }\SpecialCharTok{*} \FunctionTok{chol2inv}\NormalTok{(}\FunctionTok{chol}\NormalTok{(omega))}
+\NormalTok{b }\OtherTok{\textless{}{-}} \FunctionTok{rmvnorm}\NormalTok{(}\DecValTok{1}\NormalTok{, }\AttributeTok{sigma =}\NormalTok{ sigma)}
+
+\FunctionTok{denseval.slow}\NormalTok{(b, sigma)}
+\CommentTok{\#\textgreater{} [1] 8.551637}
+\FunctionTok{denseval.fast}\NormalTok{(b)}
+\CommentTok{\#\textgreater{} [1] 8.551637}
+\end{Highlighting}
+\end{Shaded}
+
+And we can compare the time it takes for each method. Ignoring the outliers (the way R works often causes the first several evaluations of a function to be much slower), we see that the fast version runs much faster, as expected.
+
+\begin{figure}
+\includegraphics[width=1\linewidth]{brownianBridges_files/figure-latex/denseval-times-1} \caption{Time comparison for methods}\label{fig:denseval-times}
+\end{figure}
+
+\end{document}
