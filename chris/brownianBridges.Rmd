@@ -5,11 +5,11 @@ pkgdown:
 output:
   bookdown::html_document2:
     keep_tex: true
-  number_sections: true
-toc: true
-toc_depth: 3
-toc_float:
-  collapsed: false
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
 ---
 
 ```{r setup, include = FALSE}
@@ -359,8 +359,8 @@ which can be turned into
 
 Note the coefficients are determined by the *distance* between observations. For example, the coefficient in front of $(x_3 - x_1)^2$ is $\frac{1}{2}$ because the distance between $x_3$ and $x_1$ is $2$. Likewise, the coefficient for $(x_6 - x_3)^2$ is $\frac{1}{3}$ because the distance between them is $3$. We can use this fact to create a fast function to construct our tridiagonal precision matrix.
 
-```{r denseval-marginal}
-denseval.marginal <- function(d) {
+```{r marginal-precision}
+marginal.precision <- function(d) {
   obs <- length(d)
   n <- d[obs]
   omega <- matrix(0, nrow = obs, ncol = obs)
@@ -376,10 +376,9 @@ denseval.marginal <- function(d) {
     omega[1 + k, k] <- omega[k, k + 1] <- -1 / (d[k + 1] - d[k])
   }
   
-  return(omega)
+  return(n * omega)
 }
 ```
-
 
 ## Likelihood Evaluations
 
@@ -413,6 +412,7 @@ We can make the calculation faster by exploiting \@ref(eq:omega-simplification).
 
 ```{r denseval-fast}
 denseval.fast <- function(b) {
+  n <- length(b)
   d2 <- diff(c(0, b, 0)) ** 2
   1 / 2 * (log(n + 1) + n * log(n) - n * log(2 * pi) - n * sum(d2))
 }
@@ -439,13 +439,203 @@ par(mar = c(2.5, 4.5, 1, 1))
 boxplot(microbenchmark(denseval.slow(b, sigma), denseval.fast(b), times = 1000), log = TRUE)
 ```
 
+## Marginal Likelihood
 
+We can also evaluate the marginal distribution of a subset of points. Let $n = 10$, and we will observe $B(v)$ with $v = 1, 3, 6, 7, 10$. First, lets look empirically at these observations.
 
+```{r marginal-empirical-test}
+n <- 10
+k <- 100000
 
+times <- seq(0, 1, length.out = n + 2)[2:(n + 1)]
+target <- 0
 
+omega <- diag(2, n)
+omega[abs(row(omega) - col(omega)) == 1] <- -1
 
+sigma <- 1 / n * chol2inv(chol(omega))
+storage <- rmvnorm(k, sigma = sigma)
+```
 
+Empirically, if we look at the variance of our select observations, we get
 
+```{r marginal-empirical-test-precision, echo = FALSE}
+solve(var(storage[, c(1, 3, 6, 7, 10)]))
+# det(solve(var(storage[, c(1, 3, 6, 7, 10)])))
+```
 
+If we use our function from above, we get
 
+```{r marginal-theoretical-test-precision, echo = FALSE}
+marginal.precision(c(1, 3, 6, 7, 10))
+# det.tridiag(marginal.precision(c(1, 3, 6, 7, 10)))
+```
+
+And for the determinants we get
+
+```{r precision-det-check}
+det(solve(var(storage[, c(1, 3, 6, 7, 10)])))
+det.tridiag(marginal.precision(c(1, 3, 6, 7, 10)))
+```
+
+Our empirical results match our functions for constructing the precision matrix and calculating the determinant. We can use these to make a function to evaluate the marginal density.
+
+```{r denseval-marginal}
+denseval.marginal <- function(b, d) {
+  prec <- marginal.precision(d)
+  1 / 2 * (log(det.tridiag(prec)) - n * log(2 * pi) - n * t(b) %*% prec %*% b)
+}
+```
+
+And we can use this function to evaluate the marginal density of various observations.
+
+```{r marginal-dens-test}
+dens <- apply(storage, 1, function(x) denseval.marginal(b = x[c(1, 3, 6, 7, 10)], d = c(1, 3, 6, 7, 10)))
+```
+
+We can also look at a histogram of $-2 log(B(v))$.
+
+```{r marginal-hist, echo = FALSE, out.width = "100%", fig.cap = "Density of $-2 log(B(v))$, with moment matched Gamma density in red"}
+par(mar = c(2.5, 4.5, 1, 1))
+logdens <- -2 * dens
+maxlogdens <- max(logdens)
+newlogdens <- max(logdens) - logdens
+plot(density(newlogdens), main = "", xlab = "")
+curve(dgamma(x, shape = mean(newlogdens) / (var(newlogdens) / mean(newlogdens)), scale = var(newlogdens) / mean(newlogdens)),
+      col = "red", add = TRUE)
+```
+
+# Donsker's Theorem
+
+Let $F_n$ be the empirical distribution function of i.i.d. random variables $X_1, X_2, X_3,...$ with distribution function $F$. Define the centered and scaled version of $F_n$ by
+
+\[
+G_n(x) = \sqrt{n}(F_n(x) - F(x))
+(\#eq:donskerseq)
+\]
+
+indexed by $x \in \mathbb{R}$. From the classical central limit theorem for fixed $x$, we know the random variable $G_n(x)$ converges in distribution to a Gaussian random variable with mean zero and variance $F(x)(1 - F(x))$ as the sample size $n$ grows. Donsker's theorem adds to this, and shows that $G_n(x)$ converges in distribution to a Gaussian Process with mean zero and covariance $K(G(s), G(t))$ given by 
+
+\[
+K(G(s), G(t)) = E[G(s)G(t)] = min\{F(s), F(t)\} - F(s)F(t)
+(\#eq:donskerkernel)
+\]
+
+## Continuous Example
+
+Let $x \sim N(0, 1)$. 
+
+First, lets look at some potential CDFs from sampling $X_n$ with $n = 1000$.
+
+```{r normexample, echo = FALSE, out.width = "100%", fig.cap = "Empirical sample CDFs for $X$"}
+N <- 10
+n <- 1000
+storage <- matrix(rnorm(N * n), nrow = N, ncol = n)
+
+colors <- sample(colors()[-1], N)
+plot(NA, NA, xlim = c(-3, 3), ylim = c(-0.05, 1.05), xlab = "x", ylab = "F(x)")
+for(i in 1:N) {
+  lines(sort(storage[i, ]), (1:n) / n, type = "s", col = colors[i])
+}
+```
+
+Next, lets transform these $F_n(x)$, using Donsker's theorem.
+
+```{r donskerize}
+storage2 <- matrix(NA, nrow = N, ncol = n)
+
+for(i in 1:N) {
+  storage2[i, ] <- sqrt(n) * (sapply(storage[i, ], function(x) sum(storage[i, ] <= x)) / n - 
+                                pnorm(storage[i, ]))
+}
+```
+
+And now we can visualize them.
+
+```{r donsker-visual, echo = FALSE, out.width = "100%", fig.cap = "Transformed CDF values"}
+plot(NA, NA, xlim = c(-3, 3), ylim = c(-1.5, 1.5), xlab = "x", ylab = TeX("$\\sqrt{n}(F_n(x) - F(x))$"))
+for(i in 1:N) {
+  ord <- order(storage[i, ])
+  lines(storage[i, ord], storage2[i, ord], type = "l", col = colors[i])
+}
+```
+
+Extracting densities.
+
+```{r donsker-densities}
+covMat <- function(p){
+  outer(p, p, FUN = "pmin") - outer(p, p)
+}
+
+denStore <- rep(NA, N)
+
+for(i in 1:N) {
+  ord <- order(storage[i, ])
+  K <- covMat(pnorm(storage[i, ord]))[-n, -n]
+  
+  test <- rmvnorm(1, sigma = K)
+  dmvnorm(test, sigma = K, log = TRUE)
+  
+  denStore[i] <- dmvnorm(sqrt(n) * (sapply(storage[i, ord], function(x) sum(storage[i, ] <= x)) / n - pnorm(storage[i, ord]))[-n], sigma = K, log = TRUE)
+}
+
+denStore
+```
+
+## Discrete Examples
+
+Let's draw a population from  $Unif(\{1, 2, 3, \dots, 100\})$, of size $N = 10000$.
+
+```{r discrete-easy-pop}
+N <- 10000
+pop <- sample(1:100, size = N, replace = TRUE)
+FN <- cumsum(as.numeric(table(pop))) / N
+```
+
+### Easy example (large sample)
+
+If we pull large samples, say $n = 1000$, it is almost guaranteed that every potential outcome receives some mass, so we will start with this easy example.
+
+```{r discrete-easy-samples}
+k <- 10
+n <- 1000
+samples <- matrix(sample(pop, size = k * n, replace = TRUE), nrow = k, ncol = n)
+```
+
+Now we can calculate our $F_n(x)$ for $x = 1, 2, 3, \dots, 100$.
+
+```{r discrete-easy-cumulative}
+Fn <- t(apply(samples, 1, function(x) cumsum(as.numeric(table(x))) / n))
+```
+
+And we can visualize them.
+
+```{r discrete-easy-cumulative-plot, echo = FALSE, out.width = "100%", fig.cap = "Sample CDFs"}
+colors <- sample(colors()[-1], k)
+plot(NA, NA, xlim = c(0, 101), ylim = c(-0.05, 1.05), xlab = "x", ylab = TeX("$F_n(x)$"))
+for(i in 1:k) {
+  lines(1:100, Fn[i, ], type = "s", col = colors[i])
+}
+```
+
+The next step is to *Donskerize* these $F_n$ values, by applying the transformation $G_n(x) = \sqrt(n)(F_n(x) - F(x))$.
+
+```{r discrete-donskerize}
+Gn <- t(apply(Fn, 1, function(x) sqrt(n) * (x - FN)))
+```
+
+And now we can visualize them again.
+
+```{r discrete-donskerized-plot}
+plot(NA, NA, xlim = c(0, 101), ylim = c(-1.5, 1.), xlab = "x", ylab = TeX("$G_n(x)$"))
+for(i in 1:k) {
+  lines(1:100, Gn[i, ], type = "l", col = colors[i])
+}
+```
+
+And we can get the densities.
+
+```{r discrete-donsker-densities}
+# apply(denseval.fast(Gn[1, -100])
+```
 
