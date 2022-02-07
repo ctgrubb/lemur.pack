@@ -19,6 +19,7 @@
 #' @param a A vector of size n, whose entries will form a diagonal. No default value.
 #' @param b A vector of size n-1, whose entries will form a sub-diagonal. No default value.
 #' @param c A vector of size n-1, whose entries will form a super-diagonal. Defaults is c = b.
+#' @param x A square matrix.
 #'
 #' @examples
 #' tridiag(c(1, 2, 3, 4), c(5, 6, 7), c(8, 9, 10))
