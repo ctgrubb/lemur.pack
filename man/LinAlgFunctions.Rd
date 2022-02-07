@@ -5,7 +5,6 @@
 \title{Linear Algebra Functions}
 \usage{
 tridiag(a, b, c)
-tridiag(a, b)
 
 det.tridiag(x)
 }
