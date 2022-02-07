@@ -94,6 +94,8 @@ A select few functions to make constructing and calculating the determinant of t
 <dd><p>A vector of size n-1, whose entries will form a sub-diagonal. No default value.</p></dd>
 <dt>c</dt>
 <dd><p>A vector of size n-1, whose entries will form a super-diagonal. Defaults is c = b.</p></dd>
+<dt>x</dt>
+<dd><p>A square matrix.</p></dd>
 </dl></div>
     <div id="details">
     <h2>Details</h2>
@@ -102,17 +104,18 @@ A select few functions to make constructing and calculating the determinant of t
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu">tridiag</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span class="fu">tridiag</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">6</span>, <span class="fl">7</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8</span>, <span class="fl">9</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2] [,3] [,4]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    1    5    0    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    5    2    6    0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]    0    6    3    7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    1    8    0    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    5    2    9    0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3,]    0    6    3   10</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [4,]    0    0    7    4</span>
 <span class="r-in"><span class="fu">tridiag</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      [,1] [,2] [,3]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1,]    1    6    0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2,]    4    2    7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [3,]    0    5    3</span>
+<span class="r-in"></span>
 </code></pre></div>
     </div>
   </div>
