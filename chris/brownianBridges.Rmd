@@ -16,7 +16,8 @@ output:
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "##",
-  eval = TRUE
+  eval = TRUE,
+  cache = TRUE
 )
 
 quick_eval <- FALSE
@@ -25,11 +26,15 @@ set.seed(318937291)
 ```
 
 ```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(extraDistr)
 library(lemur.pack)
 library(MASS)
 library(mvtnorm)
 library(latex2exp)
 library(microbenchmark)
+library(tidyverse)
+library(gridExtra)
+library(cowplot)
 ```
 
 # Random Walks
@@ -89,7 +94,6 @@ It should come as no surprise that $W^{(n)}(1)$ is in fact distributed standard 
 \]
 
 # Brownian Bridges
-
 ## Construction
 
 A Brownian bridge is the stochastic process $B(t)$ whose probability distribution is the conditional distribution of a standard Wiener process $W(t)$ (also known as Brownian motion) subject to $W(T) = 0$. 
@@ -297,13 +301,19 @@ And theoretically, we should get
 fractions(sigma[c(1, 3, 4), c(1, 3, 4)])
 ```
 
-If we look at the precision matrix instead of covariance (also we will remove the factor of $n$ from now on), we get 
+If we look at the precision matrix instead of covariance (also we will remove the factor of $n$ from now on), as well as the determinant, we get 
 
 ```{r marginal-theoretical-precision-1-1, echo = FALSE}
 fractions(solve(n * sigma[c(1, 3, 4), c(1, 3, 4)]))
 ```
 
-which can be turned into
+and
+
+```{r marginal-theoretical-det-1-1, echo = FALSE}
+fractions(det(solve(n * sigma[c(1, 3, 4), c(1, 3, 4)])))
+```
+
+Our quadratic form is thus
 
 \[
 \begin{align*}
@@ -319,7 +329,13 @@ If we instead look at $v = 1, 4$, we get
 fractions(solve(n * sigma[c(1, 4), c(1, 4)]))
 ```
 
-which can be turned into 
+and
+
+```{r marginal-theoretical-det-1-2, echo = FALSE}
+fractions(det(solve(n * sigma[c(1, 4), c(1, 4)])))
+```
+
+and our quadratic form is 
 
 \[
 \begin{align*}
@@ -328,7 +344,7 @@ which can be turned into
 \end{align*}
 \]
 
-It looks like there is a pattern emerging. To confirm, let $n=6$, and $v = 1, 3, 6$. If we look at the precision matrix instead of covariance (also removing the factor of $n$), we get
+It looks like there is a pattern emerging. To confirm, let $n = 6$, and $v = 1, 3, 6$. If we look at the precision matrix and determinant (also removing the factor of $n$), we get
 
 ```{r marginal-empirical-sim-2, echo = FALSE}
 n <- 6
@@ -348,7 +364,13 @@ storage <- rmvnorm(k, sigma = sigma)
 fractions(solve(n * sigma[c(1, 3, 6), c(1, 3, 6)]))
 ```
 
-which can be turned into 
+and 
+
+```{r marginal-theoretical-det-2-1, echo = FALSE}
+fractions(det(solve(n * sigma[c(1, 3, 6), c(1, 3, 6)])))
+```
+
+and our quadratic form is
 
 \[
 \begin{align*}
@@ -357,28 +379,7 @@ which can be turned into
 \end{align*}
 \]
 
-Note the coefficients are determined by the *distance* between observations. For example, the coefficient in front of $(x_3 - x_1)^2$ is $\frac{1}{2}$ because the distance between $x_3$ and $x_1$ is $2$. Likewise, the coefficient for $(x_6 - x_3)^2$ is $\frac{1}{3}$ because the distance between them is $3$. We can use this fact to create a fast function to construct our tridiagonal precision matrix.
-
-```{r marginal-precision}
-marginal.precision <- function(d) {
-  obs <- length(d)
-  n <- d[obs]
-  omega <- matrix(0, nrow = obs, ncol = obs)
-  
-  omega[1, 1] <- 1 + 1 / (d[2] - d[1])
-  omega[obs, obs] <- 1 + 1 / (d[obs] - d[obs - 1])
-  
-  for(k in 2:(obs - 1)) {
-    omega[k, k] <- 1 / (d[k + 1] - d[k]) + 1 / (d[k] - d[k - 1])
-  }
-  
-  for(k in 1:(obs - 1)) {
-    omega[1 + k, k] <- omega[k, k + 1] <- -1 / (d[k + 1] - d[k])
-  }
-  
-  return(n * omega)
-}
-```
+The pattern is now clear. Note the coefficients are determined by the *distance* between observations. For example, the coefficient in front of $(x_3 - x_1)^2$ is $\frac{1}{2}$ because the distance between $x_3$ and $x_1$ is $2$. Likewise, the coefficient for $(x_6 - x_3)^2$ is $\frac{1}{3}$ because the distance between them is $3$. Also, the determinant of the precision matrix is always the product of these inverse distances, with an additional $n - 1$ term. We can use these facts to calculate the marginal likelihood without ever constructing a matrix.
 
 ## Likelihood Evaluations
 
@@ -439,13 +440,31 @@ par(mar = c(2.5, 4.5, 1, 1))
 boxplot(microbenchmark(denseval.slow(b, sigma), denseval.fast(b), times = 1000), log = TRUE)
 ```
 
-## Marginal Likelihood
+## Marginal Evaluations
+
+Using what we learned above, we can evaluate the marginal density without constructing any matrices.
+
+```{r denseval-marginal}
+denseval.marginal <- function(b, d, n) {
+  bb <- c(0, b, 0)
+  b2 <- diff(bb) ** 2
+  
+  dd <- c(0, d, max(d) + 1)
+  d2 <- diff(dd)
+  
+  determ <- (n + 1) / prod(d2)
+  wp <- b2  / d2
+  
+  1 / 2 * (log(determ) + length(d) * log(n) - length(d) * log(2 * pi) - n * sum(wp))
+}
+```
 
 We can also evaluate the marginal distribution of a subset of points. Let $n = 10$, and we will observe $B(v)$ with $v = 1, 3, 6, 7, 10$. First, lets look empirically at these observations.
 
 ```{r marginal-empirical-test}
 n <- 10
-k <- 100000
+k <- 10000
+d <- c(1, 3, 6, 7, 10)
 
 times <- seq(0, 1, length.out = n + 2)[2:(n + 1)]
 target <- 0
@@ -457,55 +476,90 @@ sigma <- 1 / n * chol2inv(chol(omega))
 storage <- rmvnorm(k, sigma = sigma)
 ```
 
-Empirically, if we look at the variance of our select observations, we get
+Empirically, if we look at the variance matrix and determinant of our selected observations, we get
 
 ```{r marginal-empirical-test-precision, echo = FALSE}
-solve(var(storage[, c(1, 3, 6, 7, 10)]))
-# det(solve(var(storage[, c(1, 3, 6, 7, 10)])))
+solve(var(storage[, d]))
 ```
 
-If we use our function from above, we get
+and
 
-```{r marginal-theoretical-test-precision, echo = FALSE}
-marginal.precision(c(1, 3, 6, 7, 10))
-# det.tridiag(marginal.precision(c(1, 3, 6, 7, 10)))
+```{r marginal-empirical-test-det, echo = FALSE}
+det(solve(var(storage[, d])))
 ```
 
-And for the determinants we get
+Calculating the determinant the way of our fast function, we get
 
-```{r precision-det-check}
-det(solve(var(storage[, c(1, 3, 6, 7, 10)])))
-det.tridiag(marginal.precision(c(1, 3, 6, 7, 10)))
+```{r marginal-theoretical-test-det, echo = FALSE}
+n ** length(d) * (n + 1) / prod(diff(c(0, d, n + 1)))
 ```
 
-Our empirical results match our functions for constructing the precision matrix and calculating the determinant. We can use these to make a function to evaluate the marginal density.
+We can look at the distribution of log densities, using both the *slow* way and our new function.
 
-```{r denseval-marginal}
-denseval.marginal <- function(b, d) {
-  prec <- marginal.precision(d)
-  1 / 2 * (log(det.tridiag(prec)) - n * log(2 * pi) - n * t(b) %*% prec %*% b)
+```{r marginal-empirical-test-log-densities-plot, echo = FALSE, out.width = "100%", fig.cap = "Slow (left) and fast (right) log marginal density from 10000 samples"}
+new.sigma <- sigma[d, d]
+logdens <- apply(storage[, d], 1, denseval.marginal, d = d, n = 10)
+par(mar = c(2.5, 4.5, 1, 1), mfrow = c(1, 2))
+plot(density(apply(storage[, d], 1, dmvnorm, sigma = new.sigma, log = TRUE)), main = "", xlab = "")
+plot(density(logdens), main = "", xlab = "")
+```
+
+## Testing $\chi^2$
+
+If we look at the quantity $2 log(\ell_{max} - \ell)$, it should be distributed $\chi_k^2$, where $k$ is the dimensionality. In this example, we are looking at the marginal at $k = 5$ points, which is a $5-d$ normal.
+
+```{r chi-squared, echo = FALSE, out.width = "100%", fig.cap = "Histogram of $2 log(\\ell_{max} - \\ell)$, with overlaid  $\\chi_5^2$"}
+m <- max(logdens)
+t.logdens <- 2 * (m - logdens)
+
+par(mar = c(2.5, 4.5, 1, 1), mfrow = c(1, 1))
+hist(t.logdens, main = "", xlab = "", prob = TRUE, breaks = 20)
+curve(dchisq(x, df = 5), add = TRUE, col = 'blue')
+```
+
+
+## Testing vectorization
+
+One drawback of **denseval.marginal** is that if we are evaluating the marginal density of many potential bridges, it will repeat some calculations unnecessarily. Only the actual bridge values change, but other quantities such as $d$ and $n$ may be the same for every potential bridge. One way of dealing with this is to vectorize our function.
+
+```{r vectorized-marginal}
+v.denseval.marginal <- function(b, d, n) {
+  k <- length(d)
+  
+  b2 <- apply(b, 1, function(x) diff(c(0, x, 0)) ** 2)
+  d2 <- diff(c(0, d, n + 1))
+  
+  determ <- (n + 1) / prod(d2)
+  
+  wp <- b2 / d2
+  
+  1 / 2 * (log(determ) + k * log(n) - k * log(2 * pi) - n * colSums(wp))
 }
 ```
 
-And we can use this function to evaluate the marginal density of various observations.
+Is this actually faster?
 
-```{r marginal-dens-test}
-dens <- apply(storage, 1, function(x) denseval.marginal(b = x[c(1, 3, 6, 7, 10)], d = c(1, 3, 6, 7, 10)))
-```
-
-We can also look at a histogram of $-2 log(B(v))$.
-
-```{r marginal-hist, echo = FALSE, out.width = "100%", fig.cap = "Density of $-2 log(B(v))$, with moment matched Gamma density in red"}
+```{r vectorizing-comparison-time, echo = FALSE, out.width = "100%", fig.cap = "Time comparison for vectorizing"}
 par(mar = c(2.5, 4.5, 1, 1))
-logdens <- -2 * dens
-maxlogdens <- max(logdens)
-newlogdens <- max(logdens) - logdens
-plot(density(newlogdens), main = "", xlab = "")
-curve(dgamma(x, shape = mean(newlogdens) / (var(newlogdens) / mean(newlogdens)), scale = var(newlogdens) / mean(newlogdens)),
-      col = "red", add = TRUE)
+
+boxplot(microbenchmark(apply(storage[, d], 1, denseval.marginal, d = d, n = 10), v.denseval.marginal(storage[, d], d, n), times = 10), log = TRUE, names = c("denseval.marginal", "v.denseval.marginal"))
 ```
+
+And are the results the same?
+
+```{r vectorizing-comparison-density, echo = FALSE, out.width = "100%", fig.cap = "Not vectorized (left) and vectorized (right) log marginal density from 10000 samples"}
+logdens <- apply(storage[, d], 1, denseval.marginal, d = d, n = 10)
+v.logdens <- v.denseval.marginal(storage[, d], d, n)
+par(mar = c(2.5, 4.5, 1, 1), mfrow = c(1, 2))
+plot(density(logdens), main = "", xlab = "")
+plot(density(v.logdens), main = "", xlab = "")
+```
+
+
+
 
 # Donsker's Theorem
+## Statement
 
 Let $F_n$ be the empirical distribution function of i.i.d. random variables $X_1, X_2, X_3,...$ with distribution function $F$. Define the centered and scaled version of $F_n$ by
 
@@ -520,6 +574,44 @@ indexed by $x \in \mathbb{R}$. From the classical central limit theorem for fixe
 K(G(s), G(t)) = E[G(s)G(t)] = min\{F(s), F(t)\} - F(s)F(t)
 (\#eq:donskerkernel)
 \]
+
+## What does this kernel look like?
+
+If the population is $1, 2, 3, 4, 5$, the inverse of our covariance matrix is
+
+```{r discrete-kernel-example}
+X <- 1:5
+FX <- 1:5 / 5
+
+sigma <- matrix(NA, nrow = 5, ncol = 5)
+for(i in 1:5) {
+  for(j in 1:5) {
+    sigma[i, j] <- min(i, j) / 5 - i * j / 5 ** 2
+  }
+}
+
+solve(sigma[-5, -5])
+```
+
+Note that this is the $n \Omega$, Brownian bridge precision matrix, i.e.,
+
+\[
+  \begin{bmatrix} 
+    10 & -5 & 0 & 0 \\
+    -5 & 10 & -5 & 0 \\
+    0 & -5 & 10 & -5 \\
+    0 & 0 & -5 & 10 \\
+  \end{bmatrix}
+  = 5
+  \begin{bmatrix} 
+    2 & -1 & 0 & 0 \\
+    -1 & 2 & -1 & 0 \\
+    0 & -1 & 2 & -1 \\
+    0 & 0 & -1 & 2 \\
+  \end{bmatrix}
+\]
+
+
 
 ## Continuous Example
 
@@ -582,7 +674,7 @@ for(i in 1:N) {
 denStore
 ```
 
-## Discrete Examples
+## Discrete Example (simple)
 
 Let's draw a population from  $Unif(\{1, 2, 3, \dots, 100\})$, of size $N = 10000$.
 
@@ -591,8 +683,6 @@ N <- 10000
 pop <- sample(1:100, size = N, replace = TRUE)
 FN <- cumsum(as.numeric(table(pop))) / N
 ```
-
-### Easy example (large sample)
 
 If we pull large samples, say $n = 1000$, it is almost guaranteed that every potential outcome receives some mass, so we will start with this easy example.
 
@@ -605,7 +695,7 @@ samples <- matrix(sample(pop, size = k * n, replace = TRUE), nrow = k, ncol = n)
 Now we can calculate our $F_n(x)$ for $x = 1, 2, 3, \dots, 100$.
 
 ```{r discrete-easy-cumulative}
-Fn <- t(apply(samples, 1, function(x) cumsum(as.numeric(table(x))) / n))
+Fn <- t(apply(samples, 1, function(x) cumsum(as.numeric(table(factor(x, levels = 1:100)))) / n))
 ```
 
 And we can visualize them.
@@ -626,16 +716,744 @@ Gn <- t(apply(Fn, 1, function(x) sqrt(n) * (x - FN)))
 
 And now we can visualize them again.
 
-```{r discrete-donskerized-plot}
+```{r discrete-donskerized-plot, echo = FALSE, out.width = "100%", fig.cap = "Sample $G_ns$"}
 plot(NA, NA, xlim = c(0, 101), ylim = c(-1.5, 1.), xlab = "x", ylab = TeX("$G_n(x)$"))
 for(i in 1:k) {
   lines(1:100, Gn[i, ], type = "l", col = colors[i])
 }
 ```
 
-And we can get the densities.
+And we can get the log densities.
 
 ```{r discrete-donsker-densities}
-# apply(denseval.fast(Gn[1, -100])
+apply(Gn, 1, denseval.fast)
 ```
 
+## Discrete example (less simple)
+
+Let our population be discrete uniform at $1, 2, 3, \dots, 100$. Suppose we pull a sample of size $n = 20$ that looks like 
+
+\[
+  1 \quad 3 \quad 7 \quad 8 \quad 12 \quad 14 \quad 14 \quad 21 \quad 28 \quad 31 \quad 34 \quad 41 \quad 49 \quad 
+  57 \quad 63 \quad 68 \quad 74 \quad 83 \quad 91 \quad 100   
+\]
+
+```{r disc-example-df, echo = FALSE}
+x <- c(1, 3, 7, 8, 12, 14, 14, 21, 28, 31, 34, 41, 49, 57, 63, 68, 74, 83, 91, 100)
+xu <- unique(x)
+
+df <- data.frame(
+  x = 1:100,
+  F = 1:100 / 100,
+  Fn = sapply(1:100, function(y) sum(x <= y)) / 20
+)
+df$Gn = sqrt(20) * (df$Fn - df$F)
+```
+
+```{r}
+denseval.fast(df$Gn)
+denseval.marginal(df$Gn[xu], xu, 20)
+```
+
+# New (single population, multiple samples)
+
+Lets create a discrete (since finite), but continuous-valued population of size $N = 100$.
+
+```{r fixed-pop-df, echo = FALSE}
+N <- 100
+
+df <- data.frame(
+  y = sort(rnorm(N)),
+  F = 1:100 / 100
+)
+```
+
+For any i.i.d. sample (we use size $n = 20$), we can construct the needed $F_n$ and $G_n$.
+
+```{r fixed-pop-sample}
+n <- 20
+xi <- sort(sample(1:N, size = n, replace = TRUE))
+x <- df$y[xi]
+
+df$Fn <- sapply(df$y, function(z) sum(x <= z) / 20)
+df$Gn <- sqrt(20) * (df$Fn - df$F)
+```
+
+Since we are no longer working with integers, we need to modify our marginal density function slightly.
+
+```{r denseval-marginal-fixed}
+denseval.marginal.fixed <- function(b, d, n, N) {
+  bb <- c(0, b, 0)
+  b2 <- diff(bb) ** 2
+  
+  dd <- c(0, d, N + 1)
+  d2 <- diff(dd)
+  
+  logdeterm <- log(n + 1) - sum(log(d2))
+  wp <- b2  / d2
+  
+  1 / 2 * (logdeterm + length(d) * log(n) - length(d) * log(2 * pi) - n * sum(wp))
+}
+
+denseval.marginal.fixed.id <- function(b, d, n, N) {
+  bb <- c(0, b, 0)
+  b2 <- diff(bb) ** 2
+  
+  dd <- c(0, d, N + 1)
+  d2 <- diff(dd)
+  
+  wp <- b2  / d2
+  
+  - 1 / 2 * (n * sum(wp))
+}
+```
+
+And we can evaluate joint and marginal densities.
+
+```{r fixed-pop-densities}
+denseval.fast(df$Gn)
+denseval.marginal.fixed(df$Gn[unique(xi)], unique(xi), n, N)
+```
+
+Now lets do this with many samples
+
+```{r fixed-pop-iterations}
+k <- 100
+xi.storage <- t(apply(matrix(sample(1:N, size = n * k, replace = TRUE), nrow = k), 1, sort))
+x.storage <- matrix(df$y[as.numeric(xi.storage)], nrow = k)
+
+j.densities <- rep(0, k)
+m.id.densities <- rep(0, k)
+m.densities <- rep(0, k)
+
+for(i in 1:k) {
+  xi <- xi.storage[i, ]
+  x <- x.storage[i, ]
+  
+  df$Fn <- sapply(df$y, function(z) sum(x <= z) / 20)
+  df$Gn <- sqrt(20) * (df$Fn - df$F)
+  
+  j.densities[i] <- denseval.fast(df$Gn)
+  m.id.densities[i] <- denseval.marginal.fixed.id(df$Gn[unique(xi)], unique(xi), n, N)
+  m.densities[i] <- denseval.marginal.fixed(df$Gn[unique(xi)], unique(xi), n, N)
+}
+```
+
+And we can visualize these densities.
+
+```{r fixed-pop-density-plots, echo = FALSE, out.width = "100%", fig.cap = "Joint densities (left) and marginal densities (right) from 100 samples"}
+par(mar = c(2.5, 4.5, 1, 1), mfrow = c(1, 2))
+plot(1:k, j.densities, type = "p", ylab = "Log density")
+plot(1:k, m.densities, type = "p", ylab = "Log density")
+```
+
+Which samples look the best? The indices from the sample with the highest and lowest marginal density are
+
+```{r}
+xi.storage[which.max(m.densities), ]
+xi.storage[which.min(m.densities), ]
+```
+
+And the spacings are
+
+```{r}
+diff(c(0, xi.storage[which.max(m.densities), ], 100))
+diff(c(0, xi.storage[which.min(m.densities), ], 100))
+```
+
+The densities at the entire population are
+
+```{r}
+j.densities[which.max(m.densities)]
+j.densities[which.min(m.densities)]
+```
+
+This doesn't really make sense; let's look at these samples. I will add in what should be theoretical *best* sample
+
+```{r, echo = FALSE, out.width = "100%", fig.cap = "CDF of population (black), sample with highest marginal density (blue) and lowest marginal density (red), and the theoretically ideal sample (green)"}
+x.ideal <- df$y[round(1:20 * 100 / 21)]
+
+par(mar = c(4.5, 4.5, 1, 1), mfrow = c(1, 1))
+plot(df$y, df$F, type = "s", xlab = "X", ylab = "F")
+lines(x.storage[which.max(m.densities), ], 1:n / n, type = "s", col = "blue")
+lines(x.storage[which.min(m.densities), ], 1:n / n, type = "s", col = "red")
+lines(x.ideal, 1:n / n, type = "s", col = "darkgreen")
+```
+
+What is the marginal density of this ideal sample?
+
+```{r}
+xi <- round(1:20 * 100 / 21)
+x <- df$y[xi]
+  
+df$Fn <- sapply(df$y, function(z) sum(x <= z) / 20)
+df$Gn <- sqrt(20) * (df$Fn - df$F)
+  
+denseval.fast(df$Gn)
+denseval.marginal.fixed.id(df$Gn[unique(xi)], unique(xi), n, N)
+denseval.marginal.fixed(df$Gn[unique(xi)], unique(xi), n, N)
+```
+
+# Interpolation 
+
+```{r}
+denseval.interp <- function(samp, pop, n, N, interp.n = round(N / 5) - 1) {
+  samp <- sort(samp)
+  ind <- which(pop %in% samp)
+  
+  unq.samp <- unique(samp)
+  pop <- sort(pop)
+  
+  interp.points <- seq(0, N + 1, length.out = interp.n + 2)
+  interp.points <- round(interp.points[-c(1, length(interp.points))])
+  
+  df <- data.frame(y = pop, F = 1:N / N, Fn = NA)
+  df$Fn[ind] <- sapply(unq.samp, function(x) sum(samp <= x)) / n
+  
+  df$FnNew <- df$Fn
+  df$FnNew[pop < min(samp)] <- 0
+  df$FnNew[pop > max(samp)] <- 1
+  
+  if(any(is.na(df$FnNew))) {
+    for(i in 1:(length(ind) - 1)) {
+      interp.interm <- pop > unq.samp[i] & pop < unq.samp[i + 1]
+      df$FnNew[pop >= unq.samp[i] & pop <= unq.samp[i + 1]] <- 
+        seq(df$Fn[ind[i]], df$Fn[ind[i + 1]], length.out = sum(interp.interm) + 2)
+    }
+  }
+  
+  df$Gn <- sqrt(n) * (df$FnNew - df$F)
+  
+  bb <- c(0, df$Gn[interp.points], 0)
+  b2 <- diff(bb) ** 2
+  
+  dd <- c(0, interp.points, N)
+  d2 <- diff(dd)
+  
+  logdeterm <- log(n + 1) - sum(log(d2))
+  wp <- b2  / d2
+  
+  1 / 2 * (logdeterm + length(unq.samp) * log(n) - length(unq.samp) * log(2 * pi) - n * sum(wp))
+  
+}
+```
+
+```{r}
+k <- 50000
+N <- 100
+n <- 20
+
+pop <- sort(rnorm(100))
+samps <- matrix(sample(pop, k * n, replace = TRUE), nrow = k, ncol = n)
+interp.densities <- rep(0, k)
+
+for(i in 1:k) {
+  interp.densities[i] <- denseval.interp(samp = samps[i, ], pop = pop, n = n, N = N, interp.n = 19)
+}
+
+max(interp.densities)
+
+which.max(interp.densities)
+
+samps[which.max(interp.densities), ]
+which(pop %in% samps[which.max(interp.densities), ])
+diff(c(0, which(pop %in% samps[which.max(interp.densities), ]), N))
+
+# Best sample?
+samp <- pop[round(1:n * (N / 21))]
+denseval.interp(samp = samp, pop = pop, n = n, N = N, interp.n = 19)
+```
+
+# Small Test for Understanding
+
+Very small test for understanding. Let $N = 5$, $n = 2$. Note that $F = [0.2, 0.4, 0.6, 0.8, 1.0]$.
+
+```{r}
+N <- 5
+n <- 2
+k <- 100
+
+df <- data.frame(
+  y = sort(rnorm(N)),
+  F = 1:N / N
+)
+
+xi.storage <- t(apply(matrix(sample(1:N, size = n * k, replace = TRUE), nrow = k), 1, sort))
+x.storage <- matrix(df$y[as.numeric(xi.storage)], nrow = k)
+
+j.densities <- rep(0, k)
+m.densities <- rep(0, k)
+i.densities <- rep(0, k)
+
+for(i in 1:k) {
+  xi <- xi.storage[i, ]
+  x <- x.storage[i, ]
+  
+  df$Fn <- sapply(df$y, function(z) sum(x <= z) / n)
+  df$Gn <- sqrt(n) * (df$Fn - df$F)
+  
+  j.densities[i] <- denseval.fast(df$Gn)
+  m.densities[i] <- denseval.marginal.fixed(df$Gn[unique(xi)], unique(xi), n, N)
+  i.densities[i] <- denseval.interp(x, df$y, n, N, interp.n = 2)
+}
+
+storage <- data.frame(xi.storage, j.densities, m.densities, i.densities)
+```
+
+## Example 1 
+
+Let $x_1 = [y_3, y_5]$. Thus,
+
+\begin{align*}
+  F_N &= [0, 0, 0.5, 0.5, 1] \\
+  G_n &= \sqrt{2} [-0.2, -0.4, -0.1, -0.3, 0] \\
+  f_y(x) &\propto 0.2^2 + 0.2^2 + 0.3^2 + 0.2^2 + 0.3^2 + 0^2 \\
+  f_x(x) &\propto \frac{1}{3}0.1^2 + \frac{1}{2}0.1^2 + 0^2
+\end{align*}
+
+## Example 2
+
+Let $x_1 = [y_3, y_4]$. Thus,
+
+\begin{align*}
+  F_N &= [0, 0, 0.5, 1, 1] \\
+  G_n &= \sqrt{2} [-0.2, -0.4, -0.1, 0.2, 0] \\
+  f_y(x) &\propto 0.2^2 + 0.2^2 + 0.3^2 + 0.3^2 + 0.2^2 + 0^2 \\
+  f_x(x) &\propto \frac{1}{3}0.1^2 + 0.3^2 + \frac{1}{2}0.2^2
+\end{align*}
+
+## Example 2
+
+Let $x_1 = [y_2, y_4]$. Thus,
+
+\begin{align*}
+  F_N &= [0, 0.5, 0.5, 1, 1] \\
+  G_n &= \sqrt{2} [-0.2, 0.1, -0.1, 0.2, 0] \\
+  f_y(x) &\propto 0.2^2 + 0.3^2 + 0.2^2 + 0.3^2 + 0.2^2 + 0^2 \\
+  f_x(x) &\propto \frac{1}{2}0.1^2 + \frac{1}{2}0.1^2 + \frac{1}{2}0.2^2
+\end{align*}
+
+# Duplicates in population
+
+```{r}
+N <- 5
+n <- 100
+k <- 100
+
+df <- data.frame(
+  y = sort(rnorm(N)),
+  F = 1:N / N
+)
+
+xi.storage <- t(apply(matrix(sample(1:N, size = n * k, replace = TRUE), nrow = k), 1, sort))
+x.storage <- matrix(df$y[as.numeric(xi.storage)], nrow = k)
+
+j.densities <- rep(0, k)
+m.densities <- rep(0, k)
+i.densities <- rep(0, k)
+
+for(i in 1:k) {
+  xi <- xi.storage[i, ]
+  x <- x.storage[i, ]
+  
+  df$Fn <- sapply(df$y, function(z) sum(x <= z) / n)
+  df$Gn <- sqrt(n) * (df$Fn - df$F)
+  
+  j.densities[i] <- denseval.fast(df$Gn)
+  m.densities[i] <- denseval.marginal.fixed(df$Gn[unique(xi)], unique(xi), n, N)
+  i.densities[i] <- denseval.interp(x, df$y, n, N, interp.n = 2)
+}
+
+storage <- data.frame(t(apply(xi.storage, 1, table)), j.densities, m.densities, i.densities)
+```
+
+When the variable takes on a small number of unique values compared to the sample and population size, the marginal and full distribtuon of $G_n$ work the way we expected them to. The interpolated version doesn't perform as well, since we lose information.
+
+# Interpolation Variance
+
+```{r}
+N <- 100
+n <- 100
+k <- 100000
+interp.n <- 11
+
+df <- data.frame(
+  y = sort(rnorm(N)),
+  F = 1:N / N,
+  Fn = NA
+)
+pop <- df$y
+
+xi.storage <- t(apply(matrix(sample(1:N, size = n * k, replace = TRUE), nrow = k), 1, sort))
+x.storage <- matrix(df$y[as.numeric(xi.storage)], nrow = k)
+
+interp.Gn <- matrix(nrow = k, ncol = interp.n)
+
+for(j in 1:k) {
+  xi <- xi.storage[j, ]
+  samp <- x.storage[j, ]
+  
+  ind <- which(pop %in% samp)
+  samp <- sort(samp)
+  unq.samp <- unique(samp)
+  pop <- sort(pop)
+  
+  interp.points <- round(seq(0, N + 1, length.out = interp.n + 2))
+  interp.points <- interp.points[-c(1, length(interp.points))]
+  
+  df$Fn[ind] <- sapply(unq.samp, function(x) sum(samp <= x)) / n
+  
+  df$FnNew <- df$Fn
+  df$FnNew[pop < min(samp)] <- 0
+  df$FnNew[pop > max(samp)] <- 1
+  
+  if(any(is.na(df$FnNew))) {
+    for(i in 1:(length(ind) - 1)) {
+      interp.interm <- pop > unq.samp[i] & pop < unq.samp[i + 1]
+      df$FnNew[pop >= unq.samp[i] & pop <= unq.samp[i + 1]] <- 
+        seq(df$Fn[ind[i]], df$Fn[ind[i + 1]], length.out = sum(interp.interm) + 2)
+    }
+  }
+  
+  df$Gn <- sqrt(n) * (df$FnNew - df$F)
+  
+  interp.Gn[j, ] <- df$Gn[interp.points]
+}
+
+colMeans(interp.Gn)
+solve(var(interp.Gn))
+```
+
+# Cool Plot from Dave
+
+```{r}
+n <- 5
+N <- 20
+k <- 12
+K <- 3
+
+samp.df <- data.frame(X = seq(-1.8, 1.8, length.out = n))
+
+pop.df <- data.frame(
+  Pop = rep(LETTERS[1:k], each = N),
+  X = rnorm(N * k)
+)
+
+dens.df <- data.frame(
+  Pop = rep(LETTERS[1:k], K),
+  A = dchisq(seq(0.1, 4, length.out = k), df = 3, log = TRUE),
+  B = dchisq(seq(0.1, 4, length.out = k), df = 4, log = TRUE),
+  C = dchisq(seq(0.1, 4, length.out = k), df = 5, log = TRUE)
+) %>%
+  pivot_longer(A:C, names_to = "Method", values_to = "logDensity")
+```
+
+```{r}
+popDens.plot <- function(samp.df, pop.df, dens.df) {
+  dens.plot <- ggplot(data = dens.df, mapping = aes(x = Pop, y = logDensity, color = Method, group = Method)) + 
+    geom_point() + 
+    geom_line() + 
+    theme(
+      legend.position = "top",
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      plot.margin = unit(c(0.5, 0.5, 0, 0.5), "cm")
+    ) + 
+    labs(y = "Log Density")
+  
+  pop.plot <- ggplot(data = pop.df, mapping = aes(x = Pop, y = X)) + 
+    geom_point(size = 1) + 
+    geom_hline(data = samp.df, mapping = aes(yintercept = X)) + 
+    theme(
+      plot.margin = unit(c(0, 0.5, 0.5, 0.5), "cm"),
+      axis.title.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank()
+    ) +
+    labs(x = "")
+  
+  plot_grid(dens.plot, pop.plot, ncol = 1, align = "v", axis = "l")
+}
+```
+
+```{r}
+popDens.plot(samp.df, pop.df, dens.df)
+```
+
+```{r}
+denseval.fast <- function(b, n) {
+  b2 <- diff(c(0, b, 0)) ** 2
+  1 / 2 * (log(n + 1) + length(b) * log(n) - length(b) * log(2 * pi) - n * sum(b2))
+}
+```
+
+## Dirichlet Density
+
+```{r}
+denseval.dirichlet <- function(samp, pop, n, N) {
+  x <- tabulate(findInterval(pop, samp, left.open = TRUE) + 1, nbin = n + 1)
+  alpha = x / N * (n + 1)
+  xval = c(.5 / n, rep(1 / n, n - 1), .5 / n)
+  return(ddirichlet(xval, alpha, log = TRUE))
+}
+
+denseval.dirichlet2 <- function(samp, pop, n, N) {
+  x <- tabulate(findInterval(pop, samp, left.open = TRUE) + 1, nbin = n + 1)
+  alpha = x / N * (n + 1)
+  xval = rep(1 / (n + 1), n + 1)
+  return(ddirichlet(xval, alpha, log = TRUE))
+}
+```
+
+
+## Stretching both sides
+
+```{r, warning = FALSE}
+n <- 5
+N <- 20
+k <- 20
+
+samp.df <- data.frame(X = seq(-4, 4, length.out = n))
+
+pop.df <- data.frame(
+  Pop = character(),
+  X = numeric()
+)
+
+dens.df <- data.frame(
+  Pop = character(),
+  Method = character(),
+  logDensity = numeric()
+)
+
+endpoints <- seq(2.2, 12.2, length.out = k)
+
+for(i in 1:k) {
+  X <- seq(-endpoints[i], endpoints[i], length.out = N)
+  pop.df <- bind_rows(pop.df, data.frame(Pop = LETTERS[i], X = X))
+  
+  full.pop <- sort(c(X, samp.df$X))
+  samp.indices <- which(full.pop %in% samp.df$X)
+  
+  Fn <- sapply(full.pop, function(x) sum(samp.df$X <= x)) / n
+  FN <- 1:(N + n) / (N + n)
+  Gn <- sqrt(n) * (Fn - FN)
+  
+  add.df <- data.frame(
+    Pop = LETTERS[i],
+    Method = c("Marginal Density", "Interp Density (k = 5)", "Dirichlet Density (unequal)", 
+               "Dirichlet Density (equal)"),
+    logDensity = c(
+      denseval.marginal(Gn[samp.indices], samp.indices, n),
+      denseval.interp(samp.df$X, full.pop, n, N + n, interp.n = 5),
+      denseval.dirichlet(samp.df$X, full.pop, n, N + n),
+      denseval.dirichlet2(samp.df$X, full.pop, n, N + n)
+    )
+  )
+  
+  dens.df <- bind_rows(dens.df, add.df)
+}
+
+dens.df <- dens.df %>%
+  group_by(Method) %>%
+  mutate(Density = exp(logDensity)) %>%
+  mutate(Density = Density / sum(Density, na.rm = TRUE)) %>%
+  mutate(logDensity = log(Density))
+
+popDens.plot(samp.df, pop.df, dens.df)
+```
+
+## Stretching top
+
+```{r, warning = FALSE}
+n <- 5
+N <- 20
+k <- 12
+
+samp.df <- data.frame(X = seq(-4, 4, length.out = n))
+
+pop.df <- data.frame(
+  Pop = character(),
+  X = numeric()
+)
+
+dens.df <- data.frame(
+  Pop = character(),
+  Method = character(),
+  logDensity = numeric()
+)
+
+endpoints <- seq(2.2, 12.2, length.out = k)
+
+for(i in 1:k) {
+  X <- seq(-5, endpoints[i], length.out = N)
+  pop.df <- bind_rows(pop.df, data.frame(Pop = LETTERS[i], X = X))
+  
+  full.pop <- sort(c(X, samp.df$X))
+  samp.indices <- which(full.pop %in% samp.df$X)
+  
+  Fn <- sapply(full.pop, function(x) sum(samp.df$X <= x)) / n
+  FN <- 1:(N + n) / (N + n)
+  Gn <- sqrt(n) * (Fn - FN)
+  
+  add.df <- data.frame(
+    Pop = LETTERS[i],
+    Method = c("Marginal Density", "Interp Density (k = 5)", "Dirichlet Density (unequal)", 
+               "Dirichlet Density (equal)"),
+    logDensity = c(
+      denseval.marginal(Gn[samp.indices], samp.indices, n),
+      denseval.interp(samp.df$X, full.pop, n, N + n, interp.n = 5),
+      denseval.dirichlet(samp.df$X, full.pop, n, N + n),
+      denseval.dirichlet2(samp.df$X, full.pop, n, N + n)
+    )
+  )
+  
+  dens.df <- bind_rows(dens.df, add.df)
+}
+
+dens.df <- dens.df %>%
+  group_by(Method) %>%
+  mutate(Density = exp(logDensity)) %>%
+  mutate(Density = Density / sum(Density, na.rm = TRUE)) %>%
+  mutate(logDensity = log(Density))
+
+popDens.plot(samp.df, pop.df, dens.df)
+```
+
+## Stretching bottom
+
+```{r, warning = FALSE}
+n <- 5
+N <- 20
+k <- 12
+
+samp.df <- data.frame(X = seq(-4, 4, length.out = n))
+
+pop.df <- data.frame(
+  Pop = character(),
+  X = numeric()
+)
+
+dens.df <- data.frame(
+  Pop = character(),
+  Method = character(),
+  logDensity = numeric()
+)
+
+endpoints <- seq(2.2, 12.2, length.out = k)
+
+for(i in 1:k) {
+  X <- seq(-endpoints[i], 5, length.out = N)
+  pop.df <- bind_rows(pop.df, data.frame(Pop = LETTERS[i], X = X))
+  
+  full.pop <- sort(c(X, samp.df$X))
+  samp.indices <- which(full.pop %in% samp.df$X)
+  
+  Fn <- sapply(full.pop, function(x) sum(samp.df$X <= x)) / n
+  FN <- 1:(N + n) / (N + n)
+  Gn <- sqrt(n) * (Fn - FN)
+  
+  add.df <- data.frame(
+    Pop = LETTERS[i],
+    Method = c("Marginal Density", "Interp Density (k = 5)", "Dirichlet Density (unequal)", 
+               "Dirichlet Density (equal)"),
+    logDensity = c(
+      denseval.marginal(Gn[samp.indices], samp.indices, n),
+      denseval.interp(samp.df$X, full.pop, n, N + n, interp.n = 5),
+      denseval.dirichlet(samp.df$X, full.pop, n, N + n),
+      denseval.dirichlet2(samp.df$X, full.pop, n, N + n)
+    )
+  )
+  
+  dens.df <- bind_rows(dens.df, add.df)
+}
+
+dens.df <- dens.df %>%
+  group_by(Method) %>%
+  mutate(Density = exp(logDensity)) %>%
+  mutate(Density = Density / sum(Density, na.rm = TRUE)) %>%
+  mutate(logDensity = log(Density))
+
+popDens.plot(samp.df, pop.df, dens.df)
+```
+
+## Shifting up
+
+```{r, warning = FALSE}
+n <- 5
+N <- 20
+k <- 12
+
+samp.df <- data.frame(X = seq(-4, 4, length.out = n))
+
+pop.df <- data.frame(
+  Pop = character(),
+  X = numeric()
+)
+
+dens.df <- data.frame(
+  Pop = character(),
+  Method = character(),
+  logDensity = numeric()
+)
+
+endpoints <- seq(5.55, 5.55, length.out = k)
+
+for(i in 1:k) {
+  X <- seq(-endpoints[i], endpoints[i], length.out = N) + 0.35 * (i - 5)
+  pop.df <- bind_rows(pop.df, data.frame(Pop = LETTERS[i], X = X))
+  
+  full.pop <- sort(c(X, samp.df$X))
+  samp.indices <- which(full.pop %in% samp.df$X)
+  
+  Fn <- sapply(full.pop, function(x) sum(samp.df$X <= x)) / n
+  FN <- 1:(N + n) / (N + n)
+  Gn <- sqrt(n) * (Fn - FN)
+  
+  add.df <- data.frame(
+    Pop = LETTERS[i],
+    Method = c("Marginal Density", "Interp Density (k = 5)", "Dirichlet Density (unequal)", 
+               "Dirichlet Density (equal)"),
+    logDensity = c(
+      denseval.marginal(Gn[samp.indices], samp.indices, n),
+      denseval.interp(samp.df$X, full.pop, n, N + n, interp.n = 5),
+      denseval.dirichlet(samp.df$X, full.pop, n, N + n),
+      denseval.dirichlet2(samp.df$X, full.pop, n, N + n)
+    )
+  ) 
+  
+  dens.df <- bind_rows(dens.df, add.df)
+}
+
+dens.df <- dens.df %>%
+  group_by(Method) %>%
+  mutate(Density = exp(logDensity)) %>%
+  mutate(Density = Density / sum(Density, na.rm = TRUE)) %>%
+  mutate(logDensity = log(Density))
+
+popDens.plot(samp.df, pop.df, dens.df)
+```
+
+# Dirichlet Approximation
+
+```{r}
+denseval.dirichlet <- function(samp, pop, n, N) {
+  x <- tabulate(findInterval(pop, samp, left.open = TRUE) + 1, nbin = n + 1)
+  alpha = x / N * (n + 1)
+  xval = c(.5 / n, rep(1 / n, n - 1), .5 / n)
+  return(ddirichlet(xval, alpha, log = TRUE))
+}
+
+randpop.dirichlet <- function(n, N) {
+  "hmm"
+}
+```
+
+Let $k_i$ be the number of population members in the $i^{th}$ interval of $-\infty, sort(x), \infty$.
+
+\begin{align*}
+  f(x) &= \frac{1}{\beta(\frac{k(n+1)}{N})}  {\frac{1}{2n}}^{(n + 1) \frac{k_1}{N}} {\frac{1}{n}}^{(n + 1) \frac{k_2}{N}} \cdots 
+    {\frac{1}{n}}^{(n + 1) \frac{k_n}{N}} {\frac{1}{2n}}^{(n + 1) \frac{k_{n+1}}{N}} \\
+    &= 
+\end{align*}

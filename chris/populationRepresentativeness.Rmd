@@ -1,0 +1,79 @@
+---
+title: "Population Representativeness"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+  keep_tex: true
+number_sections: true
+toc: true
+toc_depth: 3
+toc_float:
+  collapsed: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "##",
+  eval = TRUE,
+  cache = TRUE
+)
+
+quick_eval <- FALSE
+options(digits = 2)
+options(scipen = 6)
+set.seed(318937291)
+```
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(extraDistr)
+library(lemur.pack)
+library(MASS)
+library(mvtnorm)
+library(latex2exp)
+library(microbenchmark)
+library(tidyverse)
+library(gridExtra)
+library(cowplot)
+```
+
+# Introduction
+
+::: {.definition #representative}
+In statistics, the term *representative* is commonly applied to a sample that meets either of two conditions conditions, 1) sampling was conducted in a way that leads to each possible sample being equally likely, and 2) it is possible to draw accurate conclusions about a population from the sample.
+:::
+
+While the second condition may imply that the first condition was met (it is certainly *not* guaranteed), it would be foolish to imply that the first condition would imply the second. For example, consider a population $Y$ that is the first $N=99$ natural numbers: $1, 2, \dots, 99$. Suppose two i.i.d. samples of size $n = 9$, $x_1$ and $x_2$ are both taken from this population.
+
+```{r, echo = FALSE}
+Y <- 1:99
+x_1 <- c(1, 3, 7, 34, 37, 71, 83, 90, 91)
+x_2 <- c(10, 20, 30, 40, 50, 60, 70, 80, 90)
+```
+
+
+\begin{align*}
+  x_1 &= \{1, 3, 7, 34, 37, 71, 83, 90, 91\} \\
+  x_2 &= \{10, 20, 30, 40, 50, 60, 70, 80, 90\}
+\end{align*}
+
+In what way is $x_2$ more *representative* of the population $Y$? For starters, the mean of $Y$ is `r mean(Y)`, while the mean of $x_1$ and $x_2$ are `r mean(x_1)` and `r mean(x_2)` respectively. Likewise, the standard deviations are `r sd(Y)` for the population, `r sd(x_1)`, and `r sd(x_2)` for the samples. There is another way that $x_2$ is a more desirable sample. Consider the number of population members in each of the $k = n + 1$ spaces defined by $(-\infty, x_{(1)}), (x_{(2)}, x_{(1)}), \dots, (x_{(n)}, \infty)$. The count for $x_2$ is constant; there are 9 population members in each of the 10 spacings. Thus, using this way of comparing samples, $x_2$ would be the ideal sample of $Y$, at least when restricting to samples of size $n = 9$.
+
+Imagine we repeat this sampling process (with replacement) repeatedly, and calculate the number of population members within each space each time.
+
+```{r}
+n_samples <- 10000
+n <- 9
+storage <- matrix(NA, nrow = n_samples, ncol = n + 1)
+
+for(i in 1:n_samples) {
+  samp <- sort(sample(Y, size = n))
+  spacings <- tabulate(findInterval(Y, samp, left.open = TRUE) + 1, nbins = n + 1) - c(rep(1, n), 0)
+  storage[i, ] <- spacings
+}
+
+apply(storage, 2, mean)
+apply(storage, 2, sd)
+```
+

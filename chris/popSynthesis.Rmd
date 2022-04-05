@@ -1,0 +1,125 @@
+---
+title: "Population Synthesis"
+pkgdown:
+  as_is: true
+output:
+  bookdown::html_document2:
+    keep_tex: true
+    number_sections: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "##",
+  eval = TRUE,
+  cache = TRUE
+)
+
+quick_eval <- FALSE
+options(scipen = 6)
+set.seed(318937291)
+```
+
+```{r libraries, include = FALSE, warning = FALSE, message = FALSE}
+library(extraDistr)
+library(lemur.pack)
+library(MASS)
+library(mvtnorm)
+library(latex2exp)
+library(microbenchmark)
+library(tidyverse)
+library(gridExtra)
+library(cowplot)
+```
+
+# Populations
+
+We are working with various finite populations which take on different values, ranging from simple discrete-valued categorical variables, to continuous-valued variables. We focus on three scenarios:
+
+(1) Categorical -- $Y_i \in \{a, b, c, \dots\}$
+(2) Discrete Numeric -- $Y_i \in \{1, 2, 3, \dots\}$
+(3) Continuous Numeric -- $Y_i \in \mathbb{R}$
+
+# Synthesis
+
+We employ *Markov chain Monte Carlo* (MCMC) methods to sample from the posterior of our populations, and focus largely on jittering populations via symmetric proposals. Our posterior is constructed the canonical way, via
+
+\[
+\pi(y|x) \propto \ell(x|y) p(y)
+\]
+
+The two major components, our prior distribution $p(y)$, and likelihood function $\ell(x|y)$.
+
+## Likelihood
+
+Because we are working with finite populations, $\ell(x|y)$ often cannot take on the form of sampling distribution. To illustrate, imagine a population...
+
+[insert example here]
+
+## Prior
+
+[still need to talk about priors... but we have the discrete case]
+
+
+
+
+# Comparisons
+
+## Categorical Populations
+
+### Binary
+
+#### Binomial vs Hypergeometric
+
+#### Brownian Bridge using Integers
+
+### Many Categories
+
+#### Multinomial vs Multivariate Hypergeometric
+
+##### Problems as number of categories increases
+
+#### Brownian Bridge using Integers (cont'd)
+
+#### Dirichlet Approx using Integers
+
+### Discrete Numeric Populations
+
+#### Problems with Multinomial & Multivariate Hypergeometric
+
+#### Brownian Bridge
+
+#### Dirichlet Approx
+
+#### Problems as number of unique values increases? -> Motivation for fixed interpolation points
+
+### Continuous Populations (bounded)
+
+#### Brownian Bridge
+
+#### Interpolated
+
+#### Dirichlet Approx
+
+##### Equal probability on endpoints vs 1/2 probability on 
+
+### Continuous Populations (unbounded)
+
+???
+
+### Parametric Populations
+
+#### Normal "lock-step" fixed intervals in inverse-cdf space
+
+#### Changing from "lock-step" -> i.i.d.
+
+### Binned data informing likelihood
+
+
+
+
