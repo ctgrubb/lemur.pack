@@ -43,7 +43,8 @@ We are working with various finite populations which take on different values, r
 
 (1) Categorical -- $Y_i \in \{a, b, c, \dots\}$
 (2) Discrete Numeric -- $Y_i \in \{1, 2, 3, \dots\}$
-(3) Continuous Numeric -- $Y_i \in \mathbb{R}$
+(3) Binned Numeric -- $Y_i \in \{(-\infty, a], (a, b], \dots\}$
+(4) Continuous Numeric -- $Y_i \in \mathbb{R}$
 
 # Synthesis
 
